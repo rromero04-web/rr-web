@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://raulromero.es";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://raulromero.es";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
