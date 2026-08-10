@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { projects } from "@/content/projects";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 
@@ -23,14 +24,18 @@ export function Projects() {
           {projects.map((project, index) => (
             <RevealOnScroll key={project.slug} delay={index * 0.08} className="h-full">
               <article className="group flex h-full flex-col border border-line/70 bg-cream transition-colors hover:border-cobalt/60">
-                <div
-                  aria-hidden="true"
-                  className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border-b border-line/70 bg-navy"
-                >
-                  <span className="text-6xl font-extrabold text-cream/10 select-none">
-                    {project.sector.slice(0, 2).toUpperCase()}
-                  </span>
-                  <span className="absolute right-0 top-0 skew-x-[-12deg] origin-top-right translate-x-3 bg-cobalt px-4 py-1.5 text-[11px] font-bold tracking-wide text-cream uppercase">
+                <div className="relative aspect-[4/3] overflow-hidden border-b border-line/70 bg-navy">
+                  <Image
+                    src={project.image}
+                    alt={`Mockup de ${project.name}`}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-0 top-0 skew-x-[-12deg] origin-top-right translate-x-3 bg-cobalt px-4 py-1.5 text-[11px] font-bold tracking-wide text-cream uppercase"
+                  >
                     <span className="inline-block -skew-x-[-12deg]">
                       Proyecto conceptual
                     </span>

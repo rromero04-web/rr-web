@@ -6,6 +6,7 @@ export type Project = {
   solution: string;
   tech: string[];
   result: string;
+  image: string;
   conceptual: true;
 };
 
@@ -22,6 +23,7 @@ export const projects: Project[] = [
     solution: "Panel de reservas online con disponibilidad en tiempo real y recordatorios automáticos por email.",
     tech: ["Next.js", "Supabase", "TypeScript"],
     result: "Reducción del tiempo administrativo dedicado a gestionar citas.",
+    image: "/projects/reservas-clinica-dental.jpg",
     conceptual: true,
   },
   {
@@ -32,6 +34,7 @@ export const projects: Project[] = [
     solution: "Rediseño centrado en los problemas del cliente tipo, con formulario de valoración inicial.",
     tech: ["Next.js", "Tailwind CSS", "Zod"],
     result: "Un flujo de contacto claro pensado para convertir visitas en consultas.",
+    image: "/projects/web-captacion-asesoria.jpg",
     conceptual: true,
   },
   {
@@ -42,6 +45,7 @@ export const projects: Project[] = [
     solution: "Herramienta interna para crear, editar y enviar presupuestos con una plantilla consistente.",
     tech: ["Next.js", "Supabase", "React"],
     result: "Un proceso de presupuestos estandarizado y más rápido de preparar.",
+    image: "/projects/panel-presupuestos-reformas.jpg",
     conceptual: true,
   },
 ];
