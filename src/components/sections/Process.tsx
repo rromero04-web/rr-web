@@ -2,7 +2,10 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
+import { Search, Target, PenTool, Code2, Rocket, type LucideIcon } from "lucide-react";
 import { processSteps } from "@/content/process";
+
+const STEP_ICONS: LucideIcon[] = [Search, Target, PenTool, Code2, Rocket];
 
 export function Process() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -25,28 +28,43 @@ export function Process() {
       </div>
 
       <div ref={sectionRef} className="relative">
-        {processSteps.map((step, index) => (
-          <div
-            key={step.number}
-            className="sticky top-0 flex min-h-screen items-center border-t border-cream/10 bg-navy py-16"
-            style={{ zIndex: index + 1 }}
-          >
-            <div className="container-page grid w-full items-center gap-10 md:grid-cols-[auto_1fr]">
+        {processSteps.map((step, index) => {
+          const Icon = STEP_ICONS[index];
+          return (
+            <div
+              key={step.number}
+              className="sticky top-0 flex min-h-screen items-center overflow-hidden border-t border-cream/10 bg-navy py-16"
+              style={{ zIndex: index + 1 }}
+            >
               <span
                 aria-hidden="true"
-                className="font-mono text-[clamp(4rem,14vw,9rem)] leading-none font-bold text-cream/10"
+                className="pointer-events-none absolute -right-[4vw] top-1/2 -translate-y-1/2 font-mono text-[clamp(10rem,32vw,26rem)] leading-none font-bold text-cream/[0.04]"
               >
                 {step.number}
               </span>
-              <div className="max-w-xl">
-                <h3 className="text-2xl font-bold sm:text-3xl">{step.title}</h3>
-                <p className="mt-4 text-base leading-relaxed text-cream/70 sm:text-lg">
-                  {step.description}
-                </p>
+
+              <div className="container-page relative w-full">
+                <div className="max-w-xl">
+                  <div className="relative inline-flex h-14 w-14 items-center justify-center border border-cream/15 bg-cream/[0.03]">
+                    <Icon size={24} className="text-cobalt-soft" aria-hidden="true" />
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-2.5 -bottom-2.5 h-5 w-5 skew-x-[-12deg] bg-cobalt"
+                    />
+                  </div>
+
+                  <p className="mt-6 font-mono text-sm text-cream/40">
+                    Paso {step.number}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-bold sm:text-3xl">{step.title}</h3>
+                  <p className="mt-4 text-base leading-relaxed text-cream/70 sm:text-lg">
+                    {step.description}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <div
           aria-hidden="true"
