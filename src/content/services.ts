@@ -24,6 +24,8 @@ export const services: Service[] = [
       "Panel sencillo para que puedas actualizar textos e imágenes",
     ],
     nextStep: "Cuéntame tu negocio y te propongo una estructura concreta.",
+    demoHref: "/demo/web-profesional",
+    demoLabel: "Ver demo de web profesional",
   },
   {
     slug: "web-de-captacion",
@@ -38,6 +40,8 @@ export const services: Service[] = [
       "Iteración tras el lanzamiento con datos reales",
     ],
     nextStep: "Reviso tu situación actual y te digo qué cambiaría primero.",
+    demoHref: "/demo/web-captacion",
+    demoLabel: "Ver demo de web de captación",
   },
   {
     slug: "aplicaciones-a-medida",

@@ -14,6 +14,10 @@ export function Services() {
           <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
             Tres formas de ayudarte a crecer, según dónde estés ahora mismo.
           </h2>
+          <p className="mt-4 max-w-2xl text-sm text-slate">
+            Prueba ejemplos interactivos del tipo de solución que puedo crear
+            para tu negocio.
+          </p>
         </RevealOnScroll>
 
         <div className="mt-14 grid gap-px overflow-hidden border border-line/70 bg-line/70 md:grid-cols-3">
