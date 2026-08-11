@@ -47,7 +47,7 @@ export function Hero() {
                 href="#servicios"
                 className="inline-flex items-center justify-center gap-2 border border-navy/20 px-6 py-3.5 text-sm font-semibold text-navy transition-colors hover:border-cobalt hover:text-cobalt"
               >
-                Ver servicios
+                Probar las demos
               </a>
             </div>
           </RevealOnScroll>
