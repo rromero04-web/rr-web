@@ -6,6 +6,8 @@ export type Service = {
   problem: string;
   includes: string[];
   nextStep: string;
+  demoHref?: string;
+  demoLabel?: string;
 };
 
 export const services: Service[] = [
@@ -50,5 +52,7 @@ export const services: Service[] = [
       "Acompañamiento tras el lanzamiento para ajustar lo que haga falta",
     ],
     nextStep: "Hablamos del proceso que quieres mejorar y valoramos si tiene sentido digitalizarlo.",
+    demoHref: "/demo/gestion-de-equipos",
+    demoLabel: "Probar demo de gestión de equipos",
   },
 ];

@@ -1,4 +1,5 @@
-import { ArrowRight, Check } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Check, MonitorPlay } from "lucide-react";
 import { services } from "@/content/services";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 
@@ -47,7 +48,7 @@ export function Services() {
                   ))}
                 </ul>
 
-                <div className="mt-auto pt-8">
+                <div className="mt-auto flex flex-col items-start gap-3 pt-8">
                   <a
                     href="#contacto"
                     className="group inline-flex items-center gap-2 text-sm font-semibold text-navy hover:text-cobalt"
@@ -59,6 +60,16 @@ export function Services() {
                       aria-hidden="true"
                     />
                   </a>
+
+                  {service.demoHref && (
+                    <Link
+                      href={service.demoHref}
+                      className="inline-flex items-center gap-2 border border-navy/20 px-4 py-2 text-xs font-semibold text-navy transition-colors hover:border-cobalt hover:text-cobalt"
+                    >
+                      <MonitorPlay size={14} aria-hidden="true" />
+                      {service.demoLabel}
+                    </Link>
+                  )}
                 </div>
               </article>
             </RevealOnScroll>

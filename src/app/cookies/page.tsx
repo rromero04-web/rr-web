@@ -41,9 +41,7 @@ export default function CookiesPage() {
             <p>
               <strong>
                 Esta web, en su versión actual, no instala ninguna cookie,
-                propia ni de terceros, ni utiliza <code>localStorage</code>{" "}
-                ni <code>sessionStorage</code> para guardar información en tu
-                navegador.
+                propia ni de terceros.
               </strong>{" "}
               No hay cookies de analítica (como Google Analytics), ni de
               publicidad, ni de redes sociales, ni siquiera cookies técnicas
@@ -61,6 +59,19 @@ export default function CookiesPage() {
               enlaces a Instagram y WhatsApp son enlaces salientes normales:
               no cargan ningún contenido de esos servicios dentro de esta web
               ni instalan cookies mientras navegas por ella.
+            </p>
+            <p>
+              La única excepción es la demo interactiva en{" "}
+              <Link href="/demo/gestion-de-equipos">
+                /demo/gestion-de-equipos
+              </Link>
+              , que usa <code>localStorage</code> (almacenamiento local del
+              navegador, no una cookie) únicamente para recordar en tu propio
+              dispositivo los cambios que hagas dentro de esa simulación
+              (fichajes, tareas, incidencias ficticias). Esos datos nunca
+              salen de tu navegador, no se envían a ningún servidor y puedes
+              borrarlos en cualquier momento con el botón «Restablecer datos
+              de la demo» o limpiando los datos del sitio en tu navegador.
             </p>
             <p>
               Como no se utiliza ninguna cookie no esencial, esta web no
