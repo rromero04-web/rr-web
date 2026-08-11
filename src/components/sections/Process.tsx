@@ -91,7 +91,13 @@ function ProcessCard({
         className="relative h-full w-full motion-reduce:transform-none"
         style={{ transformStyle: "preserve-3d" }}
         animate={{ rotateY: flipped ? 180 : 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        transition={{
+          duration: 0.6,
+          ease: [0.16, 1, 0.3, 1],
+          // En móvil (sin hover), espera 2 s tras aparecer en pantalla antes
+          // de girar; en escritorio y al volver a la cara frontal, sin retraso.
+          delay: !hasHover && flipped ? 2 : 0,
+        }}
       >
         {/* Cara frontal */}
         <div
