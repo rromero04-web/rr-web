@@ -4,6 +4,13 @@ import { Avatar } from "@/components/demo/ui/Avatar";
 import { StatusBadge } from "@/components/demo/ui/StatusBadge";
 import { EMPLOYEE_STATUS_LABEL, EMPLOYEE_STATUS_TONE } from "@/lib/demo/labels";
 import type { DemoSection } from "@/lib/demo/nav";
+import { WEEK_DAYS } from "@/lib/demo/types";
+
+// WEEK_DAYS empieza en lunes; Date#getDay() empieza en domingo (0).
+function todayWeekDayIndex(): number {
+  const jsDay = new Date().getDay();
+  return jsDay === 0 ? 6 : jsDay - 1;
+}
 
 export function Overview({ onNavigate }: { onNavigate: (section: DemoSection) => void }) {
   const { state } = useDemoData();
@@ -14,8 +21,18 @@ export function Overview({ onNavigate }: { onNavigate: (section: DemoSection) =>
   const openIncidents = incidents.filter((i) => i.status === "abierta").length;
   const weeklyHours = employees.reduce((sum, e) => sum + e.weeklyHours, 0);
 
-  const upcomingShifts = shifts
-    .filter((s) => !s.isAbsence && s.label !== "Libre")
+  // Turnos realmente próximos: se recorren los días empezando por hoy y
+  // avanzando por la semana, tomando los turnos asignados (excluyendo
+  // "Libre" y ausencias) tal y como estén configurados en Horarios ahora
+  // mismo, no un orden fijo.
+  const todayIndex = todayWeekDayIndex();
+  const orderedDays = Array.from({ length: 7 }, (_, i) => WEEK_DAYS[(todayIndex + i) % 7]);
+  const upcomingShifts = orderedDays
+    .flatMap((day) =>
+      shifts
+        .filter((s) => s.day === day && !s.isAbsence && s.label !== "Libre")
+        .sort((a, b) => a.employeeId.localeCompare(b.employeeId))
+    )
     .slice(0, 5);
 
   const recentActivity = [...timeEntries]
@@ -76,7 +93,9 @@ export function Overview({ onNavigate }: { onNavigate: (section: DemoSection) =>
                   <Avatar initials={employee.initials} size="sm" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-navy">{employee.name}</p>
-                    <p className="text-xs text-slate">{shift.day}</p>
+                    <p className="text-xs text-slate">
+                      {shift.day === orderedDays[0] ? "Hoy" : shift.day}
+                    </p>
                   </div>
                   <span className="shrink-0 font-mono text-xs text-slate">{shift.label}</span>
                 </li>

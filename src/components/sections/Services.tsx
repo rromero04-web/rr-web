@@ -64,7 +64,7 @@ export function Services() {
                   {service.demoHref && (
                     <Link
                       href={service.demoHref}
-                      className="inline-flex items-center gap-2 border border-navy/20 px-4 py-2 text-xs font-semibold text-navy transition-colors hover:border-cobalt hover:text-cobalt"
+                      className="inline-flex items-center gap-2 bg-navy px-4 py-2.5 text-xs font-semibold text-cream transition-colors hover:bg-cobalt"
                     >
                       <MonitorPlay size={14} aria-hidden="true" />
                       {service.demoLabel}
