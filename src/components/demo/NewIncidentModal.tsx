@@ -2,23 +2,62 @@
 
 import { useId, useState } from "react";
 import { Modal } from "@/components/demo/ui/Modal";
+import type { Locale } from "@/lib/i18n/config";
 import { INCIDENT_TYPE_LABEL } from "@/lib/demo/labels";
 import type { Employee, Incident, IncidentType } from "@/lib/demo/types";
 
-const TYPES = Object.keys(INCIDENT_TYPE_LABEL) as IncidentType[];
+const TYPES: IncidentType[] = ["material", "equipo", "turno", "otro"];
+
+const STRINGS: Record<
+  Locale,
+  {
+    title: string;
+    fieldTitle: string;
+    titlePlaceholder: string;
+    employee: string;
+    type: string;
+    description: string;
+    descriptionPlaceholder: string;
+    submit: string;
+  }
+> = {
+  es: {
+    title: "Nueva incidencia",
+    fieldTitle: "Título",
+    titlePlaceholder: "p. ej. Falta material en almacén",
+    employee: "Empleado",
+    type: "Tipo",
+    description: "Descripción",
+    descriptionPlaceholder: "Describe brevemente la incidencia.",
+    submit: "Crear incidencia",
+  },
+  en: {
+    title: "New incident",
+    fieldTitle: "Title",
+    titlePlaceholder: "e.g. Missing supplies in the warehouse",
+    employee: "Employee",
+    type: "Type",
+    description: "Description",
+    descriptionPlaceholder: "Briefly describe the incident.",
+    submit: "Create incident",
+  },
+};
 
 export function NewIncidentModal({
+  locale,
   open,
   employees,
   onClose,
   onCreate,
 }: {
+  locale: Locale;
   open: boolean;
   employees: Employee[];
   onClose: () => void;
   onCreate: (incident: Omit<Incident, "id" | "createdAt">) => void;
 }) {
   const formId = useId();
+  const strings = STRINGS[locale];
   const [title, setTitle] = useState("");
   const [employeeId, setEmployeeId] = useState(employees[0]?.id ?? "");
   const [type, setType] = useState<IncidentType>("otro");
@@ -38,8 +77,9 @@ export function NewIncidentModal({
         onClose();
         reset();
       }}
-      title="Nueva incidencia"
+      title={strings.title}
       widthClassName="max-w-md"
+      locale={locale}
     >
       <form
         onSubmit={(event) => {
@@ -59,7 +99,7 @@ export function NewIncidentModal({
       >
         <div>
           <label htmlFor={`${formId}-title`} className="text-xs font-semibold tracking-[0.1em] text-slate uppercase">
-            Título
+            {strings.fieldTitle}
           </label>
           <input
             id={`${formId}-title`}
@@ -68,14 +108,14 @@ export function NewIncidentModal({
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className="mt-1.5 w-full border border-navy/20 bg-cream px-3 py-2 text-sm text-navy outline-none focus:border-cobalt"
-            placeholder="p. ej. Falta material en almacén"
+            placeholder={strings.titlePlaceholder}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor={`${formId}-employee`} className="text-xs font-semibold tracking-[0.1em] text-slate uppercase">
-              Empleado
+              {strings.employee}
             </label>
             <select
               id={`${formId}-employee`}
@@ -92,7 +132,7 @@ export function NewIncidentModal({
           </div>
           <div>
             <label htmlFor={`${formId}-type`} className="text-xs font-semibold tracking-[0.1em] text-slate uppercase">
-              Tipo
+              {strings.type}
             </label>
             <select
               id={`${formId}-type`}
@@ -102,7 +142,7 @@ export function NewIncidentModal({
             >
               {TYPES.map((t) => (
                 <option key={t} value={t}>
-                  {INCIDENT_TYPE_LABEL[t]}
+                  {INCIDENT_TYPE_LABEL[locale][t]}
                 </option>
               ))}
             </select>
@@ -111,7 +151,7 @@ export function NewIncidentModal({
 
         <div>
           <label htmlFor={`${formId}-description`} className="text-xs font-semibold tracking-[0.1em] text-slate uppercase">
-            Descripción
+            {strings.description}
           </label>
           <textarea
             id={`${formId}-description`}
@@ -120,7 +160,7 @@ export function NewIncidentModal({
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             className="mt-1.5 w-full resize-none border border-navy/20 bg-cream px-3 py-2 text-sm text-navy outline-none focus:border-cobalt"
-            placeholder="Describe brevemente la incidencia."
+            placeholder={strings.descriptionPlaceholder}
           />
         </div>
 
@@ -128,7 +168,7 @@ export function NewIncidentModal({
           type="submit"
           className="w-full border border-navy bg-navy px-4 py-2.5 text-sm font-semibold text-cream transition-colors hover:bg-cobalt hover:border-cobalt"
         >
-          Crear incidencia
+          {strings.submit}
         </button>
       </form>
     </Modal>

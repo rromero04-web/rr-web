@@ -5,12 +5,55 @@ import { ChevronRight } from "lucide-react";
 import { useDemoData } from "@/components/demo/DemoDataProvider";
 import { Avatar } from "@/components/demo/ui/Avatar";
 import { StatusBadge } from "@/components/demo/ui/StatusBadge";
-import { EMPLOYEE_STATUS_LABEL, EMPLOYEE_STATUS_TONE } from "@/lib/demo/labels";
+import type { Locale } from "@/lib/i18n/config";
+import { DEPARTMENT_LABEL, EMPLOYEE_STATUS_LABEL, EMPLOYEE_STATUS_TONE } from "@/lib/demo/labels";
 import { EmployeeDetailModal } from "@/components/demo/EmployeeDetailModal";
 import type { Department, Employee } from "@/lib/demo/types";
 
-export function EmployeesSection() {
+const STRINGS: Record<
+  Locale,
+  {
+    filterLabel: string;
+    allDepartments: string;
+    name: string;
+    department: string;
+    status: string;
+    scheduleToday: string;
+    hoursWeek: string;
+    incidents: string;
+    openProfile: string;
+    viewProfileOf: (name: string) => string;
+  }
+> = {
+  es: {
+    filterLabel: "Filtrar por departamento",
+    allDepartments: "Todos los departamentos",
+    name: "Nombre",
+    department: "Departamento",
+    status: "Estado",
+    scheduleToday: "Horario hoy",
+    hoursWeek: "Horas/sem.",
+    incidents: "Incidencias",
+    openProfile: "Abrir ficha",
+    viewProfileOf: (name) => `Ver ficha de ${name}`,
+  },
+  en: {
+    filterLabel: "Filter by department",
+    allDepartments: "All departments",
+    name: "Name",
+    department: "Department",
+    status: "Status",
+    scheduleToday: "Today's schedule",
+    hoursWeek: "Hours/wk.",
+    incidents: "Incidents",
+    openProfile: "Open profile",
+    viewProfileOf: (name) => `View profile of ${name}`,
+  },
+};
+
+export function EmployeesSection({ locale }: { locale: Locale }) {
   const { state } = useDemoData();
+  const strings = STRINGS[locale];
   const [department, setDepartment] = useState<Department | "todos">("todos");
   const [selected, setSelected] = useState<Employee | null>(null);
 
@@ -30,7 +73,7 @@ export function EmployeesSection() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="department-filter" className="text-xs font-semibold text-slate">
-          Filtrar por departamento
+          {strings.filterLabel}
         </label>
         <select
           id="department-filter"
@@ -38,10 +81,10 @@ export function EmployeesSection() {
           onChange={(event) => setDepartment(event.target.value as Department | "todos")}
           className="border border-line/70 bg-cream px-3 py-1.5 text-sm text-navy"
         >
-          <option value="todos">Todos los departamentos</option>
+          <option value="todos">{strings.allDepartments}</option>
           {departments.map((dept) => (
             <option key={dept} value={dept}>
-              {dept}
+              {DEPARTMENT_LABEL[locale][dept]}
             </option>
           ))}
         </select>
@@ -52,14 +95,14 @@ export function EmployeesSection() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line/70 text-left text-xs font-semibold tracking-wide text-slate uppercase">
-                <th scope="col" className="p-4">Nombre</th>
-                <th scope="col" className="p-4">Departamento</th>
-                <th scope="col" className="p-4">Estado</th>
-                <th scope="col" className="p-4">Horario hoy</th>
-                <th scope="col" className="p-4">Horas/sem.</th>
-                <th scope="col" className="p-4">Incidencias</th>
+                <th scope="col" className="p-4">{strings.name}</th>
+                <th scope="col" className="p-4">{strings.department}</th>
+                <th scope="col" className="p-4">{strings.status}</th>
+                <th scope="col" className="p-4">{strings.scheduleToday}</th>
+                <th scope="col" className="p-4">{strings.hoursWeek}</th>
+                <th scope="col" className="p-4">{strings.incidents}</th>
                 <th scope="col" className="p-4">
-                  <span className="sr-only">Abrir ficha</span>
+                  <span className="sr-only">{strings.openProfile}</span>
                 </th>
               </tr>
             </thead>
@@ -76,7 +119,7 @@ export function EmployeesSection() {
                       setSelected(employee);
                     }
                   }}
-                  aria-label={`Ver ficha de ${employee.name}`}
+                  aria-label={strings.viewProfileOf(employee.name)}
                   className="cursor-pointer transition-colors hover:bg-navy/[0.03]"
                 >
                   <td className="p-4">
@@ -85,10 +128,10 @@ export function EmployeesSection() {
                       <span className="font-medium text-navy">{employee.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-slate">{employee.department}</td>
+                  <td className="p-4 text-slate">{DEPARTMENT_LABEL[locale][employee.department]}</td>
                   <td className="p-4">
                     <StatusBadge tone={EMPLOYEE_STATUS_TONE[employee.status]}>
-                      {EMPLOYEE_STATUS_LABEL[employee.status]}
+                      {EMPLOYEE_STATUS_LABEL[locale][employee.status]}
                     </StatusBadge>
                   </td>
                   <td className="p-4 font-mono text-xs text-slate">{employee.todaySchedule}</td>
@@ -114,10 +157,10 @@ export function EmployeesSection() {
                 <Avatar initials={employee.initials} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-navy">{employee.name}</p>
-                  <p className="text-xs text-slate">{employee.department}</p>
+                  <p className="text-xs text-slate">{DEPARTMENT_LABEL[locale][employee.department]}</p>
                   <div className="mt-1.5">
                     <StatusBadge tone={EMPLOYEE_STATUS_TONE[employee.status]}>
-                      {EMPLOYEE_STATUS_LABEL[employee.status]}
+                      {EMPLOYEE_STATUS_LABEL[locale][employee.status]}
                     </StatusBadge>
                   </div>
                 </div>
@@ -128,7 +171,7 @@ export function EmployeesSection() {
         </ul>
       </div>
 
-      <EmployeeDetailModal employee={selected} onClose={() => setSelected(null)} />
+      <EmployeeDetailModal locale={locale} employee={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }

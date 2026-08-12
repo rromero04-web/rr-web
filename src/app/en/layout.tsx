@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteChrome } from "@/components/layout/SiteChrome";
-import "./globals.css";
+import { SITE_URL } from "@/lib/i18n/config";
+import "../globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,41 +15,47 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://raulromero.es";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Raúl Romero | Webs y aplicaciones para negocios",
+    default: "Raúl Romero | Websites and applications for businesses",
     template: "%s | Raúl Romero",
   },
   description:
-    "Diseño y desarrollo webs y aplicaciones que ayudan a pequeñas empresas y profesionales a captar clientes, digitalizar procesos y crecer.",
+    "I design and build websites and applications that help small businesses and professionals attract customers, digitize processes and grow.",
   keywords: [
-    "diseño web",
-    "desarrollo web",
-    "aplicaciones a medida",
-    "digitalización de procesos",
-    "webs para negocios",
+    "web design",
+    "web development",
+    "custom applications",
+    "process automation",
+    "websites for businesses",
     "Raúl Romero",
   ],
   authors: [{ name: "Raúl Romero" }],
   creator: "Raúl Romero",
+  alternates: {
+    canonical: "/en",
+    languages: {
+      es: "/",
+      en: "/en",
+      "x-default": "/",
+    },
+  },
   openGraph: {
     type: "website",
-    locale: "es_ES",
-    url: siteUrl,
+    locale: "en_US",
+    url: `${SITE_URL}/en`,
     siteName: "Raúl Romero — Web & Growth",
-    title: "Raúl Romero | Webs y aplicaciones para negocios",
+    title: "Raúl Romero | Websites and applications for businesses",
     description:
-      "Diseño y desarrollo webs y aplicaciones que ayudan a pequeñas empresas y profesionales a captar clientes, digitalizar procesos y crecer.",
+      "I design and build websites and applications that help small businesses and professionals attract customers, digitize processes and grow.",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Raúl Romero | Webs y aplicaciones para negocios",
+    title: "Raúl Romero | Websites and applications for businesses",
     description:
-      "Diseño y desarrollo webs y aplicaciones que ayudan a pequeñas empresas y profesionales a captar clientes, digitalizar procesos y crecer.",
+      "I design and build websites and applications that help small businesses and professionals attract customers, digitize processes and grow.",
     images: ["/opengraph-image"],
   },
   robots: {
@@ -56,33 +64,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function EnglishRootLayout({ children }: { children: ReactNode }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
     name: "Raúl Romero — Web & Growth",
-    url: siteUrl,
+    url: `${SITE_URL}/en`,
     email: "info@raulromero.es",
     telephone: "+34684772973",
     description:
-      "Diseño y desarrollo de webs y aplicaciones a medida para pequeñas empresas, autónomos y profesionales.",
+      "Custom website and application design and development for small businesses, freelancers and professionals.",
     founder: {
       "@type": "Person",
       name: "Raúl Romero",
     },
     areaServed: "ES",
     knowsAbout: [
-      "Diseño web",
-      "Desarrollo web",
-      "Marketing digital",
-      "Aplicaciones a medida",
-      "Digitalización de procesos",
+      "Web design",
+      "Web development",
+      "Digital marketing",
+      "Custom applications",
+      "Process automation",
     ],
   };
 
   return (
     <html
-      lang="es"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-cream text-navy">

@@ -1,5 +1,6 @@
 import { Modal } from "@/components/demo/ui/Modal";
 import { StatusBadge } from "@/components/demo/ui/StatusBadge";
+import type { Locale } from "@/lib/i18n/config";
 import {
   INCIDENT_STATUS_LABEL,
   INCIDENT_STATUS_TONE,
@@ -10,30 +11,52 @@ import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS: IncidentStatus[] = ["abierta", "en_proceso", "resuelta"];
 
+const STRINGS: Record<
+  Locale,
+  { fallbackTitle: string; unassigned: string; status: string; currentStatus: string }
+> = {
+  es: {
+    fallbackTitle: "Incidencia",
+    unassigned: "Sin asignar",
+    status: "Estado",
+    currentStatus: "Estado actual:",
+  },
+  en: {
+    fallbackTitle: "Incident",
+    unassigned: "Unassigned",
+    status: "Status",
+    currentStatus: "Current status:",
+  },
+};
+
 export function IncidentDetailModal({
+  locale,
   incident,
   employeeName,
   onClose,
   onChangeStatus,
 }: {
+  locale: Locale;
   incident: Incident | null;
   employeeName: string | undefined;
   onClose: () => void;
   onChangeStatus: (status: IncidentStatus) => void;
 }) {
+  const strings = STRINGS[locale];
   return (
     <Modal
       open={Boolean(incident)}
       onClose={onClose}
-      title={incident?.title ?? "Incidencia"}
+      title={incident?.title ?? strings.fallbackTitle}
       widthClassName="max-w-lg"
+      locale={locale}
     >
       {incident && (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate">
-            <span>{INCIDENT_TYPE_LABEL[incident.type]}</span>
+            <span>{INCIDENT_TYPE_LABEL[locale][incident.type]}</span>
             <span>·</span>
-            <span>{employeeName ?? "Sin asignar"}</span>
+            <span>{employeeName ?? strings.unassigned}</span>
             <span>·</span>
             <span>{incident.createdAt}</span>
           </div>
@@ -42,7 +65,7 @@ export function IncidentDetailModal({
 
           <div>
             <p className="text-xs font-semibold tracking-[0.1em] text-slate uppercase">
-              Estado
+              {strings.status}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {STATUS_OPTIONS.map((status) => (
@@ -58,7 +81,7 @@ export function IncidentDetailModal({
                       : "border-line/70 text-slate hover:border-navy/30"
                   )}
                 >
-                  {INCIDENT_STATUS_LABEL[status]}
+                  {INCIDENT_STATUS_LABEL[locale][status]}
                 </button>
               ))}
             </div>
@@ -66,7 +89,7 @@ export function IncidentDetailModal({
 
           <div>
             <StatusBadge tone={INCIDENT_STATUS_TONE[incident.status]}>
-              Estado actual: {INCIDENT_STATUS_LABEL[incident.status]}
+              {strings.currentStatus} {INCIDENT_STATUS_LABEL[locale][incident.status]}
             </StatusBadge>
           </div>
         </div>

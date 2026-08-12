@@ -5,18 +5,45 @@ import { Check } from "lucide-react";
 import { useDemoData } from "@/components/demo/DemoDataProvider";
 import { Avatar } from "@/components/demo/ui/Avatar";
 import { StatusBadge } from "@/components/demo/ui/StatusBadge";
+import type { Locale } from "@/lib/i18n/config";
 import { TASK_PRIORITY_LABEL, TASK_PRIORITY_TONE } from "@/lib/demo/labels";
 import { cn } from "@/lib/utils";
 import type { TaskStatus } from "@/lib/demo/types";
 
-const FILTERS: { id: TaskStatus | "todas"; label: string }[] = [
-  { id: "todas", label: "Todas" },
-  { id: "pendiente", label: "Pendientes" },
-  { id: "completada", label: "Completadas" },
-];
+const STRINGS: Record<
+  Locale,
+  {
+    filters: { id: TaskStatus | "todas"; label: string }[];
+    markPending: (title: string) => string;
+    markCompleted: (title: string) => string;
+    empty: string;
+  }
+> = {
+  es: {
+    filters: [
+      { id: "todas", label: "Todas" },
+      { id: "pendiente", label: "Pendientes" },
+      { id: "completada", label: "Completadas" },
+    ],
+    markPending: (title) => `Marcar "${title}" como pendiente`,
+    markCompleted: (title) => `Marcar "${title}" como completada`,
+    empty: "No hay tareas en este filtro.",
+  },
+  en: {
+    filters: [
+      { id: "todas", label: "All" },
+      { id: "pendiente", label: "Pending" },
+      { id: "completada", label: "Completed" },
+    ],
+    markPending: (title) => `Mark "${title}" as pending`,
+    markCompleted: (title) => `Mark "${title}" as completed`,
+    empty: "No tasks in this filter.",
+  },
+};
 
-export function TasksSection() {
+export function TasksSection({ locale }: { locale: Locale }) {
   const { state, toggleTask } = useDemoData();
+  const strings = STRINGS[locale];
   const [filter, setFilter] = useState<TaskStatus | "todas">("todas");
 
   const tasks = state.tasks.filter((task) => filter === "todas" || task.status === filter);
@@ -24,7 +51,7 @@ export function TasksSection() {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        {FILTERS.map((item) => (
+        {strings.filters.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -53,7 +80,7 @@ export function TasksSection() {
                 onClick={() => toggleTask(task.id)}
                 aria-pressed={completed}
                 aria-label={
-                  completed ? `Marcar "${task.title}" como pendiente` : `Marcar "${task.title}" como completada`
+                  completed ? strings.markPending(task.title) : strings.markCompleted(task.title)
                 }
                 className={cn(
                   "flex h-6 w-6 shrink-0 items-center justify-center border transition-colors",
@@ -81,15 +108,13 @@ export function TasksSection() {
               </div>
 
               <StatusBadge tone={TASK_PRIORITY_TONE[task.priority]}>
-                {TASK_PRIORITY_LABEL[task.priority]}
+                {TASK_PRIORITY_LABEL[locale][task.priority]}
               </StatusBadge>
             </li>
           );
         })}
         {tasks.length === 0 && (
-          <li className="p-6 text-center text-sm text-slate">
-            No hay tareas en este filtro.
-          </li>
+          <li className="p-6 text-center text-sm text-slate">{strings.empty}</li>
         )}
       </ul>
     </div>

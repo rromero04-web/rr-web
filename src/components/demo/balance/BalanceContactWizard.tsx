@@ -3,10 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Info, RotateCcw } from "lucide-react";
-import { NEED_OPTIONS, CONTACT_PREFERENCES } from "./content";
+import { getNeedOptions, getContactPreferences, getSituationOptions } from "./content";
 import { cn } from "@/lib/utils";
-
-const SITUATION_OPTIONS = ["Autónomo", "Empresa", "Próxima alta", "Consulta puntual"];
+import { localizePath, type Locale } from "@/lib/i18n/config";
 
 type WizardValues = {
   situation: string;
@@ -33,11 +32,108 @@ const EMPTY_VALUES: WizardValues = {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TOTAL_STEPS = 3;
 
-export function BalanceContactWizard() {
+const STRINGS: Record<Locale, {
+  eyebrow: string;
+  title: string;
+  formNotice: string;
+  errorSituation: string;
+  errorNeed: string;
+  errorName: string;
+  errorEmail: string;
+  errorConsent: string;
+  completedTitle: string;
+  completedBody: string;
+  restart: string;
+  ctaAfterCompletion: string;
+  stepOf: (step: number, total: number) => string;
+  situationLegend: string;
+  needLegend: string;
+  needDetailLabel: string;
+  needDetailPlaceholder: string;
+  nameLabel: string;
+  emailLabel: string;
+  phoneLabel: string;
+  preferenceLabel: string;
+  preferenceNone: string;
+  consentLabel: string;
+  back: string;
+  continue: string;
+  submit: string;
+}> = {
+  es: {
+    eyebrow: "Valoración inicial",
+    title: "Solicita tu valoración fiscal inicial",
+    formNotice:
+      "Formulario de demostración: no envía ni almacena ninguna información. Nada de lo que escribas sale de tu navegador.",
+    errorSituation: "Selecciona tu situación para continuar.",
+    errorNeed: "Selecciona qué necesitas para continuar.",
+    errorName: "Indica tu nombre.",
+    errorEmail: "Introduce un correo válido.",
+    errorConsent: "Marca la casilla de consentimiento de demostración para continuar.",
+    completedTitle: "Simulación completada",
+    completedBody:
+      "En una web real, Balance Asesores recibiría una solicitud estructurada con la información necesaria para valorar el contacto.",
+    restart: "Reiniciar demostración",
+    ctaAfterCompletion: "Quiero una web de captación para mi negocio",
+    stepOf: (step, total) => `Paso ${step} de ${total}`,
+    situationLegend: "¿Cuál es tu situación?",
+    needLegend: "¿Qué necesitas?",
+    needDetailLabel: "Detalle adicional (opcional)",
+    needDetailPlaceholder: "Cuéntanos algo más si lo consideras útil.",
+    nameLabel: "Nombre",
+    emailLabel: "Correo",
+    phoneLabel: "Teléfono (opcional)",
+    preferenceLabel: "Preferencia de contacto",
+    preferenceNone: "Sin preferencia",
+    consentLabel:
+      "He leído que esto es una demostración: mis datos no se envían ni almacenan en ningún servidor.",
+    back: "Atrás",
+    continue: "Continuar",
+    submit: "Enviar solicitud",
+  },
+  en: {
+    eyebrow: "Initial assessment",
+    title: "Request your initial tax assessment",
+    formNotice:
+      "Demo form: it doesn't send or store any information. Nothing you type ever leaves your browser.",
+    errorSituation: "Select your situation to continue.",
+    errorNeed: "Select what you need to continue.",
+    errorName: "Enter your name.",
+    errorEmail: "Enter a valid email address.",
+    errorConsent: "Check the demo consent box to continue.",
+    completedTitle: "Simulation completed",
+    completedBody:
+      "On a real website, Balance Asesores would receive a structured request with the information needed to assess the contact.",
+    restart: "Restart demo",
+    ctaAfterCompletion: "I want a lead-generation website for my business",
+    stepOf: (step, total) => `Step ${step} of ${total}`,
+    situationLegend: "What's your situation?",
+    needLegend: "What do you need?",
+    needDetailLabel: "Additional detail (optional)",
+    needDetailPlaceholder: "Tell us more if you find it useful.",
+    nameLabel: "Name",
+    emailLabel: "Email",
+    phoneLabel: "Phone (optional)",
+    preferenceLabel: "Contact preference",
+    preferenceNone: "No preference",
+    consentLabel:
+      "I understand this is a demo: my data is not sent to or stored on any server.",
+    back: "Back",
+    continue: "Continue",
+    submit: "Send request",
+  },
+};
+
+export function BalanceContactWizard({ locale }: { locale: Locale }) {
   const [step, setStep] = useState(1);
   const [values, setValues] = useState<WizardValues>(EMPTY_VALUES);
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
+
+  const t = STRINGS[locale];
+  const situationOptions = getSituationOptions(locale);
+  const needOptions = getNeedOptions(locale);
+  const contactPreferences = getContactPreferences(locale);
 
   function update<K extends keyof WizardValues>(key: K, value: WizardValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -45,11 +141,11 @@ export function BalanceContactWizard() {
 
   function goNext() {
     if (step === 1 && !values.situation) {
-      setError("Selecciona tu situación para continuar.");
+      setError(t.errorSituation);
       return;
     }
     if (step === 2 && !values.need) {
-      setError("Selecciona qué necesitas para continuar.");
+      setError(t.errorNeed);
       return;
     }
     setError(null);
@@ -63,15 +159,15 @@ export function BalanceContactWizard() {
 
   function handleSubmit() {
     if (!values.name.trim()) {
-      setError("Indica tu nombre.");
+      setError(t.errorName);
       return;
     }
     if (!EMAIL_RE.test(values.email)) {
-      setError("Introduce un correo válido.");
+      setError(t.errorEmail);
       return;
     }
     if (!values.consent) {
-      setError("Marca la casilla de consentimiento de demostración para continuar.");
+      setError(t.errorConsent);
       return;
     }
     setError(null);
@@ -89,26 +185,23 @@ export function BalanceContactWizard() {
     <section id="valoracion" className="bg-white py-20">
       <div className="mx-auto max-w-2xl px-5 sm:px-8">
         <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          Valoración inicial
+          {t.eyebrow}
         </p>
         <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#16233A] sm:text-4xl">
-          Solicita tu valoración fiscal inicial
+          {t.title}
         </h2>
         <p className="mt-3 flex items-start gap-2 text-xs text-[#4B5568]/80">
           <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-          Formulario de demostración: no envía ni almacena ninguna
-          información. Nada de lo que escribas sale de tu navegador.
+          {t.formNotice}
         </p>
 
         <div className="mt-8 border border-[#16233A]/10 bg-[#F6F4EF] p-6 sm:p-8">
           {completed ? (
             <div role="status" className="flex flex-col items-start gap-3">
               <CheckCircle2 size={28} className="text-[#2F8F5B]" aria-hidden="true" />
-              <p className="text-base font-bold text-[#16233A]">Simulación completada</p>
+              <p className="text-base font-bold text-[#16233A]">{t.completedTitle}</p>
               <p className="text-sm leading-relaxed text-[#4B5568]">
-                En una web real, Balance Asesores recibiría una solicitud
-                estructurada con la información necesaria para valorar el
-                contacto.
+                {t.completedBody}
               </p>
               <div className="mt-2 flex flex-wrap gap-3">
                 <button
@@ -117,13 +210,13 @@ export function BalanceContactWizard() {
                   className="inline-flex items-center gap-2 border border-[#16233A]/20 px-4 py-2.5 text-sm font-semibold text-[#16233A] hover:border-[#16233A]/50"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
-                  Reiniciar demostración
+                  {t.restart}
                 </button>
                 <Link
-                  href="/#contacto"
+                  href={localizePath("/#contacto", locale)}
                   className="inline-flex items-center gap-2 bg-[#2F8F5B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#26744A]"
                 >
-                  Quiero una web de captación para mi negocio
+                  {t.ctaAfterCompletion}
                   <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </div>
@@ -132,7 +225,7 @@ export function BalanceContactWizard() {
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold tracking-wide text-[#4B5568]">
-                  Paso {step} de {TOTAL_STEPS}
+                  {t.stepOf(step, TOTAL_STEPS)}
                 </p>
               </div>
               <div className="mt-2 h-1.5 w-full bg-[#16233A]/10">
@@ -146,10 +239,10 @@ export function BalanceContactWizard() {
                 {step === 1 && (
                   <fieldset>
                     <legend className="text-sm font-bold text-[#16233A]">
-                      ¿Cuál es tu situación?
+                      {t.situationLegend}
                     </legend>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {SITUATION_OPTIONS.map((option) => (
+                      {situationOptions.map((option) => (
                         <button
                           key={option}
                           type="button"
@@ -173,10 +266,10 @@ export function BalanceContactWizard() {
                   <div className="space-y-5">
                     <fieldset>
                       <legend className="text-sm font-bold text-[#16233A]">
-                        ¿Qué necesitas?
+                        {t.needLegend}
                       </legend>
                       <div className="mt-3 grid gap-2">
-                        {NEED_OPTIONS.map((option) => (
+                        {needOptions.map((option) => (
                           <button
                             key={option}
                             type="button"
@@ -196,14 +289,14 @@ export function BalanceContactWizard() {
                     </fieldset>
                     <div>
                       <label htmlFor="balance-need-detail" className="mb-1.5 block text-sm font-medium text-[#16233A]">
-                        Detalle adicional (opcional)
+                        {t.needDetailLabel}
                       </label>
                       <textarea
                         id="balance-need-detail"
                         rows={3}
                         value={values.needDetail}
                         onChange={(e) => update("needDetail", e.target.value)}
-                        placeholder="Cuéntanos algo más si lo consideras útil."
+                        placeholder={t.needDetailPlaceholder}
                         className="w-full resize-none border border-[#16233A]/20 bg-white px-4 py-3 text-sm text-[#16233A] outline-none focus:border-[#2F8F5B]"
                       />
                     </div>
@@ -214,7 +307,7 @@ export function BalanceContactWizard() {
                   <div className="space-y-5">
                     <div>
                       <label htmlFor="balance-name" className="mb-1.5 block text-sm font-medium text-[#16233A]">
-                        Nombre
+                        {t.nameLabel}
                       </label>
                       <input
                         id="balance-name"
@@ -227,7 +320,7 @@ export function BalanceContactWizard() {
                     </div>
                     <div>
                       <label htmlFor="balance-email" className="mb-1.5 block text-sm font-medium text-[#16233A]">
-                        Correo
+                        {t.emailLabel}
                       </label>
                       <input
                         id="balance-email"
@@ -240,7 +333,7 @@ export function BalanceContactWizard() {
                     </div>
                     <div>
                       <label htmlFor="balance-phone" className="mb-1.5 block text-sm font-medium text-[#16233A]">
-                        Teléfono (opcional)
+                        {t.phoneLabel}
                       </label>
                       <input
                         id="balance-phone"
@@ -253,7 +346,7 @@ export function BalanceContactWizard() {
                     </div>
                     <div>
                       <label htmlFor="balance-preference" className="mb-1.5 block text-sm font-medium text-[#16233A]">
-                        Preferencia de contacto
+                        {t.preferenceLabel}
                       </label>
                       <select
                         id="balance-preference"
@@ -261,8 +354,8 @@ export function BalanceContactWizard() {
                         onChange={(e) => update("contactPreference", e.target.value)}
                         className="w-full border border-[#16233A]/20 bg-white px-4 py-3 text-sm text-[#16233A] outline-none focus:border-[#2F8F5B]"
                       >
-                        <option value="">Sin preferencia</option>
-                        {CONTACT_PREFERENCES.map((pref) => (
+                        <option value="">{t.preferenceNone}</option>
+                        {contactPreferences.map((pref) => (
                           <option key={pref} value={pref}>
                             {pref}
                           </option>
@@ -276,8 +369,7 @@ export function BalanceContactWizard() {
                         onChange={(e) => update("consent", e.target.checked)}
                         className="mt-1 h-4 w-4 shrink-0 border border-[#16233A]/30 accent-[#2F8F5B]"
                       />
-                      He leído que esto es una demostración: mis datos no se
-                      envían ni almacenan en ningún servidor.
+                      {t.consentLabel}
                     </label>
                   </div>
                 )}
@@ -297,7 +389,7 @@ export function BalanceContactWizard() {
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#16233A] disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   <ArrowLeft size={15} aria-hidden="true" />
-                  Atrás
+                  {t.back}
                 </button>
 
                 {step < TOTAL_STEPS ? (
@@ -306,7 +398,7 @@ export function BalanceContactWizard() {
                     onClick={goNext}
                     className="inline-flex items-center gap-2 bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
                   >
-                    Continuar
+                    {t.continue}
                     <ArrowRight size={15} aria-hidden="true" />
                   </button>
                 ) : (
@@ -315,7 +407,7 @@ export function BalanceContactWizard() {
                     onClick={handleSubmit}
                     className="inline-flex items-center gap-2 bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
                   >
-                    Enviar solicitud
+                    {t.submit}
                   </button>
                 )}
               </div>

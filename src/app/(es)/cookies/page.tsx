@@ -4,6 +4,10 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Política de cookies",
   description: "Política de cookies de Raúl Romero — Web & Growth.",
+  alternates: {
+    canonical: "/cookies",
+    languages: { es: "/cookies", en: "/en/cookies" },
+  },
   robots: { index: false, follow: true },
 };
 

@@ -3,11 +3,17 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { motion, useInView } from "motion/react";
 import { Search, Target, PenTool, Code2, Rocket, type LucideIcon } from "lucide-react";
-import { processSteps } from "@/content/process";
+import { getProcessSteps, type ProcessStep } from "@/content/process";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/lib/i18n/config";
 
 const STEP_ICONS: LucideIcon[] = [Search, Target, PenTool, Code2, Rocket];
+
+const STRINGS: Record<Locale, { eyebrow: string; title: string }> = {
+  es: { eyebrow: "Proceso", title: "Cómo trabajamos, paso a paso." },
+  en: { eyebrow: "Process", title: "How we work, step by step." },
+};
 
 const HOVER_QUERY = "(hover: hover) and (pointer: fine)";
 
@@ -36,15 +42,18 @@ function useHasHover() {
   );
 }
 
-export function Process() {
+export function Process({ locale }: { locale: Locale }) {
+  const t = STRINGS[locale];
+  const processSteps = getProcessSteps(locale);
+
   return (
     <section id="proceso" className="border-b border-line/70 bg-navy text-cream py-24 md:py-32">
       <div className="container-page">
         <p className="text-xs font-semibold tracking-[0.14em] text-cobalt-soft uppercase">
-          Proceso
+          {t.eyebrow}
         </p>
         <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Cómo trabajamos, paso a paso.
+          {t.title}
         </h2>
 
         <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
@@ -59,13 +68,7 @@ export function Process() {
   );
 }
 
-function ProcessCard({
-  step,
-  Icon,
-}: {
-  step: (typeof processSteps)[number];
-  Icon: LucideIcon;
-}) {
+function ProcessCard({ step, Icon }: { step: ProcessStep; Icon: LucideIcon }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const inView = useInView(cardRef, { amount: 0.6 });
   const hasHover = useHasHover();

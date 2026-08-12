@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/i18n/config";
 import type {
   DemoState,
   DemoTask,
@@ -8,256 +9,377 @@ import type {
   WeekDay,
 } from "./types";
 import { WEEK_DAYS } from "./types";
+import { ABSENCE_SHIFT_LABEL, FREE_SHIFT_LABEL } from "./labels";
 
 // Datos completamente ficticios para la demo interactiva de "Nexo Servicios".
-// Ningún nombre, horario o incidencia corresponde a una empresa o persona real.
+// Ningún nombre, horario o incidencia corresponde a una empresa o persona
+// real. Los identificadores (id, department, day...) son estables entre
+// idiomas; solo el texto visible (títulos, descripciones, fechas legibles)
+// cambia según el locale.
 
-export const SEED_EMPLOYEES: Employee[] = [
+interface EmployeeSeed {
+  id: string;
+  name: string;
+  initials: string;
+  department: Employee["department"];
+  status: Employee["status"];
+  todaySchedule: Record<Locale, string>;
+  weeklyHours: number;
+}
+
+const EMPLOYEE_SEEDS: EmployeeSeed[] = [
   {
     id: "lucia-martin",
     name: "Lucía Martín",
     initials: "LM",
-    department: "Administración",
+    department: "administracion",
     status: "trabajando",
-    todaySchedule: "09:00–17:00",
+    todaySchedule: { es: "09:00–17:00", en: "09:00–17:00" },
     weeklyHours: 32,
   },
   {
     id: "javier-ortega",
     name: "Javier Ortega",
     initials: "JO",
-    department: "Operaciones",
+    department: "operaciones",
     status: "trabajando",
-    todaySchedule: "08:00–16:00",
+    todaySchedule: { es: "08:00–16:00", en: "08:00–16:00" },
     weeklyHours: 36,
   },
   {
     id: "marta-ruiz",
     name: "Marta Ruiz",
     initials: "MR",
-    department: "Atención al cliente",
+    department: "atencion_cliente",
     status: "trabajando",
-    todaySchedule: "10:00–18:00",
+    todaySchedule: { es: "10:00–18:00", en: "10:00–18:00" },
     weeklyHours: 30,
   },
   {
     id: "diego-navarro",
     name: "Diego Navarro",
     initials: "DN",
-    department: "Mantenimiento",
+    department: "mantenimiento",
     status: "trabajando",
-    todaySchedule: "09:00–17:00",
+    todaySchedule: { es: "09:00–17:00", en: "09:00–17:00" },
     weeklyHours: 34,
   },
   {
     id: "elena-soto",
     name: "Elena Soto",
     initials: "ES",
-    department: "Coordinación",
+    department: "coordinacion",
     status: "fuera",
-    todaySchedule: "09:00–17:00",
+    todaySchedule: { es: "09:00–17:00", en: "09:00–17:00" },
     weeklyHours: 28,
   },
   {
     id: "pablo-torres",
     name: "Pablo Torres",
     initials: "PT",
-    department: "Operaciones",
+    department: "operaciones",
     status: "ausente",
-    todaySchedule: "Ausencia programada",
+    todaySchedule: ABSENCE_SHIFT_LABEL,
     weeklyHours: 20,
   },
 ];
 
-function shiftsFor(employeeId: string, pattern: Partial<Record<WeekDay, string>>): Shift[] {
+function seedEmployees(locale: Locale): Employee[] {
+  return EMPLOYEE_SEEDS.map((seed) => ({
+    id: seed.id,
+    name: seed.name,
+    initials: seed.initials,
+    department: seed.department,
+    status: seed.status,
+    todaySchedule: seed.todaySchedule[locale],
+    weeklyHours: seed.weeklyHours,
+  }));
+}
+
+type ShiftKind = "time" | "free" | "absence";
+
+interface ShiftPatternEntry {
+  kind: ShiftKind;
+  time?: string; // solo cuando kind === "time"
+}
+
+function shiftsFor(
+  locale: Locale,
+  employeeId: string,
+  pattern: Partial<Record<WeekDay, ShiftPatternEntry>>
+): Shift[] {
   return WEEK_DAYS.map((day, index) => {
-    const label = pattern[day] ?? "Libre";
+    const entry = pattern[day] ?? { kind: "free" };
+    const isAbsence = entry.kind === "absence";
+    const label =
+      entry.kind === "time"
+        ? (entry.time as string)
+        : entry.kind === "absence"
+          ? ABSENCE_SHIFT_LABEL[locale]
+          : FREE_SHIFT_LABEL[locale];
     return {
       id: `${employeeId}-shift-${index}`,
       employeeId,
       day,
       label,
-      isAbsence: label.toLowerCase().includes("ausen"),
+      isAbsence,
     };
   });
 }
 
-const WEEKDAY_9_17: Partial<Record<WeekDay, string>> = {
-  Lunes: "09:00–17:00",
-  Martes: "09:00–17:00",
-  Miércoles: "09:00–17:00",
-  Jueves: "09:00–17:00",
-  Viernes: "09:00–17:00",
+function time(value: string): ShiftPatternEntry {
+  return { kind: "time", time: value };
+}
+
+const ABSENCE: ShiftPatternEntry = { kind: "absence" };
+
+const WEEKDAY_9_17: Partial<Record<WeekDay, ShiftPatternEntry>> = {
+  lunes: time("09:00–17:00"),
+  martes: time("09:00–17:00"),
+  miercoles: time("09:00–17:00"),
+  jueves: time("09:00–17:00"),
+  viernes: time("09:00–17:00"),
 };
 
-const WEEKDAY_8_16: Partial<Record<WeekDay, string>> = {
-  Lunes: "08:00–16:00",
-  Martes: "08:00–16:00",
-  Miércoles: "08:00–16:00",
-  Jueves: "08:00–16:00",
-  Viernes: "08:00–16:00",
-  Sábado: "08:00–13:00",
+const WEEKDAY_8_16: Partial<Record<WeekDay, ShiftPatternEntry>> = {
+  lunes: time("08:00–16:00"),
+  martes: time("08:00–16:00"),
+  miercoles: time("08:00–16:00"),
+  jueves: time("08:00–16:00"),
+  viernes: time("08:00–16:00"),
+  sabado: time("08:00–13:00"),
 };
 
-const WEEKDAY_10_18: Partial<Record<WeekDay, string>> = {
-  Lunes: "10:00–18:00",
-  Martes: "10:00–18:00",
-  Miércoles: "Libre",
-  Jueves: "10:00–18:00",
-  Viernes: "10:00–18:00",
-  Sábado: "10:00–14:00",
+const WEEKDAY_10_18: Partial<Record<WeekDay, ShiftPatternEntry>> = {
+  lunes: time("10:00–18:00"),
+  martes: time("10:00–18:00"),
+  miercoles: { kind: "free" },
+  jueves: time("10:00–18:00"),
+  viernes: time("10:00–18:00"),
+  sabado: time("10:00–14:00"),
 };
 
-export const SEED_SHIFTS: Shift[] = [
-  ...shiftsFor("lucia-martin", WEEKDAY_9_17),
-  ...shiftsFor("javier-ortega", WEEKDAY_8_16),
-  ...shiftsFor("marta-ruiz", WEEKDAY_10_18),
-  ...shiftsFor("diego-navarro", WEEKDAY_9_17),
-  ...shiftsFor("elena-soto", WEEKDAY_9_17),
-  ...shiftsFor("pablo-torres", {
-    Lunes: "09:00–17:00",
-    Martes: "Ausencia programada",
-    Miércoles: "Ausencia programada",
-    Jueves: "09:00–17:00",
-    Viernes: "09:00–17:00",
-  }),
-];
+function seedShifts(locale: Locale): Shift[] {
+  return [
+    ...shiftsFor(locale, "lucia-martin", WEEKDAY_9_17),
+    ...shiftsFor(locale, "javier-ortega", WEEKDAY_8_16),
+    ...shiftsFor(locale, "marta-ruiz", WEEKDAY_10_18),
+    ...shiftsFor(locale, "diego-navarro", WEEKDAY_9_17),
+    ...shiftsFor(locale, "elena-soto", WEEKDAY_9_17),
+    ...shiftsFor(locale, "pablo-torres", {
+      lunes: time("09:00–17:00"),
+      martes: ABSENCE,
+      miercoles: ABSENCE,
+      jueves: time("09:00–17:00"),
+      viernes: time("09:00–17:00"),
+    }),
+  ];
+}
 
-export const SEED_TASKS: DemoTask[] = [
+interface TaskSeed {
+  id: string;
+  title: Record<Locale, string>;
+  employeeId: string;
+  priority: DemoTask["priority"];
+  dueDate: Record<Locale, string>;
+  status: DemoTask["status"];
+}
+
+const TASK_SEEDS: TaskSeed[] = [
   {
     id: "task-1",
-    title: "Revisar pedido de material de limpieza",
+    title: {
+      es: "Revisar pedido de material de limpieza",
+      en: "Review the cleaning supplies order",
+    },
     employeeId: "diego-navarro",
     priority: "alta",
-    dueDate: "Hoy",
+    dueDate: { es: "Hoy", en: "Today" },
     status: "pendiente",
   },
   {
     id: "task-2",
-    title: "Actualizar cuadrante de turnos de la próxima semana",
+    title: {
+      es: "Actualizar cuadrante de turnos de la próxima semana",
+      en: "Update next week's shift schedule",
+    },
     employeeId: "elena-soto",
     priority: "alta",
-    dueDate: "Hoy",
+    dueDate: { es: "Hoy", en: "Today" },
     status: "pendiente",
   },
   {
     id: "task-3",
-    title: "Llamar a cliente para confirmar visita",
+    title: {
+      es: "Llamar a cliente para confirmar visita",
+      en: "Call client to confirm the visit",
+    },
     employeeId: "marta-ruiz",
     priority: "media",
-    dueDate: "Mañana",
+    dueDate: { es: "Mañana", en: "Tomorrow" },
     status: "pendiente",
   },
   {
     id: "task-4",
-    title: "Revisar extintores de la planta baja",
+    title: {
+      es: "Revisar extintores de la planta baja",
+      en: "Check fire extinguishers on the ground floor",
+    },
     employeeId: "diego-navarro",
     priority: "media",
-    dueDate: "Vie 14",
+    dueDate: { es: "Vie 14", en: "Fri 14" },
     status: "pendiente",
   },
   {
     id: "task-5",
-    title: "Preparar informe mensual de horas",
+    title: {
+      es: "Preparar informe mensual de horas",
+      en: "Prepare the monthly hours report",
+    },
     employeeId: "lucia-martin",
     priority: "media",
-    dueDate: "Vie 14",
+    dueDate: { es: "Vie 14", en: "Fri 14" },
     status: "completada",
   },
   {
     id: "task-6",
-    title: "Reponer stock en almacén secundario",
+    title: {
+      es: "Reponer stock en almacén secundario",
+      en: "Restock the secondary warehouse",
+    },
     employeeId: "javier-ortega",
     priority: "baja",
-    dueDate: "Lun 17",
+    dueDate: { es: "Lun 17", en: "Mon 17" },
     status: "pendiente",
   },
   {
     id: "task-7",
-    title: "Formación breve sobre nuevo protocolo",
+    title: {
+      es: "Formación breve sobre nuevo protocolo",
+      en: "Short training on the new protocol",
+    },
     employeeId: "pablo-torres",
     priority: "baja",
-    dueDate: "Lun 17",
+    dueDate: { es: "Lun 17", en: "Mon 17" },
     status: "completada",
   },
 ];
 
-export const SEED_INCIDENTS: Incident[] = [
+function seedTasks(locale: Locale): DemoTask[] {
+  return TASK_SEEDS.map((seed) => ({
+    id: seed.id,
+    title: seed.title[locale],
+    employeeId: seed.employeeId,
+    priority: seed.priority,
+    dueDate: seed.dueDate[locale],
+    status: seed.status,
+  }));
+}
+
+interface IncidentSeed {
+  id: string;
+  title: Record<Locale, string>;
+  employeeId: string;
+  type: Incident["type"];
+  status: Incident["status"];
+  createdAt: Record<Locale, string>;
+  description: Record<Locale, string>;
+}
+
+const INCIDENT_SEEDS: IncidentSeed[] = [
   {
     id: "incident-1",
-    title: "Material de limpieza pendiente de reponer",
+    title: {
+      es: "Material de limpieza pendiente de reponer",
+      en: "Cleaning supplies need restocking",
+    },
     employeeId: "diego-navarro",
     type: "material",
     status: "abierta",
-    createdAt: "Hoy, 08:40",
-    description:
-      "Falta material de limpieza en la planta 2. Se ha avisado al proveedor habitual pero aún no hay fecha de entrega confirmada.",
+    createdAt: { es: "Hoy, 08:40", en: "Today, 08:40" },
+    description: {
+      es: "Falta material de limpieza en la planta 2. Se ha avisado al proveedor habitual pero aún no hay fecha de entrega confirmada.",
+      en: "Cleaning supplies are running low on floor 2. The usual supplier has been notified but there is no confirmed delivery date yet.",
+    },
   },
   {
     id: "incident-2",
-    title: "Equipo de climatización averiado",
+    title: {
+      es: "Equipo de climatización averiado",
+      en: "Air conditioning unit malfunctioning",
+    },
     employeeId: "javier-ortega",
     type: "equipo",
     status: "en_proceso",
-    createdAt: "Ayer, 17:10",
-    description:
-      "El equipo de climatización de la nave 1 hace un ruido anómalo desde ayer. Técnico avisado, pendiente de visita.",
+    createdAt: { es: "Ayer, 17:10", en: "Yesterday, 17:10" },
+    description: {
+      es: "El equipo de climatización de la nave 1 hace un ruido anómalo desde ayer. Técnico avisado, pendiente de visita.",
+      en: "The air conditioning unit in warehouse 1 has been making an unusual noise since yesterday. A technician has been notified and a visit is pending.",
+    },
   },
   {
     id: "incident-3",
-    title: "Cambio de turno solicitado",
+    title: {
+      es: "Cambio de turno solicitado",
+      en: "Shift change requested",
+    },
     employeeId: "marta-ruiz",
     type: "turno",
     status: "resuelta",
-    createdAt: "Lun 10, 09:15",
-    description:
-      "Solicitud de cambio de turno del sábado por motivos personales. Cambio aprobado y reflejado en el cuadrante.",
+    createdAt: { es: "Lun 10, 09:15", en: "Mon 10, 09:15" },
+    description: {
+      es: "Solicitud de cambio de turno del sábado por motivos personales. Cambio aprobado y reflejado en el cuadrante.",
+      en: "Request to change Saturday's shift for personal reasons. The change was approved and reflected in the schedule.",
+    },
   },
   {
     id: "incident-4",
-    title: "Duda sobre política de fichaje remoto",
+    title: {
+      es: "Duda sobre política de fichaje remoto",
+      en: "Question about remote clock-in policy",
+    },
     employeeId: "elena-soto",
     type: "otro",
     status: "resuelta",
-    createdAt: "Vie 7, 12:00",
-    description:
-      "Consulta sobre cómo fichar en una visita a cliente fuera del centro de trabajo. Resuelta por coordinación.",
+    createdAt: { es: "Vie 7, 12:00", en: "Fri 7, 12:00" },
+    description: {
+      es: "Consulta sobre cómo fichar en una visita a cliente fuera del centro de trabajo. Resuelta por coordinación.",
+      en: "Question about how to clock in during a client visit outside the workplace. Resolved by coordination.",
+    },
   },
 ];
 
-export const SEED_TIME_ENTRIES: TimeEntry[] = [
-  {
-    id: "entry-1",
-    employeeId: "lucia-martin",
-    employeeName: "Lucía Martín",
-    type: "entrada",
-    timestamp: todayAt(9, 2),
-    location: "Centro de trabajo",
-  },
-  {
-    id: "entry-2",
-    employeeId: "javier-ortega",
-    employeeName: "Javier Ortega",
-    type: "entrada",
-    timestamp: todayAt(7, 58),
-    location: "Centro de trabajo",
-  },
-  {
-    id: "entry-3",
-    employeeId: "marta-ruiz",
-    employeeName: "Marta Ruiz",
-    type: "entrada",
-    timestamp: todayAt(9, 55),
-    location: "Centro de trabajo",
-  },
-  {
-    id: "entry-4",
-    employeeId: "diego-navarro",
-    employeeName: "Diego Navarro",
-    type: "entrada",
-    timestamp: todayAt(9, 0),
-    location: "Centro de trabajo",
-  },
+function seedIncidents(locale: Locale): Incident[] {
+  return INCIDENT_SEEDS.map((seed) => ({
+    id: seed.id,
+    title: seed.title[locale],
+    employeeId: seed.employeeId,
+    type: seed.type,
+    status: seed.status,
+    createdAt: seed.createdAt[locale],
+    description: seed.description[locale],
+  }));
+}
+
+const WORKPLACE_LOCATION: Record<Locale, string> = {
+  es: "Centro de trabajo",
+  en: "Workplace",
+};
+
+interface TimeEntrySeed {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  type: TimeEntry["type"];
+  hours: number;
+  minutes: number;
+}
+
+const TIME_ENTRY_SEEDS: TimeEntrySeed[] = [
+  { id: "entry-1", employeeId: "lucia-martin", employeeName: "Lucía Martín", type: "entrada", hours: 9, minutes: 2 },
+  { id: "entry-2", employeeId: "javier-ortega", employeeName: "Javier Ortega", type: "entrada", hours: 7, minutes: 58 },
+  { id: "entry-3", employeeId: "marta-ruiz", employeeName: "Marta Ruiz", type: "entrada", hours: 9, minutes: 55 },
+  { id: "entry-4", employeeId: "diego-navarro", employeeName: "Diego Navarro", type: "entrada", hours: 9, minutes: 0 },
 ];
 
 function todayAt(hours: number, minutes: number): string {
@@ -266,13 +388,24 @@ function todayAt(hours: number, minutes: number): string {
   return date.toISOString();
 }
 
-export function createInitialDemoState(): DemoState {
+function seedTimeEntries(locale: Locale): TimeEntry[] {
+  return TIME_ENTRY_SEEDS.map((seed) => ({
+    id: seed.id,
+    employeeId: seed.employeeId,
+    employeeName: seed.employeeName,
+    type: seed.type,
+    timestamp: todayAt(seed.hours, seed.minutes),
+    location: WORKPLACE_LOCATION[locale],
+  }));
+}
+
+export function createInitialDemoState(locale: Locale): DemoState {
   return {
-    employees: SEED_EMPLOYEES,
-    timeEntries: SEED_TIME_ENTRIES,
-    shifts: SEED_SHIFTS,
-    tasks: SEED_TASKS,
-    incidents: SEED_INCIDENTS,
+    employees: seedEmployees(locale),
+    timeEntries: seedTimeEntries(locale),
+    shifts: seedShifts(locale),
+    tasks: seedTasks(locale),
+    incidents: seedIncidents(locale),
     visitorStatus: "fuera",
   };
 }

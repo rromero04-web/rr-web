@@ -9,13 +9,13 @@ import { Contact } from "@/components/sections/Contact";
 export default function Home() {
   return (
     <>
-      <Hero />
-      <Services />
-      <Projects />
-      <Process />
-      <About />
-      <Faq />
-      <Contact />
+      <Hero locale="es" />
+      <Services locale="es" />
+      <Projects locale="es" />
+      <Process locale="es" />
+      <About locale="es" />
+      <Faq locale="es" />
+      <Contact locale="es" />
     </>
   );
 }

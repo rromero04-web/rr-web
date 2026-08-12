@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Mail } from "lucide-react";
 import { InstagramIcon } from "@/components/ui/SocialIcons";
+import { localizePath, type Locale } from "@/lib/i18n/config";
 
 const SOCIAL_LINKS = [
   {
@@ -11,13 +12,45 @@ const SOCIAL_LINKS = [
   },
 ];
 
-const LEGAL_LINKS = [
-  { href: "/aviso-legal", label: "Aviso legal" },
-  { href: "/privacidad", label: "Política de privacidad" },
-  { href: "/cookies", label: "Política de cookies" },
-];
+const STRINGS: Record<Locale, {
+  tagline: string;
+  network: string;
+  legal: string;
+  rights: string;
+  builtBy: string;
+  legalLinks: { href: string; label: string }[];
+}> = {
+  es: {
+    tagline:
+      "Webs y aplicaciones pensadas para hacer crecer negocios. Estrategia, diseño y desarrollo en una misma dirección.",
+    network: "Redes",
+    legal: "Legal",
+    rights: "Todos los derechos reservados.",
+    builtBy: "Diseñado y desarrollado por Raúl Romero.",
+    legalLinks: [
+      { href: "/aviso-legal", label: "Aviso legal" },
+      { href: "/privacidad", label: "Política de privacidad" },
+      { href: "/cookies", label: "Política de cookies" },
+    ],
+  },
+  en: {
+    tagline:
+      "Websites and applications built to help businesses grow. Strategy, design and development in one direction.",
+    network: "Social",
+    legal: "Legal",
+    rights: "All rights reserved.",
+    builtBy: "Designed and built by Raúl Romero.",
+    legalLinks: [
+      { href: "/aviso-legal", label: "Legal notice" },
+      { href: "/privacidad", label: "Privacy policy" },
+      { href: "/cookies", label: "Cookies policy" },
+    ],
+  },
+};
 
-export function Footer() {
+export function Footer({ locale }: { locale: Locale }) {
+  const t = STRINGS[locale];
+
   return (
     <footer className="border-t border-line/70 bg-navy text-cream">
       <div className="container-page grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
@@ -35,8 +68,7 @@ export function Footer() {
             </span>
           </div>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-cream/70">
-            Webs y aplicaciones pensadas para hacer crecer negocios. Estrategia,
-            diseño y desarrollo en una misma dirección.
+            {t.tagline}
           </p>
           <a
             href="mailto:info@raulromero.es"
@@ -49,7 +81,7 @@ export function Footer() {
 
         <div>
           <h2 className="text-xs font-semibold tracking-[0.14em] text-cream/50 uppercase">
-            Redes
+            {t.network}
           </h2>
           <ul className="mt-4 flex flex-col gap-3">
             {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
@@ -70,13 +102,13 @@ export function Footer() {
 
         <div>
           <h2 className="text-xs font-semibold tracking-[0.14em] text-cream/50 uppercase">
-            Legal
+            {t.legal}
           </h2>
           <ul className="mt-4 flex flex-col gap-3">
-            {LEGAL_LINKS.map((link) => (
+            {t.legalLinks.map((link) => (
               <li key={link.href}>
                 <Link
-                  href={link.href}
+                  href={localizePath(link.href, locale)}
                   className="text-sm text-cream/80 hover:text-cobalt-soft"
                 >
                   {link.label}
@@ -89,8 +121,8 @@ export function Footer() {
 
       <div className="border-t border-cream/10">
         <div className="container-page flex flex-col gap-2 py-6 text-xs text-cream/50 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Raúl Romero. Todos los derechos reservados.</p>
-          <p>Diseñado y desarrollado por Raúl Romero.</p>
+          <p>© {new Date().getFullYear()} Raúl Romero. {t.rights}</p>
+          <p>{t.builtBy}</p>
         </div>
       </div>
     </footer>

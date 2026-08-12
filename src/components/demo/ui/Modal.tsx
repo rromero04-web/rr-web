@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
+import type { Locale } from "@/lib/i18n/config";
 
 interface ModalProps {
   open: boolean;
@@ -9,9 +10,15 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   widthClassName?: string;
+  locale?: Locale;
 }
 
-export function Modal({ open, onClose, title, children, widthClassName }: ModalProps) {
+const CLOSE_LABEL: Record<Locale, string> = {
+  es: "Cerrar",
+  en: "Close",
+};
+
+export function Modal({ open, onClose, title, children, widthClassName, locale = "es" }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
@@ -60,7 +67,7 @@ export function Modal({ open, onClose, title, children, widthClassName }: ModalP
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={CLOSE_LABEL[locale]}
             className="-m-1.5 inline-flex h-8 w-8 shrink-0 items-center justify-center text-slate transition-colors hover:text-navy"
           >
             <X size={18} aria-hidden="true" />

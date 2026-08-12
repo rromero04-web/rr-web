@@ -1,28 +1,37 @@
 "use client";
 
-import { DEMO_NAV_ITEMS, type DemoSection } from "@/lib/demo/nav";
+import type { Locale } from "@/lib/i18n/config";
+import { getDemoNavItems, type DemoSection } from "@/lib/demo/nav";
 import { DEMO_COMPANY_NAME } from "@/lib/demo/types";
 import { cn } from "@/lib/utils";
 
 interface DemoNavProps {
+  locale: Locale;
   active: DemoSection;
   onChange: (section: DemoSection) => void;
 }
 
-export function DemoSidebar({ active, onChange }: DemoNavProps) {
+const STRINGS: Record<Locale, { navLabel: string; panel: string }> = {
+  es: { navLabel: "Secciones de la demo", panel: "Panel interno" },
+  en: { navLabel: "Demo sections", panel: "Internal panel" },
+};
+
+export function DemoSidebar({ locale, active, onChange }: DemoNavProps) {
+  const strings = STRINGS[locale];
+  const navItems = getDemoNavItems(locale);
   return (
     <nav
-      aria-label="Secciones de la demo"
+      aria-label={strings.navLabel}
       className="hidden w-60 shrink-0 flex-col border-r border-cream/10 bg-navy py-6 text-cream md:flex"
     >
       <div className="px-6 pb-6">
         <p className="text-xs font-semibold tracking-[0.14em] text-cream/40 uppercase">
-          Panel interno
+          {strings.panel}
         </p>
         <p className="mt-1 text-base font-bold">{DEMO_COMPANY_NAME}</p>
       </div>
       <ul className="flex flex-1 flex-col gap-1 px-3">
-        {DEMO_NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.id === active;
           return (
@@ -49,14 +58,16 @@ export function DemoSidebar({ active, onChange }: DemoNavProps) {
   );
 }
 
-export function DemoMobileTabs({ active, onChange }: DemoNavProps) {
+export function DemoMobileTabs({ locale, active, onChange }: DemoNavProps) {
+  const strings = STRINGS[locale];
+  const navItems = getDemoNavItems(locale);
   return (
     <nav
-      aria-label="Secciones de la demo"
+      aria-label={strings.navLabel}
       className="border-b border-line/70 bg-cream md:hidden"
     >
       <ul className="flex gap-1 overflow-x-auto px-3 py-2">
-        {DEMO_NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.id === active;
           return (

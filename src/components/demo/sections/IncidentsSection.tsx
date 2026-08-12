@@ -4,13 +4,26 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useDemoData } from "@/components/demo/DemoDataProvider";
 import { StatusBadge } from "@/components/demo/ui/StatusBadge";
+import type { Locale } from "@/lib/i18n/config";
 import { INCIDENT_STATUS_LABEL, INCIDENT_STATUS_TONE, INCIDENT_TYPE_LABEL } from "@/lib/demo/labels";
 import { IncidentDetailModal } from "@/components/demo/IncidentDetailModal";
 import { NewIncidentModal } from "@/components/demo/NewIncidentModal";
 import type { Incident } from "@/lib/demo/types";
 
-export function IncidentsSection() {
+const STRINGS: Record<Locale, { newIncident: string; unassigned: string }> = {
+  es: {
+    newIncident: "Nueva incidencia",
+    unassigned: "Sin asignar",
+  },
+  en: {
+    newIncident: "New incident",
+    unassigned: "Unassigned",
+  },
+};
+
+export function IncidentsSection({ locale }: { locale: Locale }) {
   const { state, setIncidentStatus, createIncident } = useDemoData();
+  const strings = STRINGS[locale];
   const [selected, setSelected] = useState<Incident | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -29,7 +42,7 @@ export function IncidentsSection() {
           className="inline-flex items-center gap-2 bg-navy px-4 py-2.5 text-sm font-semibold text-cream transition-colors hover:bg-cobalt"
         >
           <Plus size={16} aria-hidden="true" />
-          Nueva incidencia
+          {strings.newIncident}
         </button>
       </div>
 
@@ -46,11 +59,11 @@ export function IncidentsSection() {
                 <div className="flex w-full items-start justify-between gap-2">
                   <p className="text-sm font-bold text-navy">{incident.title}</p>
                   <StatusBadge tone={INCIDENT_STATUS_TONE[incident.status]}>
-                    {INCIDENT_STATUS_LABEL[incident.status]}
+                    {INCIDENT_STATUS_LABEL[locale][incident.status]}
                   </StatusBadge>
                 </div>
                 <p className="text-xs text-slate">
-                  {INCIDENT_TYPE_LABEL[incident.type]} · {employee?.name ?? "Sin asignar"} ·{" "}
+                  {INCIDENT_TYPE_LABEL[locale][incident.type]} · {employee?.name ?? strings.unassigned} ·{" "}
                   {incident.createdAt}
                 </p>
               </button>
@@ -60,6 +73,7 @@ export function IncidentsSection() {
       </ul>
 
       <IncidentDetailModal
+        locale={locale}
         incident={selected}
         employeeName={state.employees.find((e) => e.id === selected?.employeeId)?.name}
         onClose={() => setSelected(null)}
@@ -72,6 +86,7 @@ export function IncidentsSection() {
       />
 
       <NewIncidentModal
+        locale={locale}
         open={creating}
         employees={state.employees}
         onClose={() => setCreating(false)}

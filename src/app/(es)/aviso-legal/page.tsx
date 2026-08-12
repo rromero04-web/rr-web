@@ -4,6 +4,10 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Aviso legal",
   description: "Aviso legal de Raúl Romero — Web & Growth.",
+  alternates: {
+    canonical: "/aviso-legal",
+    languages: { es: "/aviso-legal", en: "/en/aviso-legal" },
+  },
   robots: { index: false, follow: true },
 };
 

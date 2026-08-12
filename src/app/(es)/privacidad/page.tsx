@@ -4,6 +4,10 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Política de privacidad",
   description: "Política de privacidad de Raúl Romero — Web & Growth.",
+  alternates: {
+    canonical: "/privacidad",
+    languages: { es: "/privacidad", en: "/en/privacidad" },
+  },
   robots: { index: false, follow: true },
 };
 

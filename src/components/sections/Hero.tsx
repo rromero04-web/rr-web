@@ -1,8 +1,36 @@
 import { ArrowRight } from "lucide-react";
 import { Monogram } from "@/components/ui/Monogram";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
+import type { Locale } from "@/lib/i18n/config";
 
-export function Hero() {
+const STRINGS: Record<Locale, {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaPrimary: string;
+  ctaSecondary: string;
+}> = {
+  es: {
+    eyebrow: "Marketing + Diseño + Desarrollo",
+    title: "Webs y aplicaciones que hacen avanzar tu negocio.",
+    description:
+      "Combino estrategia, diseño y desarrollo para crear soluciones digitales que captan clientes, simplifican procesos y ayudan a crecer.",
+    ctaPrimary: "Cuéntame tu proyecto",
+    ctaSecondary: "Probar las demos",
+  },
+  en: {
+    eyebrow: "Marketing + Design + Development",
+    title: "Websites and applications that move your business forward.",
+    description:
+      "I combine strategy, design and development to create digital solutions that attract customers, simplify processes and support business growth.",
+    ctaPrimary: "Tell me about your project",
+    ctaSecondary: "View live demos",
+  },
+};
+
+export function Hero({ locale }: { locale: Locale }) {
+  const t = STRINGS[locale];
+
   return (
     <section
       id="inicio"
@@ -12,21 +40,19 @@ export function Hero() {
         <div>
           <RevealOnScroll>
             <p className="inline-flex items-center gap-2 border border-navy/15 px-3 py-1.5 text-xs font-semibold tracking-[0.14em] text-slate uppercase">
-              Marketing + Diseño + Desarrollo
+              {t.eyebrow}
             </p>
           </RevealOnScroll>
 
           <RevealOnScroll delay={0.08}>
             <h1 className="mt-6 text-4xl leading-[1.08] font-extrabold tracking-tight text-navy sm:text-5xl md:text-6xl">
-              Webs y aplicaciones que hacen avanzar tu negocio.
+              {t.title}
             </h1>
           </RevealOnScroll>
 
           <RevealOnScroll delay={0.16}>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate">
-              Combino estrategia, diseño y desarrollo para crear soluciones
-              digitales que captan clientes, simplifican procesos y ayudan a
-              crecer.
+              {t.description}
             </p>
           </RevealOnScroll>
 
@@ -36,7 +62,7 @@ export function Hero() {
                 href="#contacto"
                 className="group inline-flex items-center justify-center gap-2 bg-navy px-6 py-3.5 text-sm font-semibold text-cream transition-colors hover:bg-cobalt"
               >
-                Cuéntame tu proyecto
+                {t.ctaPrimary}
                 <ArrowRight
                   size={16}
                   className="transition-transform group-hover:translate-x-1"
@@ -47,7 +73,7 @@ export function Hero() {
                 href="#servicios"
                 className="inline-flex items-center justify-center gap-2 border border-navy/20 px-6 py-3.5 text-sm font-semibold text-navy transition-colors hover:border-cobalt hover:text-cobalt"
               >
-                Probar las demos
+                {t.ctaSecondary}
               </a>
             </div>
           </RevealOnScroll>

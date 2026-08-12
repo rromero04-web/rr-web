@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   alternates: {
     canonical: "/demo/web-profesional",
+    languages: { es: "/demo/web-profesional", en: "/en/demo/web-profesional" },
   },
   robots: {
     index: false,
@@ -23,5 +24,5 @@ export const metadata: Metadata = {
 };
 
 export default function WebProfesionalDemoPage() {
-  return <FisioNovaSite />;
+  return <FisioNovaSite locale="es" />;
 }

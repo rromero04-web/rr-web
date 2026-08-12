@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
 import { SERVICE_OPTIONS, BUDGET_OPTIONS } from "@/lib/validation";
+import { localizePath, type Locale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
 const initialState: ContactFormState = { status: "idle", message: "" };
@@ -11,9 +12,151 @@ const initialState: ContactFormState = { status: "idle", message: "" };
 const fieldClass =
   "w-full border border-navy/20 bg-cream px-4 py-3 text-sm text-navy outline-none transition-colors placeholder:text-slate/60 focus:border-cobalt";
 
-export function ContactForm() {
+const STRINGS: Record<Locale, {
+  honeypotLabel: string;
+  name: string;
+  company: string;
+  email: string;
+  serviceLabel: string;
+  servicePlaceholder: string;
+  budgetLabel: string;
+  budgetPlaceholder: string;
+  messageLabel: string;
+  messagePlaceholder: string;
+  legalNotice: (privacyHref: string) => ReactNode;
+  consentLabel: (privacyHref: string) => ReactNode;
+  submit: string;
+  submitting: string;
+}> = {
+  es: {
+    honeypotLabel: "No rellenar este campo",
+    name: "Nombre",
+    company: "Empresa o proyecto",
+    email: "Correo electrónico",
+    serviceLabel: "Tipo de servicio",
+    servicePlaceholder: "Selecciona una opción",
+    budgetLabel: "Presupuesto orientativo",
+    budgetPlaceholder: "Prefiero no indicarlo",
+    messageLabel: "Cuéntame tu proyecto",
+    messagePlaceholder: "Cuéntame brevemente tu idea, problema o proceso a mejorar.",
+    legalNotice: (privacyHref) => (
+      <p>
+        <strong className="text-navy">Responsable:</strong> Raúl Romero
+        Agüera. <strong className="text-navy">Finalidad:</strong> responder
+        a tu consulta, valorar el proyecto y realizar las gestiones
+        precontractuales solicitadas.{" "}
+        <strong className="text-navy">Legitimación:</strong> aplicación de
+        medidas precontractuales a petición del interesado.{" "}
+        <strong className="text-navy">Destinatarios:</strong> proveedores
+        tecnológicos necesarios para alojar la web, gestionar el
+        formulario y prestar el servicio, según se detalla en la Política
+        de privacidad. <strong className="text-navy">Derechos:</strong>{" "}
+        puedes ejercer tus derechos escribiendo a{" "}
+        <a
+          href="mailto:info@raulromero.es"
+          className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
+        >
+          info@raulromero.es
+        </a>
+        . Más información en la{" "}
+        <a
+          href={privacyHref}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
+        >
+          Política de privacidad
+        </a>
+        .
+      </p>
+    ),
+    consentLabel: (privacyHref) => (
+      <>
+        He leído la{" "}
+        <a
+          href={privacyHref}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
+        >
+          Política de privacidad
+        </a>{" "}
+        y entiendo cómo se tratarán mis datos.{" "}
+        <span aria-hidden="true">*</span>
+      </>
+    ),
+    submit: "Enviar mi proyecto",
+    submitting: "Enviando...",
+  },
+  en: {
+    honeypotLabel: "Leave this field empty",
+    name: "Name",
+    company: "Company or project",
+    email: "Email address",
+    serviceLabel: "Service type",
+    servicePlaceholder: "Choose an option",
+    budgetLabel: "Estimated budget",
+    budgetPlaceholder: "Prefer not to say",
+    messageLabel: "Tell me about your project",
+    messagePlaceholder: "Briefly describe your idea, problem or process to improve.",
+    legalNotice: (privacyHref) => (
+      <p>
+        <strong className="text-navy">Data controller:</strong> Raúl Romero
+        Agüera. <strong className="text-navy">Purpose:</strong> to respond
+        to your enquiry, assess the project and carry out the requested
+        pre-contractual steps.{" "}
+        <strong className="text-navy">Legal basis:</strong> pre-contractual
+        measures taken at the data subject&apos;s request.{" "}
+        <strong className="text-navy">Recipients:</strong> technology
+        providers required to host the website, manage the form and
+        deliver the service, as detailed in the Privacy Policy.{" "}
+        <strong className="text-navy">Your rights:</strong> you can
+        exercise your rights by writing to{" "}
+        <a
+          href="mailto:info@raulromero.es"
+          className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
+        >
+          info@raulromero.es
+        </a>
+        . More information in the{" "}
+        <a
+          href={privacyHref}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
+        >
+          Privacy Policy
+        </a>
+        .
+      </p>
+    ),
+    consentLabel: (privacyHref) => (
+      <>
+        I have read the{" "}
+        <a
+          href={privacyHref}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
+        >
+          Privacy Policy
+        </a>{" "}
+        and understand how my data will be handled.{" "}
+        <span aria-hidden="true">*</span>
+      </>
+    ),
+    submit: "Send my project",
+    submitting: "Sending...",
+  },
+};
+
+export function ContactForm({ locale }: { locale: Locale }) {
+  const t = STRINGS[locale];
   const [state, formAction, pending] = useActionState(submitContactForm, initialState);
   const formRef = useRef<HTMLFormElement>(null);
+  const privacyHref = localizePath("/privacidad", locale);
+  const serviceOptions = SERVICE_OPTIONS[locale];
+  const budgetOptions = BUDGET_OPTIONS[locale];
 
   useEffect(() => {
     if (state.status === "success") {
@@ -25,9 +168,11 @@ export function ContactForm() {
 
   return (
     <form ref={formRef} action={formAction} noValidate className="flex flex-col gap-5">
+      <input type="hidden" name="language" value={locale} />
+
       {/* Honeypot: oculto visualmente pero presente en el DOM para atrapar bots */}
       <div className="absolute -left-[9999px]" aria-hidden="true">
-        <label htmlFor="website">No rellenar este campo</label>
+        <label htmlFor="website">{t.honeypotLabel}</label>
         <input
           id="website"
           name="website"
@@ -39,14 +184,14 @@ export function ContactForm() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
-          label="Nombre"
+          label={t.name}
           name="name"
           required
           error={errors.name}
           autoComplete="name"
         />
         <Field
-          label="Empresa o proyecto"
+          label={t.company}
           name="company"
           error={errors.company}
           autoComplete="organization"
@@ -54,7 +199,7 @@ export function ContactForm() {
       </div>
 
       <Field
-        label="Correo electrónico"
+        label={t.email}
         name="email"
         type="email"
         required
@@ -65,7 +210,7 @@ export function ContactForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="service" className="mb-1.5 block text-sm font-medium text-navy">
-            Tipo de servicio <span aria-hidden="true">*</span>
+            {t.serviceLabel} <span aria-hidden="true">*</span>
           </label>
           <select
             id="service"
@@ -77,9 +222,9 @@ export function ContactForm() {
             className={fieldClass}
           >
             <option value="" disabled>
-              Selecciona una opción
+              {t.servicePlaceholder}
             </option>
-            {SERVICE_OPTIONS.map((option) => (
+            {serviceOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -94,7 +239,7 @@ export function ContactForm() {
 
         <div>
           <label htmlFor="budget" className="mb-1.5 block text-sm font-medium text-navy">
-            Presupuesto orientativo
+            {t.budgetLabel}
           </label>
           <select
             id="budget"
@@ -102,8 +247,8 @@ export function ContactForm() {
             defaultValue=""
             className={fieldClass}
           >
-            <option value="">Prefiero no indicarlo</option>
-            {BUDGET_OPTIONS.map((option) => (
+            <option value="">{t.budgetPlaceholder}</option>
+            {budgetOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -114,7 +259,7 @@ export function ContactForm() {
 
       <div>
         <label htmlFor="message" className="mb-1.5 block text-sm font-medium text-navy">
-          Cuéntame tu proyecto <span aria-hidden="true">*</span>
+          {t.messageLabel} <span aria-hidden="true">*</span>
         </label>
         <textarea
           id="message"
@@ -124,7 +269,7 @@ export function ContactForm() {
           aria-invalid={Boolean(errors.message)}
           aria-describedby={errors.message ? "message-error" : undefined}
           className={cn(fieldClass, "resize-none")}
-          placeholder="Cuéntame brevemente tu idea, problema o proceso a mejorar."
+          placeholder={t.messagePlaceholder}
         />
         {errors.message && (
           <p id="message-error" className="mt-1.5 text-xs text-red-700">
@@ -134,35 +279,7 @@ export function ContactForm() {
       </div>
 
       <div className="border border-line/70 bg-navy/[0.03] p-4 text-xs leading-relaxed text-slate">
-        <p>
-          <strong className="text-navy">Responsable:</strong> Raúl Romero
-          Agüera. <strong className="text-navy">Finalidad:</strong> responder
-          a tu consulta, valorar el proyecto y realizar las gestiones
-          precontractuales solicitadas.{" "}
-          <strong className="text-navy">Legitimación:</strong> aplicación de
-          medidas precontractuales a petición del interesado.{" "}
-          <strong className="text-navy">Destinatarios:</strong> proveedores
-          tecnológicos necesarios para alojar la web, gestionar el
-          formulario y prestar el servicio, según se detalla en la Política
-          de privacidad. <strong className="text-navy">Derechos:</strong>{" "}
-          puedes ejercer tus derechos escribiendo a{" "}
-          <a
-            href="mailto:info@raulromero.es"
-            className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
-          >
-            info@raulromero.es
-          </a>
-          . Más información en la{" "}
-          <a
-            href="/privacidad"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
-          >
-            Política de privacidad
-          </a>
-          .
-        </p>
+        {t.legalNotice(privacyHref)}
       </div>
 
       <div className="flex items-start gap-3">
@@ -176,17 +293,7 @@ export function ContactForm() {
           className="mt-1 h-4 w-4 shrink-0 border border-navy/30 accent-[var(--color-cobalt)]"
         />
         <label htmlFor="consent" className="text-sm leading-relaxed text-slate">
-          He leído la{" "}
-          <a
-            href="/privacidad"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="font-medium text-navy underline underline-offset-2 hover:text-cobalt"
-          >
-            Política de privacidad
-          </a>{" "}
-          y entiendo cómo se tratarán mis datos.{" "}
-          <span aria-hidden="true">*</span>
+          {t.consentLabel(privacyHref)}
         </label>
       </div>
       {errors.consent && (
@@ -201,7 +308,7 @@ export function ContactForm() {
         className="mt-2 inline-flex items-center justify-center gap-2 bg-navy px-6 py-3.5 text-sm font-semibold text-cream transition-colors hover:bg-cobalt disabled:cursor-not-allowed disabled:opacity-70"
       >
         {pending && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-        {pending ? "Enviando..." : "Enviar mi proyecto"}
+        {pending ? t.submitting : t.submit}
       </button>
 
       <div role="status" aria-live="polite">

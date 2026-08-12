@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { BalanceSite } from "@/components/demo/balance/BalanceSite";
 
-const TITLE = "Demo de web de captación";
+const TITLE = "Lead-generation website demo";
 const DESCRIPTION =
-  "Explora una demostración de web de captación diseñada por Raúl Romero para convertir visitas en solicitudes comerciales.";
+  "Explore a lead-generation website demo designed by Raúl Romero to turn visits into business inquiries.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: {
-    canonical: "/demo/web-captacion",
+    canonical: "/en/demo/web-captacion",
+    languages: { es: "/demo/web-captacion", en: "/en/demo/web-captacion" },
   },
   robots: {
     index: false,
@@ -18,10 +19,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${TITLE} | Raúl Romero`,
     description: DESCRIPTION,
-    url: "/demo/web-captacion",
+    url: "/en/demo/web-captacion",
   },
 };
 
 export default function WebCaptacionDemoPage() {
-  return <BalanceSite />;
+  return <BalanceSite locale="en" />;
 }

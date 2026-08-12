@@ -2,22 +2,36 @@
 
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { SITUATIONS, type SituationId } from "./content";
+import { getSituations, type SituationId } from "./content";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/lib/i18n/config";
 
-export function SituationSelector() {
+const STRINGS: Record<Locale, { heading: string; cta: string }> = {
+  es: {
+    heading: "¿Cuál describe mejor tu situación?",
+    cta: "Solicitar valoración",
+  },
+  en: {
+    heading: "Which one best describes your situation?",
+    cta: "Request an assessment",
+  },
+};
+
+export function SituationSelector({ locale }: { locale: Locale }) {
   const [selected, setSelected] = useState<SituationId | null>(null);
-  const active = SITUATIONS.find((s) => s.id === selected);
+  const t = STRINGS[locale];
+  const situations = getSituations(locale);
+  const active = situations.find((s) => s.id === selected);
 
   return (
     <section className="border-b border-[#16233A]/10 bg-white py-16">
       <div className="mx-auto max-w-3xl px-5 sm:px-8">
         <h2 className="text-center text-2xl font-extrabold tracking-tight text-[#16233A] sm:text-3xl">
-          ¿Cuál describe mejor tu situación?
+          {t.heading}
         </h2>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
-          {SITUATIONS.map((situation) => {
+          {situations.map((situation) => {
             const isActive = situation.id === selected;
             return (
               <button
@@ -45,7 +59,7 @@ export function SituationSelector() {
               href="#valoracion"
               className="inline-flex shrink-0 items-center gap-2 bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
             >
-              Solicitar valoración
+              {t.cta}
               <ArrowRight size={15} aria-hidden="true" />
             </a>
           </div>

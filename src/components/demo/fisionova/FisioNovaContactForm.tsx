@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { CheckCircle2, Info, RotateCcw } from "lucide-react";
-import { CONSULTATION_REASONS, TIME_PREFERENCES } from "./content";
+import type { Locale } from "@/lib/i18n/config";
+import { getConsultationReasons, getTimePreferences } from "./content";
 
 type FormValues = {
   name: string;
@@ -22,10 +23,86 @@ const EMPTY_FORM: FormValues = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function FisioNovaContactForm() {
+const STRINGS: Record<Locale, {
+  eyebrow: string;
+  title: string;
+  demoNotice: string;
+  successTitle: string;
+  successBody: string;
+  fillAnother: string;
+  nameLabel: string;
+  emailLabel: string;
+  reasonLabel: string;
+  reasonPlaceholder: string;
+  timeLabel: string;
+  timePlaceholder: string;
+  messageLabel: string;
+  messagePlaceholder: string;
+  submit: string;
+  errors: {
+    name: string;
+    email: string;
+    reason: string;
+    message: string;
+  };
+}> = {
+  es: {
+    eyebrow: "Contacto",
+    title: "Solicita tu primera valoración",
+    demoNotice:
+      "Formulario de demostración: no envía ni almacena ninguna información. Nada de lo que escribas sale de tu navegador.",
+    successTitle: "Solicitud de demostración completada.",
+    successBody: "En una web real, la clínica recibiría ahora esta información.",
+    fillAnother: "Rellenar otra solicitud",
+    nameLabel: "Nombre",
+    emailLabel: "Correo",
+    reasonLabel: "Motivo de la consulta",
+    reasonPlaceholder: "Selecciona una opción",
+    timeLabel: "Preferencia de horario",
+    timePlaceholder: "Sin preferencia concreta",
+    messageLabel: "Mensaje",
+    messagePlaceholder: "Cuéntanos brevemente qué te ocurre.",
+    submit: "Enviar solicitud",
+    errors: {
+      name: "Indica tu nombre.",
+      email: "Introduce un correo válido.",
+      reason: "Selecciona el motivo de la consulta.",
+      message: "Cuéntanos brevemente tu caso (al menos 10 caracteres).",
+    },
+  },
+  en: {
+    eyebrow: "Contact",
+    title: "Request your first assessment",
+    demoNotice:
+      "Demo form: it doesn't send or store any information. Nothing you type leaves your browser.",
+    successTitle: "Demo request completed.",
+    successBody: "On a real website, the clinic would now receive this information.",
+    fillAnother: "Fill out another request",
+    nameLabel: "Name",
+    emailLabel: "Email",
+    reasonLabel: "Reason for consultation",
+    reasonPlaceholder: "Select an option",
+    timeLabel: "Time preference",
+    timePlaceholder: "No specific preference",
+    messageLabel: "Message",
+    messagePlaceholder: "Tell us briefly what's going on.",
+    submit: "Send request",
+    errors: {
+      name: "Please enter your name.",
+      email: "Enter a valid email address.",
+      reason: "Select the reason for your consultation.",
+      message: "Tell us briefly about your case (at least 10 characters).",
+    },
+  },
+};
+
+export function FisioNovaContactForm({ locale }: { locale: Locale }) {
   const [values, setValues] = useState<FormValues>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const t = STRINGS[locale];
+  const consultationReasons = getConsultationReasons(locale);
+  const timePreferences = getTimePreferences(locale);
 
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -34,11 +111,11 @@ export function FisioNovaContactForm() {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const nextErrors: Partial<Record<keyof FormValues, string>> = {};
-    if (!values.name.trim()) nextErrors.name = "Indica tu nombre.";
-    if (!EMAIL_RE.test(values.email)) nextErrors.email = "Introduce un correo válido.";
-    if (!values.reason) nextErrors.reason = "Selecciona el motivo de la consulta.";
+    if (!values.name.trim()) nextErrors.name = t.errors.name;
+    if (!EMAIL_RE.test(values.email)) nextErrors.email = t.errors.email;
+    if (!values.reason) nextErrors.reason = t.errors.reason;
     if (!values.message.trim() || values.message.trim().length < 10) {
-      nextErrors.message = "Cuéntanos brevemente tu caso (al menos 10 caracteres).";
+      nextErrors.message = t.errors.message;
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length === 0) {
@@ -56,15 +133,14 @@ export function FisioNovaContactForm() {
     <section id="contacto" className="bg-[#FAF9F5] py-20">
       <div className="mx-auto max-w-2xl px-5 sm:px-8">
         <p className="text-xs font-semibold tracking-[0.14em] text-[#0E6E64] uppercase">
-          Contacto
+          {t.eyebrow}
         </p>
         <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#123832] sm:text-4xl">
-          Solicita tu primera valoración
+          {t.title}
         </h2>
         <p className="mt-3 flex items-start gap-2 text-xs text-[#5C726D]/80">
           <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-          Formulario de demostración: no envía ni almacena ninguna
-          información. Nada de lo que escribas sale de tu navegador.
+          {t.demoNotice}
         </p>
 
         <div className="mt-8 border border-[#E4DFD3] bg-white p-6 sm:p-8">
@@ -72,10 +148,10 @@ export function FisioNovaContactForm() {
             <div role="status" className="flex flex-col items-start gap-3">
               <CheckCircle2 size={28} className="text-[#0E6E64]" aria-hidden="true" />
               <p className="text-base font-bold text-[#123832]">
-                Solicitud de demostración completada.
+                {t.successTitle}
               </p>
               <p className="text-sm leading-relaxed text-[#5C726D]">
-                En una web real, la clínica recibiría ahora esta información.
+                {t.successBody}
               </p>
               <button
                 type="button"
@@ -83,20 +159,20 @@ export function FisioNovaContactForm() {
                 className="mt-2 inline-flex items-center gap-2 border border-[#0E6E64]/30 px-4 py-2 text-sm font-semibold text-[#123832] hover:border-[#0E6E64] hover:text-[#0E6E64]"
               >
                 <RotateCcw size={14} aria-hidden="true" />
-                Rellenar otra solicitud
+                {t.fillAnother}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
               <Field
-                label="Nombre"
+                label={t.nameLabel}
                 value={values.name}
                 onChange={(v) => update("name", v)}
                 error={errors.name}
                 autoComplete="name"
               />
               <Field
-                label="Correo"
+                label={t.emailLabel}
                 type="email"
                 value={values.email}
                 onChange={(v) => update("email", v)}
@@ -106,7 +182,7 @@ export function FisioNovaContactForm() {
 
               <div>
                 <label htmlFor="fn-reason" className="mb-1.5 block text-sm font-medium text-[#123832]">
-                  Motivo de la consulta
+                  {t.reasonLabel}
                 </label>
                 <select
                   id="fn-reason"
@@ -116,8 +192,8 @@ export function FisioNovaContactForm() {
                   aria-describedby={errors.reason ? "fn-reason-error" : undefined}
                   className="w-full border border-[#123832]/20 bg-[#FAF9F5] px-4 py-3 text-sm text-[#123832] outline-none focus:border-[#0E6E64]"
                 >
-                  <option value="">Selecciona una opción</option>
-                  {CONSULTATION_REASONS.map((reason) => (
+                  <option value="">{t.reasonPlaceholder}</option>
+                  {consultationReasons.map((reason) => (
                     <option key={reason} value={reason}>
                       {reason}
                     </option>
@@ -132,7 +208,7 @@ export function FisioNovaContactForm() {
 
               <div>
                 <label htmlFor="fn-time" className="mb-1.5 block text-sm font-medium text-[#123832]">
-                  Preferencia de horario
+                  {t.timeLabel}
                 </label>
                 <select
                   id="fn-time"
@@ -140,8 +216,8 @@ export function FisioNovaContactForm() {
                   onChange={(e) => update("timePreference", e.target.value)}
                   className="w-full border border-[#123832]/20 bg-[#FAF9F5] px-4 py-3 text-sm text-[#123832] outline-none focus:border-[#0E6E64]"
                 >
-                  <option value="">Sin preferencia concreta</option>
-                  {TIME_PREFERENCES.map((pref) => (
+                  <option value="">{t.timePlaceholder}</option>
+                  {timePreferences.map((pref) => (
                     <option key={pref} value={pref}>
                       {pref}
                     </option>
@@ -151,7 +227,7 @@ export function FisioNovaContactForm() {
 
               <div>
                 <label htmlFor="fn-message" className="mb-1.5 block text-sm font-medium text-[#123832]">
-                  Mensaje
+                  {t.messageLabel}
                 </label>
                 <textarea
                   id="fn-message"
@@ -160,7 +236,7 @@ export function FisioNovaContactForm() {
                   onChange={(e) => update("message", e.target.value)}
                   aria-invalid={Boolean(errors.message)}
                   aria-describedby={errors.message ? "fn-message-error" : undefined}
-                  placeholder="Cuéntanos brevemente qué te ocurre."
+                  placeholder={t.messagePlaceholder}
                   className="w-full resize-none border border-[#123832]/20 bg-[#FAF9F5] px-4 py-3 text-sm text-[#123832] outline-none focus:border-[#0E6E64]"
                 />
                 {errors.message && (
@@ -174,7 +250,7 @@ export function FisioNovaContactForm() {
                 type="submit"
                 className="mt-2 inline-flex items-center justify-center bg-[#0E6E64] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0B4F49]"
               >
-                Enviar solicitud
+                {t.submit}
               </button>
             </form>
           )}

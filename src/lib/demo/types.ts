@@ -2,33 +2,40 @@
 // vive solo en el navegador (estado de React + localStorage). Este módulo
 // está pensado para poder sustituirse más adelante por datos reales desde
 // Supabase sin cambiar la forma en que los componentes consumen los datos.
+//
+// Los identificadores internos (Department, WeekDay y los distintos enums de
+// estado) son estables entre idiomas: solo su etiqueta visible cambia según
+// el locale, a través de los mapas de `@/lib/demo/labels`. Nunca se debe
+// comparar contra el texto traducido.
+
+import type { Locale } from "@/lib/i18n/config";
 
 export type Department =
-  | "Administración"
-  | "Operaciones"
-  | "Atención al cliente"
-  | "Mantenimiento"
-  | "Coordinación";
+  | "administracion"
+  | "operaciones"
+  | "atencion_cliente"
+  | "mantenimiento"
+  | "coordinacion";
 
 export type EmployeeStatus = "trabajando" | "fuera" | "ausente";
 
 export type WeekDay =
-  | "Lunes"
-  | "Martes"
-  | "Miércoles"
-  | "Jueves"
-  | "Viernes"
-  | "Sábado"
-  | "Domingo";
+  | "lunes"
+  | "martes"
+  | "miercoles"
+  | "jueves"
+  | "viernes"
+  | "sabado"
+  | "domingo";
 
 export const WEEK_DAYS: WeekDay[] = [
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-  "Domingo",
+  "lunes",
+  "martes",
+  "miercoles",
+  "jueves",
+  "viernes",
+  "sabado",
+  "domingo",
 ];
 
 export interface Employee {
@@ -56,7 +63,7 @@ export interface Shift {
   id: string;
   employeeId: string;
   day: WeekDay;
-  label: string; // p.ej. "09:00–17:00", "Libre", "Ausente"
+  label: string; // texto visible, p.ej. "09:00–17:00", "Libre"/"Free"
   isAbsence: boolean;
 }
 
@@ -95,4 +102,8 @@ export interface DemoState {
 }
 
 export const DEMO_COMPANY_NAME = "Nexo Servicios";
-export const DEMO_VISITOR_NAME = "Tú (usuario de la demo)";
+
+export const DEMO_VISITOR_NAME: Record<Locale, string> = {
+  es: "Tú (usuario de la demo)",
+  en: "You (demo user)",
+};

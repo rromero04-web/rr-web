@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { DemoApp } from "@/components/demo/DemoApp";
 
-const TITLE = "Demo de gestión de empleados y fichajes";
+const TITLE = "Employee and clock-in management demo";
 const DESCRIPTION =
-  "Prueba una simulación interactiva de una aplicación interna para gestionar empleados, horarios, fichajes, tareas e incidencias.";
+  "Try an interactive simulation of an internal application for managing employees, schedules, clock-ins, tasks and incidents.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: {
-    canonical: "/demo/gestion-de-equipos",
+    canonical: "/en/demo/gestion-de-equipos",
+    languages: { es: "/demo/gestion-de-equipos", en: "/en/demo/gestion-de-equipos" },
   },
   robots: {
     index: true,
@@ -18,10 +19,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${TITLE} | Raúl Romero`,
     description: DESCRIPTION,
-    url: "/demo/gestion-de-equipos",
+    url: "/en/demo/gestion-de-equipos",
   },
 };
 
 export default function GestionDeEquiposDemoPage() {
-  return <DemoApp />;
+  return <DemoApp locale="en" />;
 }

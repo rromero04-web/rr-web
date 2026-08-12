@@ -1,17 +1,32 @@
 import { Plus } from "lucide-react";
-import { faqItems } from "@/content/faq";
+import { getFaqItems } from "@/content/faq";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
+import type { Locale } from "@/lib/i18n/config";
 
-export function Faq() {
+const STRINGS: Record<Locale, { eyebrow: string; title: string }> = {
+  es: {
+    eyebrow: "Preguntas frecuentes",
+    title: "Lo que sueles preguntarme antes de empezar",
+  },
+  en: {
+    eyebrow: "Frequently asked questions",
+    title: "What people usually ask me before getting started",
+  },
+};
+
+export function Faq({ locale }: { locale: Locale }) {
+  const t = STRINGS[locale];
+  const faqItems = getFaqItems(locale);
+
   return (
     <section id="faq" className="border-b border-line/70 py-24 md:py-32">
       <div className="container-page">
         <RevealOnScroll>
           <p className="text-xs font-semibold tracking-[0.14em] text-cobalt uppercase">
-            Preguntas frecuentes
+            {t.eyebrow}
           </p>
           <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
-            Lo que sueles preguntarme antes de empezar
+            {t.title}
           </h2>
         </RevealOnScroll>
 

@@ -8,6 +8,7 @@ type ContactNotificationInput = {
   service: string;
   budget: string | null;
   message: string;
+  language: "es" | "en";
 };
 
 // Envío de la notificación por email al recibir una solicitud de contacto.
@@ -39,6 +40,7 @@ export async function sendContactNotification(data: ContactNotificationInput) {
       `Correo: ${data.email}`,
       `Servicio: ${data.service}`,
       `Presupuesto orientativo: ${data.budget ?? "(no indicado)"}`,
+      `Idioma del formulario: ${data.language === "en" ? "Inglés (/en)" : "Español (/)"}`,
       "",
       "Mensaje:",
       data.message,
