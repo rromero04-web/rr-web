@@ -7,16 +7,18 @@ import { localizePath } from "@/lib/i18n/config";
 // web-captacion). Deliberadamente distinta de DemoBanner (usada por la demo
 // de gestión de equipos), que tiene su propio texto y no debe modificarse.
 
-const STRINGS: Record<Locale, { badge: string; back: string; cta: string }> = {
+const STRINGS: Record<Locale, { badge: string; back: string; cta: string; configuratorCta: string }> = {
   es: {
     badge: "DEMO CREADA POR RAÚL ROMERO · Negocio y datos ficticios",
     back: "Volver a raulromero.es",
     cta: "Quiero una web como esta",
+    configuratorCta: "Configura tu proyecto",
   },
   en: {
     badge: "DEMO BY RAÚL ROMERO · Fictional business and data",
     back: "Back to raulromero.es",
     cta: "I want a website like this",
+    configuratorCta: "Build your project",
   },
 };
 
@@ -35,13 +37,19 @@ export function DemoTopBar({
       <p className="text-xs font-semibold tracking-wide sm:text-sm">
         {t.badge}
       </p>
-      <div className="flex shrink-0 items-center gap-4">
+      <div className="flex flex-wrap shrink-0 items-center justify-center gap-3 sm:gap-4">
         <Link
           href={localizePath("/", locale)}
           className="inline-flex items-center gap-1.5 text-xs font-semibold underline underline-offset-2 opacity-90 hover:opacity-100"
         >
           <ArrowLeft size={13} aria-hidden="true" />
           {t.back}
+        </Link>
+        <Link
+          href={localizePath("/configurador", locale)}
+          className="inline-flex items-center border border-current px-3 py-1.5 text-xs font-semibold opacity-90 transition-opacity hover:opacity-100"
+        >
+          {t.configuratorCta}
         </Link>
         <Link
           href={locale === "es" ? "/#contacto" : "/en#contacto"}

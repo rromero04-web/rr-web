@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Check, MonitorPlay } from "lucide-react";
+import { ArrowRight, Check, MonitorPlay, Sliders } from "lucide-react";
 import { getServices } from "@/content/services";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 import { localizePath, type Locale } from "@/lib/i18n/config";
+import { CTA_STRINGS } from "@/lib/configurator/strings";
 
 const STRINGS: Record<Locale, {
   eyebrow: string;
@@ -136,6 +137,24 @@ export function Services({ locale }: { locale: Locale }) {
             </RevealOnScroll>
           ))}
         </div>
+
+        <RevealOnScroll delay={0.1}>
+          <div className="mt-8 flex flex-col gap-3 border border-navy/15 bg-navy p-6 text-cream sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <p className="text-base font-bold">{CTA_STRINGS[locale].label}</p>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-cream/75">
+                {CTA_STRINGS[locale].supportingText}
+              </p>
+            </div>
+            <Link
+              href={localizePath("/configurador", locale)}
+              className="inline-flex shrink-0 items-center gap-2 self-start bg-cream px-5 py-2.5 text-sm font-semibold text-navy transition-colors hover:bg-cobalt hover:text-cream sm:self-auto"
+            >
+              <Sliders size={15} aria-hidden="true" />
+              {CTA_STRINGS[locale].label}
+            </Link>
+          </div>
+        </RevealOnScroll>
       </div>
     </section>
   );

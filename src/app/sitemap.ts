@@ -9,8 +9,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://raulromero.es";
 // permanentemente desde el footer / las tarjetas de servicios.
 const INDEXABLE_PATHS = ["", "/demo/gestion-de-equipos"];
 
+// El configurador tiene slugs distintos por idioma (/configurador vs.
+// /en/project-builder), a diferencia del resto de rutas del sitio.
+const INDEXABLE_ALIAS_PATHS: { es: string; en: string }[] = [
+  { es: "/configurador", en: "/en/project-builder" },
+];
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  return INDEXABLE_PATHS.flatMap((path) => [
+  const mirrored = INDEXABLE_PATHS.flatMap((path) => [
     {
       url: `${siteUrl}${path}`,
       lastModified: new Date(),
@@ -36,4 +42,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     },
   ]);
+
+  const aliased = INDEXABLE_ALIAS_PATHS.flatMap(({ es, en }) => [
+    {
+      url: `${siteUrl}${es}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+      alternates: {
+        languages: { es: `${siteUrl}${es}`, en: `${siteUrl}${en}` },
+      },
+    },
+    {
+      url: `${siteUrl}${en}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+      alternates: {
+        languages: { es: `${siteUrl}${es}`, en: `${siteUrl}${en}` },
+      },
+    },
+  ]);
+
+  return [...mirrored, ...aliased];
 }

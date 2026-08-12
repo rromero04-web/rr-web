@@ -51,3 +51,51 @@ export async function sendContactNotification(data: ContactNotificationInput) {
     console.error("Error al enviar la notificación por email:", error.message);
   }
 }
+
+type ConfiguratorNotificationInput = {
+  name: string;
+  email: string;
+  project: string | null;
+  comment: string | null;
+  language: "es" | "en";
+  summaryText: string;
+};
+
+// Notificación del formulario del configurador. Reutiliza la misma
+// integración de Resend que sendContactNotification (mismas variables de
+// entorno, mismo comportamiento "best effort").
+export async function sendConfiguratorNotification(data: ConfiguratorNotificationInput) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.CONTACT_NOTIFICATION_EMAIL;
+  const from = process.env.CONTACT_FROM_EMAIL;
+
+  if (!apiKey || !to || !from) {
+    console.warn(
+      "Notificación por email omitida: faltan RESEND_API_KEY, CONTACT_NOTIFICATION_EMAIL o CONTACT_FROM_EMAIL."
+    );
+    return;
+  }
+
+  const resend = new Resend(apiKey);
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    replyTo: data.email,
+    subject: `Nuevo proyecto configurado — ${data.name}`,
+    text: [
+      `Nombre: ${data.name}`,
+      `Correo: ${data.email}`,
+      `Empresa o proyecto: ${data.project ?? "(no indicado)"}`,
+      `Idioma del formulario: ${data.language === "en" ? "Inglés (/en)" : "Español (/)"}`,
+      "",
+      data.summaryText,
+      "",
+      data.comment ? `Comentario adicional:\n${data.comment}` : "",
+    ].join("\n"),
+  });
+
+  if (error) {
+    console.error("Error al enviar la notificación del configurador:", error.message);
+  }
+}

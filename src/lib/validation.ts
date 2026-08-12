@@ -95,3 +95,38 @@ export function getContactSchema(locale: Locale) {
 }
 
 export type ContactInput = z.infer<ReturnType<typeof getContactSchema>>;
+
+const CONFIGURATOR_VALIDATION_MESSAGES: Record<Locale, { name: string; nameMax: string; email: string; project: string; comment: string; consent: string }> = {
+  es: {
+    name: "Escribe tu nombre completo.",
+    nameMax: "El nombre es demasiado largo.",
+    email: "Introduce un correo electrónico válido.",
+    project: "Ese campo es demasiado largo.",
+    comment: "El comentario es demasiado largo.",
+    consent: "Debes aceptar la política de privacidad.",
+  },
+  en: {
+    name: "Please enter your full name.",
+    nameMax: "That name is too long.",
+    email: "Please enter a valid email address.",
+    project: "That field is too long.",
+    comment: "That comment is too long.",
+    consent: "You must accept the privacy policy.",
+  },
+};
+
+export function getConfiguratorContactSchema(locale: Locale) {
+  const t = CONFIGURATOR_VALIDATION_MESSAGES[locale];
+
+  return z.object({
+    name: z.string().trim().min(2, t.name).max(100, t.nameMax),
+    email: z.email(t.email),
+    project: z.string().trim().max(120, t.project).optional().or(z.literal("")),
+    comment: z.string().trim().max(1000, t.comment).optional().or(z.literal("")),
+    consent: z.literal("on", { error: t.consent }),
+    language: z.enum(["es", "en"]).optional().default("es"),
+    config: z.string().max(4000),
+    // Honeypot: debe llegar vacío. Si un bot lo rellena, se descarta la solicitud.
+    website: z.string().max(0).optional().or(z.literal("")),
+  });
+}

@@ -1,7 +1,8 @@
-import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Sliders } from "lucide-react";
 import { Monogram } from "@/components/ui/Monogram";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
-import type { Locale } from "@/lib/i18n/config";
+import { localizePath, type Locale } from "@/lib/i18n/config";
 
 const STRINGS: Record<Locale, {
   eyebrow: string;
@@ -9,6 +10,7 @@ const STRINGS: Record<Locale, {
   description: string;
   ctaPrimary: string;
   ctaSecondary: string;
+  ctaConfigurator: string;
 }> = {
   es: {
     eyebrow: "Marketing + Diseño + Desarrollo",
@@ -17,6 +19,7 @@ const STRINGS: Record<Locale, {
       "Combino estrategia, diseño y desarrollo para crear soluciones digitales que captan clientes, simplifican procesos y ayudan a crecer.",
     ctaPrimary: "Cuéntame tu proyecto",
     ctaSecondary: "Probar las demos",
+    ctaConfigurator: "Configura tu proyecto",
   },
   en: {
     eyebrow: "Marketing + Design + Development",
@@ -25,6 +28,7 @@ const STRINGS: Record<Locale, {
       "I combine strategy, design and development to create digital solutions that attract customers, simplify processes and support business growth.",
     ctaPrimary: "Tell me about your project",
     ctaSecondary: "View live demos",
+    ctaConfigurator: "Build your project",
   },
 };
 
@@ -76,6 +80,21 @@ export function Hero({ locale }: { locale: Locale }) {
                 {t.ctaSecondary}
               </a>
             </div>
+          </RevealOnScroll>
+
+          <RevealOnScroll delay={0.3}>
+            <Link
+              href={localizePath("/configurador", locale)}
+              className="group mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cobalt hover:text-navy"
+            >
+              <Sliders size={15} aria-hidden="true" />
+              {t.ctaConfigurator}
+              <ArrowRight
+                size={14}
+                className="transition-transform group-hover:translate-x-1"
+                aria-hidden="true"
+              />
+            </Link>
           </RevealOnScroll>
         </div>
 
