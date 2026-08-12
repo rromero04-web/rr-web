@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type JSX } from "react";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { motion, MotionConfig } from "motion/react";
 import { MonitorSmartphone } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { ConfiguratorProvider, useConfigurator } from "@/lib/configurator/state";
@@ -43,17 +43,18 @@ function ConfiguratorLayout({ locale }: { locale: Locale }) {
 
         <div className="mt-8 grid gap-10 md:grid-cols-[1.05fr_0.95fr] md:items-start">
           <div className="min-w-0">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={state.currentStep}
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <StepComponent locale={locale} />
-              </motion.div>
-            </AnimatePresence>
+            {/* Fade-in por paso: AnimatePresence+mode="wait" con React 19
+                bloqueaba la desmontar/remontar y la vista se quedaba en el
+                paso anterior. Un motion.div sencillo con key por paso da la
+                misma sensación (aparición del nuevo paso) sin el riesgo. */}
+            <motion.div
+              key={state.currentStep}
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <StepComponent locale={locale} />
+            </motion.div>
           </div>
 
           <div className="hidden md:sticky md:top-28 md:block md:h-[560px]">
