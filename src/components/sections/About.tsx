@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
+import { TiltCard } from "@/components/ui/TiltCard";
 import type { Locale } from "@/lib/i18n/config";
 
 const STRINGS: Record<Locale, {
@@ -33,19 +34,17 @@ export function About({ locale }: { locale: Locale }) {
   const t = STRINGS[locale];
 
   return (
-    <section id="sobre-mi" className="border-b border-line/70 py-24 md:py-32">
+    <section id="sobre-mi" className="studio-about border-b border-line/70 py-24 md:py-32">
       <div className="container-page grid items-center gap-12 md:grid-cols-[0.8fr_1.2fr]">
-        <RevealOnScroll>
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden border border-line/70 bg-navy">
-            <Image
-              src="/brand/raul-photo.jpg"
-              alt={t.photoAlt}
-              fill
-              sizes="(min-width: 768px) 33vw, 80vw"
-              className="object-cover"
-            />
-          </div>
-        </RevealOnScroll>
+        <TiltCard maxTilt={8} className="studio-about-photo relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden border border-line/70 bg-navy">
+          <Image
+            src="/brand/raul-photo.jpg"
+            alt={t.photoAlt}
+            fill
+            sizes="(min-width: 768px) 33vw, 80vw"
+            className="object-cover"
+          />
+        </TiltCard>
 
         <RevealOnScroll delay={0.1}>
           <p className="text-xs font-semibold tracking-[0.14em] text-cobalt uppercase">
@@ -60,6 +59,7 @@ export function About({ locale }: { locale: Locale }) {
           <p className="mt-4 max-w-xl text-base leading-relaxed text-slate">
             {t.paragraph2}
           </p>
+          <div className="studio-about-signature"><strong>Raúl Romero</strong><span>{locale === "es" ? "Marketing · Diseño · Desarrollo" : "Marketing · Design · Development"}</span></div>
         </RevealOnScroll>
       </div>
     </section>

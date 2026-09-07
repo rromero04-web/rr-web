@@ -1,93 +1,76 @@
-import { ArrowRight } from "lucide-react";
-import { Monogram } from "@/components/ui/Monogram";
-import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
-import type { Locale } from "@/lib/i18n/config";
+"use client";
 
-const STRINGS: Record<Locale, {
-  eyebrow: string;
-  title: string;
-  description: string;
-  ctaPrimary: string;
-  ctaSecondary: string;
-}> = {
+import { useRef } from "react";
+import Link from "next/link";
+import { motion, useScroll, useTransform } from "motion/react";
+import { ArrowDown, ArrowUpRight, SlidersHorizontal } from "lucide-react";
+import { SolutionShowcase } from "@/components/ui/SolutionShowcase";
+import { AmbientDepth } from "@/components/ui/AmbientDepth";
+import { Magnetic } from "@/components/ui/Magnetic";
+import { localizePath, type Locale } from "@/lib/i18n/config";
+
+const COPY = {
   es: {
     eyebrow: "Marketing + Diseño + Desarrollo",
-    title: "Webs y aplicaciones que hacen avanzar tu negocio.",
-    description:
-      "Combino estrategia, diseño y desarrollo para crear soluciones digitales que captan clientes, simplifican procesos y ayudan a crecer.",
-    ctaPrimary: "Cuéntame tu proyecto",
-    ctaSecondary: "Probar las demos",
+    title: "Webs y aplicaciones que hacen avanzar",
+    accent: "tu negocio.",
+    description: "Combino estrategia, diseño y desarrollo para crear soluciones digitales que captan clientes, simplifican procesos y ayudan a crecer.",
+    contact: "Cuéntame tu proyecto", demos: "Probar las demos", builder: "Configura tu proyecto",
+    signature: "Raúl Romero · Web & Growth",
+    notes: ["Diseño con intención", "Tecnología que resuelve", "Trato directo, de principio a fin"],
+    scroll: "Descubre lo que podemos crear",
   },
   en: {
     eyebrow: "Marketing + Design + Development",
-    title: "Websites and applications that move your business forward.",
-    description:
-      "I combine strategy, design and development to create digital solutions that attract customers, simplify processes and support business growth.",
-    ctaPrimary: "Tell me about your project",
-    ctaSecondary: "View live demos",
+    title: "Websites and applications that move",
+    accent: "your business forward.",
+    description: "I combine strategy, design and development to create digital solutions that attract customers, simplify processes and support business growth.",
+    contact: "Tell me about your project", demos: "View live demos", builder: "Build your project",
+    signature: "Raúl Romero · Web & Growth",
+    notes: ["Purposeful design", "Technology that solves problems", "Direct collaboration, start to finish"],
+    scroll: "Discover what we can create",
   },
 };
 
 export function Hero({ locale }: { locale: Locale }) {
-  const t = STRINGS[locale];
+  const t = COPY[locale];
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
+  // Profundidad cinematográfica sutil: al hacer scroll, la vista del
+  // showcase se desplaza y escala ligeramente más despacio que el resto
+  // (parallax), como si tuviera su propio plano en el espacio.
+  const showcaseY = useTransform(scrollYProgress, [0, 1], [0, 70]);
+  const showcaseScale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   return (
-    <section
-      id="inicio"
-      className="relative overflow-hidden border-b border-line/70 pt-32 pb-20 md:pt-44 md:pb-28"
-    >
-      <div className="container-page grid items-center gap-16 md:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <RevealOnScroll>
-            <p className="inline-flex items-center gap-2 border border-navy/15 px-3 py-1.5 text-xs font-semibold tracking-[0.14em] text-slate uppercase">
-              {t.eyebrow}
-            </p>
-          </RevealOnScroll>
-
-          <RevealOnScroll delay={0.08}>
-            <h1 className="mt-6 text-4xl leading-[1.08] font-extrabold tracking-tight text-navy sm:text-5xl md:text-6xl">
-              {t.title}
-            </h1>
-          </RevealOnScroll>
-
-          <RevealOnScroll delay={0.16}>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate">
-              {t.description}
-            </p>
-          </RevealOnScroll>
-
-          <RevealOnScroll delay={0.24}>
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <a
-                href="#contacto"
-                className="group inline-flex items-center justify-center gap-2 bg-navy px-6 py-3.5 text-sm font-semibold text-cream transition-colors hover:bg-cobalt"
-              >
-                {t.ctaPrimary}
-                <ArrowRight
-                  size={16}
-                  className="transition-transform group-hover:translate-x-1"
-                  aria-hidden="true"
-                />
-              </a>
-              <a
-                href="#servicios"
-                className="inline-flex items-center justify-center gap-2 border border-navy/20 px-6 py-3.5 text-sm font-semibold text-navy transition-colors hover:border-cobalt hover:text-cobalt"
-              >
-                {t.ctaSecondary}
-              </a>
+    <section id="inicio" ref={sectionRef} className="studio-hero studio-depth-perspective relative">
+      <AmbientDepth tone="light" />
+      <div className="container-page relative z-10">
+        <div className="studio-hero-grid">
+          <motion.div style={{ y: contentY }} className="min-w-0">
+            <p className="studio-eyebrow"><span className="studio-status-dot" />{t.eyebrow}</p>
+            <h1 className="studio-hero-title">{t.title} <span>{t.accent}</span></h1>
+            <p className="studio-hero-description">{t.description}</p>
+            <div className="studio-hero-actions">
+              <Magnetic>
+                <a href="#contacto" className="studio-button studio-button-primary">{t.contact}<ArrowUpRight size={18} aria-hidden="true" /></a>
+              </Magnetic>
+              <a href="#servicios" className="studio-button studio-button-outline">{t.demos}<ArrowDown size={16} aria-hidden="true" /></a>
             </div>
-          </RevealOnScroll>
+            <Link href={localizePath("/configurador", locale)} className="studio-builder-link">
+              <SlidersHorizontal size={16} aria-hidden="true" />{t.builder}<ArrowUpRight size={15} aria-hidden="true" />
+            </Link>
+          </motion.div>
+          <motion.div style={{ y: showcaseY, scale: showcaseScale }} className="studio-hero-parallax">
+            <SolutionShowcase locale={locale} />
+          </motion.div>
         </div>
-
-        <RevealOnScroll delay={0.2}>
-          <div className="relative mx-auto aspect-square w-full max-w-md">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 -z-10 bg-[linear-gradient(135deg,transparent_49%,var(--color-line)_49%,var(--color-line)_51%,transparent_51%)] bg-[length:28px_28px] opacity-40"
-            />
-            <Monogram className="h-full w-full" />
-          </div>
-        </RevealOnScroll>
+        <div className="studio-hero-foot">
+          <span className="studio-hero-signature">{t.signature}</span>
+          <div className="studio-hero-notes">{t.notes.map((note) => <span key={note}>{note}</span>)}</div>
+          <a href="#servicios" aria-label={t.scroll} className="studio-scroll-link"><ArrowDown size={18} aria-hidden="true" /></a>
+        </div>
       </div>
     </section>
   );

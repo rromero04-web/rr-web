@@ -2,197 +2,93 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useMotionValueEvent, useScroll } from "motion/react";
-import { Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n/config";
+import { localizePath, type Locale } from "@/lib/i18n/config";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { Magnetic } from "@/components/ui/Magnetic";
 
-const NAV_LINKS: Record<Locale, { href: string; label: string }[]> = {
-  es: [
-    { href: "#servicios", label: "Servicios" },
-    { href: "#proyectos", label: "Proyectos" },
-    { href: "#proceso", label: "Proceso" },
-    { href: "#sobre-mi", label: "Sobre mí" },
-    { href: "#contacto", label: "Contacto" },
-  ],
-  en: [
-    { href: "#servicios", label: "Services" },
-    { href: "#proyectos", label: "Projects" },
-    { href: "#proceso", label: "Process" },
-    { href: "#sobre-mi", label: "About" },
-    { href: "#contacto", label: "Contact" },
-  ],
+const LINKS = {
+  es: ["Servicios", "Proyectos", "Proceso", "Sobre mí"],
+  en: ["Services", "Projects", "Process", "About"],
 };
-
-const STRINGS: Record<Locale, {
-  home: string;
-  cta: string;
-  openMenu: string;
-  closeMenu: string;
-  mainNav: string;
-  mobileNav: string;
-}> = {
-  es: {
-    home: "Raúl Romero — Web & Growth, inicio",
-    cta: "Cuéntame tu proyecto",
-    openMenu: "Abrir menú",
-    closeMenu: "Cerrar menú",
-    mainNav: "Navegación principal",
-    mobileNav: "Navegación móvil",
-  },
-  en: {
-    home: "Raúl Romero — Web & Growth, home",
-    cta: "Tell me about your project",
-    openMenu: "Open menu",
-    closeMenu: "Close menu",
-    mainNav: "Main navigation",
-    mobileNav: "Mobile navigation",
-  },
+const IDS = ["servicios", "proyectos", "proceso", "sobre-mi"];
+const COPY = {
+  es: { home: "Raúl Romero — Inicio", cta: "Hablemos", contact: "Cuéntame tu proyecto", open: "Abrir menú", close: "Cerrar menú", nav: "Navegación principal", builder: "Configura tu proyecto", intro: "Tu siguiente paso empieza con una conversación." },
+  en: { home: "Raúl Romero — Home", cta: "Let's talk", contact: "Tell me about your project", open: "Open menu", close: "Close menu", nav: "Main navigation", builder: "Build your project", intro: "Your next step starts with a conversation." },
 };
 
 export function Nav({ locale }: { locale: Locale }) {
-  const [hidden, setHidden] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+  const home = localizePath("/", locale);
+  const isHome = pathname === home;
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("");
-  const lastScrollY = useRef(0);
-  const { scrollY } = useScroll();
-  const links = NAV_LINKS[locale];
-  const t = STRINGS[locale];
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 24);
-    const goingDown = latest > lastScrollY.current;
-    setHidden(goingDown && latest > 200);
-    lastScrollY.current = latest;
-  });
+  const [active, setActive] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const t = COPY[locale];
+  const anchor = (id: string) => isHome ? "#" + id : home + "#" + id;
 
   useEffect(() => {
-    const sections = links.map((link) => document.querySelector(link.href));
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(`#${entry.target.id}`);
-          }
-        });
-      },
-      { rootMargin: "-40% 0px -50% 0px" }
-    );
-    sections.forEach((section) => section && observer.observe(section));
+    if (!isHome) return;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) if (entry.isIntersecting) setActive(entry.target.id);
+    }, { rootMargin: "-20% 0px -55% 0px" });
+    IDS.forEach((id) => { const element = document.getElementById(id); if (element) observer.observe(element); });
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  }, [isHome, pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const first = menuRef.current?.querySelector<HTMLAnchorElement>("a");
+    first?.focus();
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") { setMenuOpen(false); toggleRef.current?.focus(); }
+      if (event.key !== "Tab") return;
+      const links = menuRef.current?.querySelectorAll<HTMLElement>('a, button');
+      if (!links?.length) return;
+      const last = links[links.length - 1];
+      if (event.shiftKey && document.activeElement === toggleRef.current) { event.preventDefault(); last.focus(); }
+      else if (event.shiftKey && document.activeElement === links[0]) { event.preventDefault(); toggleRef.current?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); toggleRef.current?.focus(); }
+      else if (!event.shiftKey && document.activeElement === toggleRef.current) { event.preventDefault(); links[0].focus(); }
+    }
+    const desktop = window.matchMedia("(min-width: 1100px)");
+    const onResize = () => { if (desktop.matches) setMenuOpen(false); };
+    desktop.addEventListener("change", onResize);
+    document.addEventListener("keydown", handleKey);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", handleKey); desktop.removeEventListener("change", onResize); };
   }, [menuOpen]);
 
   return (
-    <motion.header
-      animate={{ y: hidden ? "-100%" : "0%" }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300",
-        scrolled
-          ? "border-line/70 bg-cream/90 backdrop-blur-md"
-          : "border-transparent bg-transparent"
-      )}
-    >
-      <div className="container-page flex h-20 items-center justify-between py-4">
-        <a href="#inicio" className="flex items-center gap-2.5 text-navy" aria-label={t.home}>
-          <Image
-            src="/brand/logo-mark.png"
-            alt=""
-            width={700}
-            height={588}
-            priority
-            className="h-8 w-auto shrink-0"
-          />
-          <span className="text-sm font-bold tracking-[0.14em] uppercase">
-            Raúl Romero
-          </span>
+    <header className="studio-header">
+      <div className="container-page studio-header-inner">
+        <a href={anchor("inicio")} className="studio-brand" aria-label={t.home}>
+          <Image src="/brand/logo-mark.png" alt="" width={700} height={588} sizes="38px" priority className="h-8 w-auto shrink-0" />
+          <span><strong>Raúl Romero</strong><small>WEB & GROWTH</small></span>
         </a>
-
-        <nav aria-label={t.mainNav} className="hidden md:block">
-          <ul className="flex items-center gap-8 text-sm font-medium text-navy">
-            {links.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  className={cn(
-                    "relative py-1 transition-colors hover:text-cobalt",
-                    activeSection === link.href && "text-cobalt"
-                  )}
-                >
-                  {link.label}
-                  {activeSection === link.href && (
-                    <motion.span
-                      layoutId="nav-active"
-                      className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-cobalt"
-                    />
-                  )}
-                </a>
-              </li>
-            ))}
-          </ul>
+        <nav aria-label={t.nav} className="studio-desktop-nav">
+          {IDS.map((id, index) => <a key={id} href={anchor(id)} aria-current={isHome && active === id ? "location" : undefined} className={cn(isHome && active === id && "is-active")}>{LINKS[locale][index]}</a>)}
         </nav>
-
-        <div className="hidden items-center gap-4 md:flex">
-          <LanguageSwitcher locale={locale} />
-          <a
-            href="#contacto"
-            className="inline-flex items-center border border-navy bg-navy px-5 py-2.5 text-sm font-semibold text-cream transition-colors hover:bg-cobalt hover:border-cobalt"
-          >
-            {t.cta}
-          </a>
+        <div className="studio-header-actions">
+          <div className="studio-header-languages"><LanguageSwitcher locale={locale} /></div>
+          <Magnetic strength={0.25}>
+            <a href={anchor("contacto")} className="studio-header-cta">{t.cta}<ArrowUpRight size={16} aria-hidden="true" /></a>
+          </Magnetic>
+          <button ref={toggleRef} type="button" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-controls="mobile-menu" aria-label={menuOpen ? t.close : t.open} className="studio-menu-toggle">{menuOpen ? <X size={21} /> : <Menu size={21} />}</button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-menu"
-          aria-label={menuOpen ? t.closeMenu : t.openMenu}
-          className="inline-flex h-10 w-10 items-center justify-center border border-navy/20 text-navy md:hidden"
-        >
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
       </div>
-
-      {menuOpen && (
-        <div
-          id="mobile-menu"
-          className="border-t border-line/70 bg-cream md:hidden"
-        >
-          <nav aria-label={t.mobileNav} className="container-page flex flex-col gap-1 py-4">
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="border-b border-line/60 py-3.5 text-base font-medium text-navy last:border-none"
-              >
-                {link.label}
-              </a>
-            ))}
-            <a
-              href="#contacto"
-              onClick={() => setMenuOpen(false)}
-              className="mt-3 inline-flex items-center justify-center bg-navy px-5 py-3 text-sm font-semibold text-cream"
-            >
-              {t.cta}
-            </a>
-            <div className="mt-3">
-              <LanguageSwitcher locale={locale} variant="mobile" />
-            </div>
-          </nav>
-        </div>
-      )}
-    </motion.header>
+      {menuOpen && <div id="mobile-menu" ref={menuRef} className="studio-mobile-menu">
+        <nav aria-label={t.nav} className="container-page">
+          {IDS.map((id, index) => <a key={id} href={anchor(id)} onClick={() => setMenuOpen(false)} className="studio-mobile-link"><span>0{index + 1}</span>{LINKS[locale][index]}<ArrowUpRight size={21} aria-hidden="true" /></a>)}
+          <a href={anchor("contacto")} onClick={() => setMenuOpen(false)} className="studio-button studio-button-primary">{t.contact}<ArrowUpRight size={18} aria-hidden="true" /></a>
+          <a href={localizePath("/configurador", locale)} onClick={() => setMenuOpen(false)} className="studio-mobile-builder">{t.builder}<ArrowUpRight size={16} aria-hidden="true" /></a>
+          <p className="studio-mobile-note">{t.intro}</p>
+        </nav>
+      </div>}
+    </header>
   );
 }

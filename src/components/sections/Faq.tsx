@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { getFaqItems } from "@/content/faq";
-import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
+import { DepthReveal } from "@/components/ui/DepthReveal";
 import type { Locale } from "@/lib/i18n/config";
 
 const STRINGS: Record<Locale, { eyebrow: string; title: string }> = {
@@ -19,20 +19,20 @@ export function Faq({ locale }: { locale: Locale }) {
   const faqItems = getFaqItems(locale);
 
   return (
-    <section id="faq" className="border-b border-line/70 py-24 md:py-32">
+    <section id="faq" className="studio-faq border-b border-line/70 py-24 md:py-32">
       <div className="container-page">
-        <RevealOnScroll>
+        <DepthReveal>
           <p className="text-xs font-semibold tracking-[0.14em] text-cobalt uppercase">
             {t.eyebrow}
           </p>
           <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
             {t.title}
           </h2>
-        </RevealOnScroll>
+        </DepthReveal>
 
-        <div className="mt-12 max-w-3xl divide-y divide-line/70 border-y border-line/70">
+        <div className="studio-faq-list max-w-3xl divide-y divide-line/70 border-y border-line/70">
           {faqItems.map((item, index) => (
-            <RevealOnScroll key={item.question} delay={index * 0.04}>
+            <DepthReveal key={item.question} delay={Math.min(index * 0.04, 0.16)}>
               <details className="group py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-navy marker:content-none">
                   {item.question}
@@ -46,7 +46,7 @@ export function Faq({ locale }: { locale: Locale }) {
                   {item.answer}
                 </p>
               </details>
-            </RevealOnScroll>
+            </DepthReveal>
           ))}
         </div>
       </div>

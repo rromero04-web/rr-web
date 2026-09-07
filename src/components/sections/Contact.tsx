@@ -1,6 +1,7 @@
 import { Mail } from "lucide-react";
 import { ContactForm } from "@/components/ui/ContactForm";
-import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
+import { DepthReveal } from "@/components/ui/DepthReveal";
+import { TiltCard } from "@/components/ui/TiltCard";
 import { WhatsappIcon } from "@/components/ui/SocialIcons";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -42,10 +43,10 @@ export function Contact({ locale }: { locale: Locale }) {
   const whatsappMessage = encodeURIComponent(t.whatsappMessage);
 
   return (
-    <section id="contacto" className="py-24 md:py-32">
+    <section id="contacto" className="studio-contact py-24 md:py-32">
       <div className="container-page grid gap-14 md:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <RevealOnScroll>
+          <DepthReveal>
             <p className="text-xs font-semibold tracking-[0.14em] text-cobalt uppercase">
               {t.eyebrow}
             </p>
@@ -55,50 +56,48 @@ export function Contact({ locale }: { locale: Locale }) {
             <p className="mt-5 max-w-md text-base leading-relaxed text-slate">
               {t.description}
             </p>
-          </RevealOnScroll>
+          </DepthReveal>
 
-          <RevealOnScroll delay={0.12}>
-            <div className="mt-8 flex flex-col gap-4 border border-line/70 p-5">
-              <div>
-                <p className="text-sm font-semibold text-navy">
-                  {t.emailPrompt}
-                </p>
-                <a
-                  href="mailto:info@raulromero.es"
-                  className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-navy hover:text-cobalt"
-                >
-                  <Mail size={16} aria-hidden="true" />
-                  info@raulromero.es
-                </a>
-              </div>
-
-              <div className="border-t border-line/70 pt-4">
-                <p className="text-sm font-semibold text-navy">
-                  {t.whatsappPrompt}
-                </p>
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-navy hover:text-cobalt"
-                >
-                  <WhatsappIcon size={16} />
-                  +34 684 772 973
-                </a>
-              </div>
-
-              <p className="text-xs text-slate">
-                {t.callNote}
+          <TiltCard maxTilt={5} className="studio-contact-channels mt-8 flex flex-col gap-4 border border-line/70 p-5">
+            <div>
+              <p className="text-sm font-semibold text-navy">
+                {t.emailPrompt}
               </p>
+              <a
+                href="mailto:info@raulromero.es"
+                className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-navy hover:text-cobalt"
+              >
+                <Mail size={16} aria-hidden="true" />
+                info@raulromero.es
+              </a>
             </div>
-          </RevealOnScroll>
+
+            <div className="border-t border-line/70 pt-4">
+              <p className="text-sm font-semibold text-navy">
+                {t.whatsappPrompt}
+              </p>
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-navy hover:text-cobalt"
+              >
+                <WhatsappIcon size={16} />
+                +34 684 772 973
+              </a>
+            </div>
+
+            <p className="text-xs text-slate">
+              {t.callNote}
+            </p>
+          </TiltCard>
         </div>
 
-        <RevealOnScroll delay={0.16}>
-          <div className="border border-line/70 bg-cream p-6 sm:p-8">
+        <DepthReveal delay={0.1}>
+          <div className="studio-contact-form border border-line/70 bg-cream p-6 sm:p-8">
             <ContactForm locale={locale} />
           </div>
-        </RevealOnScroll>
+        </DepthReveal>
       </div>
     </section>
   );

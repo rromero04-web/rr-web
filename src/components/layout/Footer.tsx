@@ -119,6 +119,7 @@ export function Footer({ locale }: { locale: Locale }) {
         </div>
       </div>
 
+      <div className="container-page"><p className="studio-footer-mark" aria-hidden="true">{locale === "es" ? "HAGAMOS QUE AVANCE." : "LET’S MOVE FORWARD."}</p></div>
       <div className="border-t border-cream/10">
         <div className="container-page flex flex-col gap-2 py-6 text-xs text-cream/50 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Raúl Romero. {t.rights}</p>

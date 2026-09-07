@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { MotionConfig } from "motion/react";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollProgressBar } from "@/components/ui/ScrollProgressBar";
@@ -22,17 +23,17 @@ export function SiteChrome({ children }: { children: ReactNode }) {
   }
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <a
-        href="#inicio"
+        href="#main-content"
         className="fixed left-3 top-3 z-[100] -translate-y-20 border border-cobalt bg-cream px-4 py-2 text-sm font-semibold text-navy transition-transform focus:translate-y-0"
       >
         {SKIP_LINK_TEXT[locale]}
       </a>
       <ScrollProgressBar />
       <Nav locale={locale} />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
       <Footer locale={locale} />
-    </>
+    </MotionConfig>
   );
 }
