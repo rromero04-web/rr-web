@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import { MotionConfig } from "motion/react";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollProgressBar } from "@/components/ui/ScrollProgressBar";
 import { getLocaleFromPathname } from "@/lib/i18n/config";
 
 const SKIP_LINK_TEXT = { es: "Saltar al contenido principal", en: "Skip to main content" };
@@ -30,7 +29,6 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       >
         {SKIP_LINK_TEXT[locale]}
       </a>
-      <ScrollProgressBar />
       <Nav locale={locale} />
       <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
       <Footer locale={locale} />
