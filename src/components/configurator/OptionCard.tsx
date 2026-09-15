@@ -26,7 +26,7 @@ export function OptionCard<Id extends string>({ option, locale, selected, onSele
       whileTap={{ scale: 0.97 }}
       transition={{ duration: 0.15 }}
       className={cn(
-        "flex h-full flex-col items-start gap-2.5 border p-4 text-left transition-colors motion-reduce:transition-none",
+        "studio-option-card flex h-full flex-col items-start gap-2.5 border p-4 text-left transition-colors motion-reduce:transition-none",
         selected
           ? "border-cobalt bg-cobalt/5"
           : "border-line/70 bg-cream hover:border-navy/30"

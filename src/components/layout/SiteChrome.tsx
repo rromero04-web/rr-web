@@ -23,6 +23,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
 
   return (
     <MotionConfig reducedMotion="user">
+      <div className="studio-site flex min-h-screen flex-1 flex-col">
       <a
         href="#main-content"
         className="fixed left-3 top-3 z-[100] -translate-y-20 border border-cobalt bg-cream px-4 py-2 text-sm font-semibold text-navy transition-transform focus:translate-y-0"
@@ -32,6 +33,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       <Nav locale={locale} />
       <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
       <Footer locale={locale} />
+      </div>
     </MotionConfig>
   );
 }

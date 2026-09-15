@@ -35,7 +35,7 @@ export function PreviewFrame({ locale }: { locale: Locale }) {
   const devices: PreviewDevice[] = ["desktop", "tablet", "mobile"];
 
   return (
-    <div className="flex h-full flex-col border border-line/70 bg-cream">
+    <div className="studio-builder-preview flex h-full flex-col border border-line/70 bg-cream">
       <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
         <p className="text-xs font-semibold tracking-[0.1em] text-navy uppercase">{t.title}</p>
         <div role="radiogroup" aria-label={t.deviceLabel} className="flex items-center gap-1">

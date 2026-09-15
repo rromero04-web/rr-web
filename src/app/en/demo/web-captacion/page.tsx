@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Raúl Romero — Web & Growth" }],
     title: `${TITLE} | Raúl Romero`,
     description: DESCRIPTION,
     url: "/en/demo/web-captacion",

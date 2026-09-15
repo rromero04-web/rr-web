@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./studio.css";
+@import "./glass.css";
 
 :root {
   --color-navy: #081b2e;

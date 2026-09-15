@@ -37,7 +37,7 @@ function ConfiguratorLayout({ locale }: { locale: Locale }) {
   const StepComponent = STEP_COMPONENTS[state.currentStep];
 
   return (
-    <div className="container-page py-24 md:py-32">
+    <div className="studio-configurator container-page py-24 md:py-32">
       <div className="mx-auto max-w-6xl">
         <StepProgress locale={locale} />
 

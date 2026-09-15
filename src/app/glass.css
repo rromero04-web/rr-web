@@ -1,0 +1,245 @@
+/* Shared glass treatment, scoped to the portfolio and its project builder. */
+.studio-site {
+  --studio-radius: 24px;
+  --glass-fill: linear-gradient(135deg, rgb(255 255 255 / 78%), rgb(255 255 255 / 42%));
+  --glass-edge: rgb(255 255 255 / 88%);
+  --glass-shadow: 0 16px 48px -24px rgb(42 63 128 / 30%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  background:
+    radial-gradient(ellipse 65% 700px at 95% 200px, #cbd6ff 0%, transparent 75%),
+    radial-gradient(ellipse 60% 650px at 0% 700px, #dbd3f7 0%, transparent 75%),
+    radial-gradient(ellipse 65% 850px at 90% 1900px, #d3edf0 0%, transparent 75%),
+    radial-gradient(ellipse 75% 900px at 0% 3300px, #e1daf7 0%, transparent 75%),
+    #f0f3f8;
+}
+
+.studio-header {
+  inset: 16px 24px auto;
+  max-width: 1240px;
+  margin-inline: auto;
+  border: 1px solid var(--glass-edge);
+  border-radius: 22px;
+  background: rgb(248 250 255 / 76%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: var(--glass-shadow);
+}
+.studio-header-inner { height: 76px; padding-inline: 26px; }
+.studio-mobile-menu { background: transparent; border-color: rgb(111 134 183 / 18%); border-radius: 0 0 22px 22px; }
+.studio-header-languages nav { background: rgb(255 255 255 / 45%); border-radius: 12px; padding: 3px; }
+.studio-header-languages nav a { border-radius: 9px; }
+.studio-header-cta,.studio-button,.studio-service-demo { border-radius: 13px; }
+.studio-header-cta,.studio-button-primary,.studio-service-card.service-1 .studio-service-demo {
+  background: linear-gradient(140deg, #3e65ff, #2445ca);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%), 0 8px 20px -10px rgb(40 85 255 / 65%);
+}
+.studio-header-cta:hover,.studio-button-primary:hover { background: linear-gradient(140deg, #3155e2, #163493); }
+.studio-menu-toggle,.studio-button-outline,.studio-scroll-link,.studio-concept-badge,.studio-tech-list li {
+  background: rgb(255 255 255 / 62%);
+  border-color: var(--glass-edge);
+  box-shadow: inset 0 1px 0 white, 0 4px 16px -10px rgb(42 63 128 / 25%);
+}
+.studio-menu-toggle { border-radius: 12px; }
+.studio-hero { padding-top: 172px; border-bottom: 0; }
+.studio-hero-title > span { color: #3155dc; }
+.studio-hero .studio-eyebrow { display: inline-flex; padding: 8px 13px; border: 1px solid var(--glass-edge); border-radius: 100px; background: rgb(255 255 255 / 55%); }
+.studio-hero-foot { border-color: rgb(111 134 183 / 18%); }
+.studio-ambient-light .studio-ambient-orb-1 { opacity: .45; }
+.studio-ambient-light .studio-ambient-orb-2 { background: radial-gradient(circle, #a58ce8, transparent 70%); opacity: .4; }
+.studio-ambient-grid { opacity: .35; }
+
+.studio-showcase-window,.studio-service-card,.studio-project,.studio-faq-list details,
+.studio-contact-form,.studio-contact-channels,.studio-option-card,.studio-builder-preview {
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-fill);
+  border-radius: var(--studio-radius);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+.studio-showcase-window { padding-inline: 16px; }
+.studio-window-bar,.studio-showcase-caption { color: var(--color-slate); }
+.studio-window-dots i { background: #9caed4; }
+.studio-window-dots i:first-child { background: #748cda; }
+.studio-caption-line { background: rgb(111 134 183 / 25%); }
+.studio-showcase-tabs button { color: var(--color-slate); border-radius: 11px; }
+.studio-showcase-tabs button[aria-selected="true"] { background: #3155dc; box-shadow: inset 0 1px 0 rgb(255 255 255 / 28%), 0 5px 12px -6px #3155dc; }
+.studio-showcase-tabs button:hover:not([aria-selected="true"]) { background: rgb(255 255 255 / 70%); color: var(--color-navy); }
+.studio-showcase-tabs :focus-visible,.studio-preview-panel:focus-visible { outline-color: var(--color-cobalt); }
+.studio-preview-panel { background: rgb(255 255 255 / 68%); border: 1px solid white; border-radius: 14px; }
+.studio-mini-services > div,.studio-mini-metrics > div { border-radius: 10px; border-color: rgb(111 134 183 / 16%); background: rgb(255 255 255 / 65%); }
+.studio-mini-options button,.studio-mini-action { border-radius: 8px; }
+
+.studio-services { background: linear-gradient(150deg, rgb(255 255 255 / 20%), rgb(212 224 250 / 35%)); }
+.studio-section,.studio-about,.studio-faq { border-bottom-color: rgb(111 134 183 / 15%); }
+.studio-service-card.service-1 { background: linear-gradient(145deg, rgb(255 255 255 / 88%), rgb(221 230 255 / 65%)); border: 1px solid rgb(116 144 237 / 55%); padding-top: 29px; }
+.studio-service-card:hover { border-color: rgb(120 147 232 / 65%); box-shadow: 0 24px 50px -24px rgb(42 63 128 / 38%), inset 0 1px 0 white; }
+.studio-builder-banner { border: 1px solid rgb(255 255 255 / 40%); border-radius: 24px; background: linear-gradient(115deg, #162a52, #304a86); box-shadow: 0 18px 38px -24px #243c75, inset 0 1px 0 rgb(255 255 255 / 25%); }
+.studio-builder-symbol { border-radius: 16px; background: rgb(255 255 255 / 8%); border-color: rgb(255 255 255 / 22%); }
+.studio-project { padding: 24px; gap: 36px; }
+.studio-project-image { border-radius: 16px; }
+.studio-concept-badge { border-radius: 100px; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.studio-tech-list li { border-radius: 8px; }
+.studio-marquee { background: rgb(255 255 255 / 38%); border-color: rgb(255 255 255 / 75%); }
+.studio-diagonal-divider { height: 0; }
+.studio-process { background: radial-gradient(ellipse at 80% 100%, #354576, transparent 65%), linear-gradient(125deg, #101f3b, #192c51); border-color: rgb(255 255 255 / 20%); }
+.studio-process-card,.studio-process-card > div,.studio-process-card .process-front,.studio-process-card .process-back { border-radius: 22px; }
+/* Keep the 3D faces free of backdrop filters, which flatten their rotation. */
+.studio-process-card .process-front { background: linear-gradient(145deg, rgb(255 255 255 / 13%), rgb(255 255 255 / 4%)); border-color: rgb(255 255 255 / 24%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 15%), 0 14px 30px -20px #000; }
+.studio-process-card .process-back { background: linear-gradient(135deg, #30436b, #1b2e50); border-color: #809be1; }
+.studio-process-card .process-front > div:first-child { border-radius: 16px; background: rgb(255 255 255 / 8%); }
+.studio-process .text-cobalt-soft { color: #adbeff; }
+.studio-about-photo { border: 7px solid rgb(255 255 255 / 75%); border-radius: 28px; box-shadow: var(--glass-shadow); }
+.studio-faq-list { border: 0; display: grid; gap: 12px; }
+.studio-faq-list > * { border: 0; }
+.studio-faq-list details,.studio-faq-list details[open] { padding: 22px 24px; border-radius: 18px; }
+.studio-faq-list details[open] { background: rgb(255 255 255 / 80%); }
+.studio-contact { border-color: rgb(255 255 255 / 70%); background: radial-gradient(ellipse at 85% 40%, rgb(175 195 250 / 55%), transparent 65%), radial-gradient(ellipse at 0% 100%, rgb(205 186 237 / 50%), transparent 70%); }
+.studio-contact-channels { padding: 24px; }
+.studio-contact-form input:not([type=checkbox]),.studio-contact-form textarea,.studio-contact-form select { border-radius: 12px; background: rgb(255 255 255 / 70%); border-color: #aab9d2; }
+.studio-contact-form button[type=submit] { border-radius: 12px; }
+.studio-site > footer { background: radial-gradient(ellipse at 80% 0%, #30436c, transparent 70%), #101f3b; border-color: rgb(255 255 255 / 25%); }
+.studio-option-card { border-radius: 18px; }
+.studio-option-card[aria-checked="true"] { background: linear-gradient(135deg, #edf2ff, #dce5ff); border-color: #3155dc; box-shadow: 0 0 0 1px #3155dc, var(--glass-shadow); }
+.studio-option-card > div:first-child > div,.studio-option-card > div:first-child > span { border-radius: 9px; }
+.studio-builder-preview { overflow: hidden; }
+
+@media (max-width: 1099px) {
+  .studio-header-inner { height: 68px; }
+  .studio-hero { padding-top: 140px; }
+  .studio-service-card.service-1 { padding-top: 22px; }
+}
+@media (max-width: 900px) {
+  .studio-header { inset: 10px 12px auto; border-radius: 18px; }
+  .studio-header-inner { padding-inline: 18px; }
+  .studio-hero { padding-top: 126px; }
+  .studio-service-card.service-1 { padding-top: 26px; }
+  .studio-project { padding: 18px; gap: 24px; }
+}
+@media (max-width: 480px) {
+  .studio-header-inner { padding-inline: 12px; gap: 8px; }
+  .studio-header-actions { gap: 6px; }
+  .studio-hero .studio-eyebrow { font-size: 8px; letter-spacing: .1em; }
+  .studio-showcase-window { padding-inline: 11px; border-radius: 20px; }
+  .studio-project { padding: 14px; }
+  .studio-faq-list details,.studio-faq-list details[open] { padding: 20px; }
+  .studio-contact-channels { padding: 20px; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .studio-site { --glass-fill: #f8faff; }
+  .studio-header { background: #f3f6fd; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .studio-site { --glass-fill: #f8faff; }
+  .studio-site * { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .studio-header { background: #f3f6fd; }
+}
+
+/* Refined glass: a translucent body, a reflected rim and a soft contact shadow. */
+.studio-site {
+  --glass-fill: linear-gradient(145deg, rgb(255 255 255 / 82%), rgb(247 250 255 / 48%) 55%, rgb(225 234 255 / 38%));
+  --glass-shadow: inset 0 1px 0 white, inset 0 -1px 0 rgb(113 139 205 / 12%), 0 2px 5px rgb(38 59 107 / 3%), 0 24px 60px -30px rgb(42 63 128 / 34%);
+  --color-slate: #506079;
+}
+.studio-site #main-content { min-width: 0; }
+.studio-site :is(a, button, summary, input, textarea, select) { -webkit-tap-highlight-color: transparent; }
+.studio-site :is(a, button, summary):focus-visible { outline: 3px solid #3155dc; outline-offset: 4px; }
+.studio-site :is(.studio-process, footer) :focus-visible { outline-color: #b9caff; }
+.studio-desktop-nav { gap: 6px; }
+.studio-desktop-nav a { padding: 11px 14px; border-radius: 12px; font-weight: 500; }
+.studio-desktop-nav a:hover,.studio-desktop-nav .is-active { background: rgb(255 255 255 / 72%); box-shadow: inset 0 1px 0 white, 0 3px 10px -7px #37549e; }
+.studio-desktop-nav .is-active::after { left: 14px; right: 14px; bottom: 4px; border-radius: 3px; }
+.studio-mobile-menu { max-height: calc(100dvh - 104px); }
+.studio-header-languages nav a { min-height: 40px; min-width: 32px; }
+.studio-menu-toggle { min-width: 44px; min-height: 44px; }
+.studio-hero-title { letter-spacing: -.055em; }
+.studio-hero-title > span { background: linear-gradient(115deg, #244ccf 15%, #5944bd 85%); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.studio-showcase { isolation: isolate; }
+.studio-showcase::before { content: ""; position: absolute; z-index: -1; inset: 72px -12px 38px; border: 1px solid rgb(255 255 255 / 80%); border-radius: 30px; background: linear-gradient(155deg, rgb(255 255 255 / 45%), rgb(160 183 245 / 20%)); transform: rotate(-3deg); box-shadow: 0 24px 50px -28px rgb(55 71 141 / 25%); pointer-events: none; }
+.studio-showcase-window { border-width: 1.5px; }
+.studio-window-bar { padding-block: 18px; }
+.studio-showcase-bottom > span { font-size: 10px; }
+.studio-showcase-bottom a { min-height: 40px; }
+.studio-showcase-tabs button { min-height: 44px; }
+.studio-service-top { border-color: rgb(87 113 172 / 16%); }
+.studio-service-demo { position: relative; overflow: hidden; min-height: 48px; background: linear-gradient(145deg, #294165, #11263f); border: 1px solid rgb(255 255 255 / 35%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 20%), 0 8px 16px -12px #183359; }
+.studio-service-contact { min-height: 44px; font-size: 12px; }
+.studio-service-details summary { min-height: 44px; display: flex; align-items: center; }
+.studio-project { gap: 30px; }
+.studio-project-content { min-width: 0; padding: 8px 6px; }
+.studio-project-meta { flex-wrap: wrap; }
+.studio-tech-list li { color: #435775; background: rgb(255 255 255 / 64%); }
+.studio-project-image { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 70%), 0 8px 24px -16px #384e80; }
+.studio-process-step { height: 100%; padding: 24px 20px; border: 1px solid rgb(222 232 255 / 26%); border-radius: 22px; background: linear-gradient(145deg, rgb(230 239 255 / 16%), rgb(213 225 255 / 5%)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 22%), 0 18px 36px -22px rgb(0 0 0 / 40%); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.studio-process-step-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.studio-process-icon { display: grid; place-items: center; height: 48px; width: 48px; border-radius: 15px; color: #c3d0ff; background: linear-gradient(145deg, rgb(255 255 255 / 13%), rgb(255 255 255 / 3%)); border: 1px solid rgb(255 255 255 / 20%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 15%); }
+.studio-process-number { font-size: 12px; font-family: var(--font-geist-mono), monospace; color: #a8bcf1; }
+.studio-process-step h3 { margin-top: 28px; font-size: 19px; font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
+.studio-process-step p { margin-top: 14px; font-size: 13px; line-height: 1.8; color: #d2dcee; }
+.studio-faq { background: radial-gradient(ellipse at 85% 30%, rgb(191 210 253 / 35%), transparent 70%); }
+.studio-faq-list details { transition: border-color .2s, background .2s, box-shadow .2s; }
+.studio-faq-list details[open] { border-color: #b3c5f4; box-shadow: inset 0 1px 0 white, 0 15px 32px -22px #516bba; }
+.studio-faq-list summary { min-height: 36px; }
+.studio-faq-list summary > svg { box-sizing: content-box; padding: 8px; background: #edf2fc; border-radius: 50%; }
+.studio-contact-form :is(input:not([type=checkbox]),textarea,select):focus { border-color: #3155dc; background: rgb(255 255 255 / 92%); box-shadow: 0 0 0 4px rgb(49 85 220 / 10%); }
+.studio-contact-form :is(input,textarea)::placeholder { color: #64748b; opacity: 1; }
+.studio-contact-form button[type=submit] { min-height: 50px; background: linear-gradient(140deg, #3e65ff, #2445ca); box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%), 0 10px 20px -12px #3155dc; }
+.studio-contact-form button[type=submit]:disabled { opacity: .6; cursor: wait; }
+.studio-contact-channels a { overflow-wrap: anywhere; }
+.studio-configurator { padding-top: 128px; padding-bottom: 96px; }
+.studio-step-progress { padding: 8px; background: rgb(255 255 255 / 55%); border: 1px solid white; border-radius: 20px; box-shadow: var(--glass-shadow); }
+.studio-step-progress button { min-width: 0; height: 44px; border: 1px solid transparent; color: #53627d; font-size: 12px; font-weight: 600; }
+.studio-step-progress button:disabled { opacity: .6; }
+.studio-step-progress .is-complete { background: #e1e9ff; color: #294bb5; }
+.studio-step-progress .is-current { background: linear-gradient(145deg, #3e65ff, #2445ca); color: white; box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%), 0 5px 12px -6px #3155dc; }
+.studio-step-progress button:not(:disabled):hover { border-color: #879ee5; }
+.studio-step-actions { flex-wrap: wrap; }
+.studio-step-actions button { min-height: 44px; border-radius: 12px; }
+.studio-step-actions > button { background: linear-gradient(145deg, #3e65ff, #2445ca); }
+.studio-segmented { border-radius: 14px; background: rgb(255 255 255 / 65%); flex-wrap: wrap; gap: 4px; max-width: 100%; }
+.studio-segmented button { border-radius: 10px; min-height: 44px; }
+.studio-segmented button[aria-checked=true] { background: #3155dc; color: white; box-shadow: 0 3px 8px -5px #3155dc; }
+.studio-configurator > button { border-radius: 16px; bottom: max(20px, env(safe-area-inset-bottom)); }
+.studio-builder-preview > div:first-child button { width: 40px; height: 40px; border-radius: 10px; }
+.studio-option-card { transition: border-color .2s, box-shadow .2s, background .2s; }
+.studio-option-card:hover { border-color: #a2b5ea; }
+.studio-option-card:focus-visible { outline-offset: 5px; }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .studio-process-step { transition: transform .25s, border-color .25s; }
+  .studio-process-step:hover { transform: translateY(-4px); border-color: rgb(222 232 255 / 50%); }
+}
+@media (max-width: 600px) {
+  .studio-showcase::before { inset-inline: -3px; transform: rotate(-1.5deg); }
+  .studio-process-step { padding: 24px; }
+  .studio-process-step h3 { margin-top: 20px; }
+  .studio-project-content { padding: 6px; }
+  .studio-contact-form :is(input:not([type=checkbox]),textarea,select) { font-size: 16px; }
+  .studio-configurator { padding-top: 108px; }
+  .studio-step-progress { gap: 2px; padding: 5px; }
+  .studio-step-actions > button { flex: 1; justify-content: center; }
+}
+@media (max-width: 359px) {
+  .studio-brand small { letter-spacing: .1em; }
+  .studio-header-languages nav a { min-width: 28px; padding-inline: 5px; }
+  .studio-header-actions { gap: 3px; }
+  .studio-step-actions > div { width: 100%; justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-site .studio-hero-parallax,.studio-site .studio-tilt,.studio-site .studio-magnetic { transform: none !important; will-change: auto; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .studio-site { --glass-fill: #f8faff; }
+  .studio-process-step { background: #263a5e; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .studio-site { --glass-fill: #f8faff; }
+  .studio-site :is(.studio-process-step,.studio-header,.studio-concept-badge) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .studio-process-step { background: #263a5e; }
+  .studio-service-card.service-1,.studio-faq-list details[open],.studio-concept-badge { background: #f8faff; }
+  .studio-showcase::before { display: none; }
+}
+@media (forced-colors: active) {
+  .studio-hero-title > span { background: none; color: CanvasText; }
+  .studio-step-progress .is-current,.studio-segmented button[aria-checked=true] { border: 2px solid Highlight; }
+}
+.studio-step-title { scroll-margin-top: 24px; outline: none; }

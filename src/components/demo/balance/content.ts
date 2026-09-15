@@ -30,8 +30,7 @@ export function getNavLinks(locale: Locale): NavLink[] {
 
 export type Situation = { id: SituationId; label: string; message: string };
 
-const SITUATION_IDS = ["nuevo", "cambio", "empresa", "puntual"] as const;
-export type SituationId = (typeof SITUATION_IDS)[number];
+export type SituationId = "nuevo" | "cambio" | "empresa" | "puntual";
 
 const SITUATIONS: Record<Locale, Situation[]> = {
   es: [

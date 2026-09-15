@@ -48,7 +48,7 @@ export function Hero({ locale }: { locale: Locale }) {
       <AmbientDepth tone="light" />
       <div className="container-page relative z-10">
         <div className="studio-hero-grid">
-          <motion.div style={{ y: contentY }} className="min-w-0">
+          <motion.div style={{ y: contentY }} className="min-w-0 motion-reduce:!transform-none">
             <p className="studio-eyebrow"><span className="studio-status-dot" />{t.eyebrow}</p>
             <h1 className="studio-hero-title">{t.title} <span>{t.accent}</span></h1>
             <p className="studio-hero-description">{t.description}</p>
@@ -62,7 +62,7 @@ export function Hero({ locale }: { locale: Locale }) {
               <SlidersHorizontal size={16} aria-hidden="true" />{t.builder}<ArrowUpRight size={15} aria-hidden="true" />
             </Link>
           </motion.div>
-          <motion.div style={{ y: showcaseY, scale: showcaseScale }} className="studio-hero-parallax">
+          <motion.div style={{ y: showcaseY, scale: showcaseScale }} className="studio-hero-parallax motion-reduce:!transform-none">
             <SolutionShowcase locale={locale} />
           </motion.div>
         </div>

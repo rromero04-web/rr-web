@@ -13,13 +13,9 @@ export function StepProgress({ locale }: { locale: Locale }) {
   const currentIndex = STEP_ORDER.indexOf(state.currentStep);
 
   return (
-    <div
-      role="progressbar"
+    <nav
       aria-label={NAV_STRINGS[locale].progressLabel}
-      aria-valuemin={1}
-      aria-valuemax={STEP_ORDER.length}
-      aria-valuenow={currentIndex + 1}
-      className="flex items-center gap-1.5"
+      className="studio-step-progress flex items-center gap-1.5"
     >
       {STEP_ORDER.map((step, index) => {
         const active = step === state.currentStep;
@@ -33,15 +29,15 @@ export function StepProgress({ locale }: { locale: Locale }) {
             aria-current={active ? "step" : undefined}
             aria-label={NAV_STRINGS[locale].stepOf(index + 1, STEP_ORDER.length)}
             className={cn(
-              "h-1.5 flex-1 rounded-full transition-colors motion-reduce:transition-none",
-              active ? "bg-cobalt" : index < currentIndex ? "bg-cobalt/40" : "bg-line",
-              jumpable && !active && "cursor-pointer hover:bg-cobalt/60",
+              "flex-1 rounded-full transition-colors motion-reduce:transition-none",
+              active ? "is-current" : index < currentIndex ? "is-complete" : "",
+              jumpable && !active && "cursor-pointer",
               !jumpable && "cursor-not-allowed"
             )}
-          />
+          ><span aria-hidden="true">{index + 1}</span></button>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
@@ -65,7 +61,7 @@ export function StepNav({
           {t.requiredHint}
         </p>
       )}
-      <div className="flex items-center justify-between gap-3">
+      <div className="studio-step-actions flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
