@@ -16,6 +16,7 @@ const STRINGS: Record<Locale, {
   tagline: string;
   network: string;
   legal: string;
+  explore: string;
   rights: string;
   builtBy: string;
   legalLinks: { href: string; label: string }[];
@@ -25,6 +26,7 @@ const STRINGS: Record<Locale, {
       "Webs y aplicaciones pensadas para hacer crecer negocios. Estrategia, diseño y desarrollo en una misma dirección.",
     network: "Redes",
     legal: "Legal",
+    explore: "Explora",
     rights: "Todos los derechos reservados.",
     builtBy: "Diseñado y desarrollado por Raúl Romero.",
     legalLinks: [
@@ -38,6 +40,7 @@ const STRINGS: Record<Locale, {
       "Websites and applications built to help businesses grow. Strategy, design and development in one direction.",
     network: "Social",
     legal: "Legal",
+    explore: "Explore",
     rights: "All rights reserved.",
     builtBy: "Designed and built by Raúl Romero.",
     legalLinks: [
@@ -98,6 +101,12 @@ export function Footer({ locale }: { locale: Locale }) {
               </li>
             ))}
           </ul>
+          <h2 className="mt-8 text-xs font-semibold tracking-[0.14em] text-cream/50 uppercase">
+            {t.explore}
+          </h2>
+          <Link href="/labs" className="mt-4 inline-flex text-sm text-cream/80 hover:text-cobalt-soft">
+            Labs ↗
+          </Link>
         </div>
 
         <div>

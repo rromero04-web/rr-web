@@ -23,12 +23,14 @@ export function LanguageSwitcher({
       )}
     >
       {LOCALES.map((loc, index) => {
-        const href = localizePath(pathname, loc);
+        const isLabs = pathname === "/labs";
+        const href = isLabs && loc === "en" ? "/en" : localizePath(pathname, loc);
         const isActive = loc === locale;
         return (
           <Link
             key={loc}
             href={href}
+            aria-label={isLabs && loc === "en" ? "English homepage" : undefined}
             aria-current={isActive ? "true" : undefined}
             className={cn(
               "px-3 py-2 tracking-wide uppercase transition-colors",

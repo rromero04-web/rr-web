@@ -64,5 +64,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]);
 
-  return [...mirrored, ...aliased];
+  const labs = [
+    {
+      url: `${siteUrl}/labs`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${siteUrl}/labs/convergence`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    },
+  ];
+
+  return [...mirrored, ...aliased, ...labs];
 }
