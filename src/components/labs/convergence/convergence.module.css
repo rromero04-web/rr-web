@@ -68,11 +68,6 @@
 .staticChapter h2 { margin: 18px 0; font-size: clamp(52px, 8vw, 110px); letter-spacing: -.06em; }
 .staticChapter > p { max-width: 540px; font-size: clamp(24px, 3vw, 42px); line-height: 1.15; }
 .staticDiagram { position: absolute; right: 9%; top: 50%; width: min(42vw, 580px); height: 260px; transform: translateY(-50%); border: 1px solid #4a5159; }
-.staticDiagram i { position: absolute; left: 10%; right: 10%; height: 9px; background: #555d66; }
-.staticDiagram i:nth-child(1){top:12%}.staticDiagram i:nth-child(2){top:27%;width:45%}.staticDiagram i:nth-child(3){top:42%;left:28%}.staticDiagram i:nth-child(4){top:57%;width:60%}.staticDiagram i:nth-child(5){top:72%;left:36%}.staticDiagram i:nth-child(6){top:87%;width:34%}
-.staticDiagram[data-phase=attention] i { height: 3px; background: #d5b48c; }
-.staticDiagram[data-phase=form] { background: linear-gradient(90deg,transparent 49.7%,#555d66 50%,transparent 50.3%),linear-gradient(transparent 49.7%,#555d66 50%,transparent 50.3%); background-size: 25% 25%; }
-.staticDiagram[data-phase=behavior] i { left: auto; width: 14px; height: 14px; border-radius: 50%; background: #91aebc; }
 .staticProduct { min-height: 100svh; padding: 12vh clamp(22px, 6vw, 96px) 120px; background: #111419; }
 .staticProduct > p:first-child { font: 550 10px/1 var(--font-geist-mono), monospace; letter-spacing: .17em; }
 .staticProduct > h2 { max-width: 940px; margin: 18px 0 30px; font-size: clamp(45px, 7vw, 104px); line-height: .9; letter-spacing: -.065em; }
@@ -122,3 +117,105 @@
 }
 @media (forced-colors: active) { .staticPage { forced-color-adjust: auto; } }
 @media (prefers-reduced-motion: reduce) { .vignette::after { display: none; } }
+
+/* Art direction: one object, a reserved image area, and a quiet editorial column. */
+.sceneWindow { position: absolute; left: 42%; right: 5%; top: 15%; bottom: 13%; }
+.vignette { background: radial-gradient(ellipse at 72% 49%, transparent 28%, rgb(0 0 0 / 13%) 100%); }
+.vignette::after { display: none; }
+.stage { background: #101315; }
+.toolbar button { background: none; border: 0; border-radius: 0; padding-inline: 10px; }
+.topbar { font-size: 9px; }
+.chapter { width: 36%; top: 46%; }
+.chapter h1 { font-size: clamp(48px, 5.3vw, 86px); letter-spacing: -.075em; }
+.chapter h2 { font-size: clamp(48px, 5.4vw, 84px); }
+.chapter[data-phase=convergence] h2 { font-size: clamp(38px, 4.1vw, 66px); }
+.statement { max-width: 350px; font-size: clamp(21px, 2vw, 30px); line-height: 1.3; color: #aeb1ad; }
+.lede { color: #aeb1ad; }
+.chapter[data-phase=product] { top: 21%; transform: none; }
+.chapter .finalTitle { font-size: clamp(34px, 3.6vw, 58px); line-height: .98; }
+.chapter[data-phase=product] .lede { margin-top: 18px; font-size: 14px; }
+.productPanel { left: 5vw; right: auto; bottom: 10%; width: min(360px, 32vw); padding: 0; background: none; backdrop-filter: none; box-shadow: none; border: 0; border-top: 1px solid #4c514d; }
+.productHead { padding: 16px 0; color: #babbb2; }
+.orderControl { border: 0; border-bottom: 1px solid #444a46; gap: 18px; }
+.orderControl button { text-align: left; min-height: 34px; color: #929990; }
+.orderControl button[data-active=true] { background: none; color: #f2f0e9; box-shadow: inset 0 -2px #df8c47; }
+.signalList { gap: 0 12px; }
+.signalList button { border: 0; border-bottom: 1px solid #343c36; background: none; padding-left: 0; min-height: 36px; }
+.signalList button[data-selected=true] { border-color: #df8c47; }
+.signalList button[data-selected=true] i { background: #df8c47; box-shadow: none; }
+.signalList button[data-routed=true] i { background: #df8c47; }
+.productActions button { border-color: #51584f; }
+.productActions button:first-child { background: #c6c6b8; }
+.behaviorTrigger { bottom: 20%; background: none; border-color: #5d665c; }
+.staticProduct .productPanel { padding: 0; }
+@media (max-width: 820px) {
+ .sceneWindow { left: 4%; right: 4%; top: 29%; bottom: 16%; }
+ .chapter { top: 112px; width: auto; }
+ .chapter h1 { font-size: clamp(36px, 9.7vw, 66px); }
+ .chapter h2 { font-size: clamp(40px, 10vw, 68px); }
+ .chapter[data-phase=convergence] h2 { font-size: clamp(34px, 9vw, 60px); }
+ .statement { font-size: 21px; line-height: 1.3; max-width: 290px; margin-top: 14px; }
+ .lede { font-size: 13px; }
+ .scrollHint { margin-top: 18px; }
+ .stage[data-phase=prelude] .sceneWindow { top: 36%; }
+ .stage[data-phase=product] .sceneWindow { top: 25%; bottom: 33%; }
+ .chapter[data-phase=product] { top: 105px; }
+ .chapter .finalTitle { font-size: 28px; }
+ .chapter[data-phase=product] .lede { display: none; }
+ .productPanel { left: 22px; right: 22px; width: auto; bottom: 43px; }
+ .productHead { padding: 12px 0; }
+ .signalList { grid-template-columns: 1fr 1fr; }
+ .signalList button { font-size: 10px; text-align: left; padding: 0 16px 0 0; min-height: 34px; }
+ .signalList button span { margin-right: 7px; font-size: 9px; }
+ .behaviorTrigger { bottom: 12%; min-height: 44px; font-size: 12px; }
+ .quality { bottom: 8px; }
+ .toolbar button { padding-inline: 6px; }
+}
+
+.chapter { transition: opacity .12s ease, visibility 0s .12s; }
+.chapter[data-active=true] { transition: opacity .28s ease .14s, transform .6s cubic-bezier(.16,1,.3,1) .14s; }
+@media (max-width: 820px) {
+ .chapterNav { display: flex; flex-direction: row; top: auto; bottom: 8px; right: 18px; transform: none; gap: 0; }
+ .chapterNav button { min-width: 30px; min-height: 34px; justify-content: center; font-size: 9px; }
+ .chapterNav i { display: none; }
+ .chapterNav button[aria-current=step] { box-shadow: inset 0 -1px #df8c47; }
+ .signalList button { min-height: 40px; }
+ .toolbar button:first-child { display: inline-block; min-width: 32px; font-size: 8px; padding: 0 4px; }
+ .topbar { letter-spacing: .03em; }
+ .toolbar button { min-width: 32px; font-size: 8px; }
+}
+@media (min-width: 821px) and (max-height: 760px) {
+ .chapter[data-phase=product] { top: 120px; }
+ .chapter .finalTitle { font-size: 32px; }
+ .chapter[data-phase=product] .lede { display: none; }
+ .productPanel { bottom: 9%; }
+}
+
+.staticDiagram { border: 0; height: min(70vh, 620px); }
+.staticDiagram img,.staticHeroImage img { object-fit: contain; }
+.staticHero { position: relative; background: #101315; }
+.staticHero h1 { font-size: clamp(44px, 5.3vw, 88px); }
+.staticHeroImage { position: absolute; left: 50%; right: 5%; top: 15%; bottom: 15%; }
+.staticChapter { background: #101315; }
+.staticChapter > p { max-width: 38%; }
+@media (max-width: 820px) {
+ .staticHero { min-height: 850px; justify-content: flex-start; padding-top: 90px; }
+ .staticHero h1 { font-size: clamp(34px, 9vw, 64px); }
+ .staticHeroImage { left: 5%; right: 5%; top: 300px; bottom: 40px; }
+ .staticDiagram { height: 400px; bottom: 0; }
+ .staticChapter > p { max-width: 100%; }
+}
+
+/* Reuse the verified 1440x900 frames; crop the reserved scene area with CSS. */
+.staticDiagram,.staticHeroImage,.staticProductImage { overflow: hidden; aspect-ratio: 700 / 648; height: auto; }
+.staticDiagram img,.staticHeroImage img,.staticProductImage img { position: absolute; width: 205.714%; height: 138.889%; max-width: none; left: -86.4%; top: -20.833%; object-fit: fill; }
+.staticHeroImage { top: 50%; bottom: auto; transform: translateY(-50%); }
+.staticProductImage { position: relative; float: right; width: 45%; }
+.staticProduct::after { content: ""; display: block; clear: both; }
+.staticProduct .productPanel { width: 45%; }
+@media (max-width: 820px) {
+ .staticDiagram { height: auto; bottom: 35px; }
+ .staticHeroImage { top: 355px; bottom: auto; transform: none; }
+ .staticProductImage { float: none; width: 100%; margin-block: 24px; }
+ .staticProduct .productPanel { width: 100%; }
+}

@@ -1,440 +1,244 @@
 "use client";
-/* eslint-disable react-hooks/immutability, react-hooks/refs -- R3F owns these mutable scene objects outside React rendering. */
+/* eslint-disable react-hooks/immutability -- R3F mutates its scene graph in the render loop. */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Physics, RigidBody, type RapierRigidBody } from "@react-three/rapier";
-import { Suspense, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { range, type Quality } from "./model";
 
 type SceneProps = {
-  progress: number;
-  paused: boolean;
-  quality: Quality;
-  selected: number | null;
-  routed: number[];
-  pulse: number;
-  onSlow: () => void;
+  progress: number; paused: boolean; quality: Quality; selected: number | null;
+  routed: number[]; pulse: number; onSlow: () => void;
 };
+const INK = "#101315";
+const AMBER = "#df8c47";
 
 export function ConvergenceCanvas(props: SceneProps) {
-  const dpr = props.quality === "high" ? [1, 1.5] : props.quality === "medium" ? [1, 1.25] : [1, 1];
   return (
-    <Canvas
-      aria-hidden="true"
-      dpr={dpr as [number, number]}
-      shadows={props.quality !== "low" ? "basic" : false}
-      gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-      camera={{ position: [0, .35, 10], fov: 35, near: .1, far: 50 }}
-      onCreated={({ gl }) => {
-        gl.setClearColor("#090b0e");
-        gl.outputColorSpace = THREE.SRGBColorSpace;
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1;
-      }}
-      fallback={<div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#a7adb4" }}>Realtime graphics unavailable. Use Reading mode.</div>}
-    >
-      <Suspense fallback={null}>
-        <Scene {...props} />
-      </Suspense>
+    <Canvas aria-hidden="true" dpr={props.quality === "high" ? [1, 1.5] : props.quality === "medium" ? [1, 1.25] : 1}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      camera={{ position: [0, 0, 12], fov: 32, near: .1, far: 50 }}
+      onCreated={({ gl }) => { gl.setClearColor(INK, 0); gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.1; }}
+      fallback={<div>Realtime graphics unavailable. Use Reading mode.</div>}>
+      <Studio />
+      <Director progress={props.progress} />
+      <PerformanceGovernor quality={props.quality} onSlow={props.onSlow} />
+      <Instrument {...props} />
     </Canvas>
   );
 }
 
-function Scene(props: SceneProps) {
-  return (
-    <>
-      <CameraDirector progress={props.progress} paused={props.paused} />
-      <PerformanceGovernor quality={props.quality} onSlow={props.onSlow} />
-      <StudioLights progress={props.progress} quality={props.quality} />
-      <fog attach="fog" args={["#090b0e", 10, 23]} />
-      <AttentionField progress={props.progress} paused={props.paused} quality={props.quality} />
-      <FormAssembly progress={props.progress} paused={props.paused} />
-      <BehaviorNetwork progress={props.progress} pulse={props.pulse} selected={props.selected} />
-      <Physics gravity={[0, 0, 0]} timeStep={1 / 60} paused={props.paused}>
-        <HeroCarriers progress={props.progress} />
-      </Physics>
-      <SignalProduct progress={props.progress} selected={props.selected} routed={props.routed} />
-      <ImpactWave progress={props.progress} />
-      <Ground />
-    </>
-  );
+// A baked studio reflection field: no per-frame shadow maps or screen-space effects.
+function Studio() {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    const generator = new THREE.PMREMGenerator(gl);
+    const room = new RoomEnvironment();
+    const target = generator.fromScene(room, .04);
+    scene.environment = target.texture;
+    scene.environmentIntensity = .65;
+    room.dispose(); generator.dispose();
+    return () => { scene.environment = null; target.dispose(); };
+  }, [gl, scene]);
+  return <><ambientLight intensity={.3} /><directionalLight position={[-3, 5, 5]} intensity={1.8} color="#fff5e5" /><directionalLight position={[4, -1, 2]} intensity={.65} color="#dce0e1" /></>;
+}
+
+function Director({ progress }: { progress: number }) {
+  const { camera, size } = useThree();
+  useFrame((_, delta) => {
+    // The lens holds each shot. Only the handover between chapters changes the angle.
+    const form = range(progress, .25, .3);
+    const convergence = range(progress, .6, .65);
+    const resolution = range(progress, .77, .83);
+    const angle = -.38 + form * .12 - convergence * .1 + resolution * .06;
+    const breath = range(progress, .61, .67) * (1 - range(progress, .78, .83));
+    const distance = Math.max(8.9 + breath * .4, (8 + breath * 2.4) / (size.width / size.height));
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, Math.sin(angle) * distance, 7, delta);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, 2.15 - resolution * .65, 7, delta);
+    camera.position.z = THREE.MathUtils.damp(camera.position.z, Math.cos(angle) * distance, 7, delta);
+    camera.lookAt(0, 0, 0);
+  });
+  return null;
 }
 
 function PerformanceGovernor({ quality, onSlow }: { quality: Quality; onSlow: () => void }) {
-  const sample = useRef({ frames: 0, seconds: 0, changed: false });
+  const sample = useRef({ frames: 0, seconds: 0 });
+  useEffect(() => { sample.current = { frames: 0, seconds: 0 }; }, [quality]);
   useFrame((_, delta) => {
-    if (quality === "low" || sample.current.changed || delta > .2) return;
-    sample.current.frames += 1;
-    sample.current.seconds += delta;
+    if (delta > .2) return;
+    sample.current.frames++; sample.current.seconds += delta;
     if (sample.current.frames >= 180) {
-      const averageMs = sample.current.seconds / sample.current.frames * 1000;
-      if (averageMs > 25) {
-        sample.current.changed = true;
-        onSlow();
-      } else {
-        sample.current.frames = 0;
-        sample.current.seconds = 0;
-      }
+      if (quality !== "low" && sample.current.seconds / sample.current.frames > .025) onSlow();
+      sample.current = { frames: 0, seconds: 0 };
     }
   });
   return null;
 }
 
-function CameraDirector({ progress, paused }: { progress: number; paused: boolean }) {
-  const { camera, size } = useThree();
-  const target = useMemo(() => new THREE.Vector3(), []);
-  const desired = useMemo(() => new THREE.Vector3(), []);
-  const mobile = size.width < 820;
-  useFrame((state, delta) => {
-    const p = progress;
-    const shots = mobile
-      ? [
-          { p: 0, pos: [0, .2, 11.2], look: [0, 0, 0], fov: 40 },
-          { p: .1, pos: [.45, .55, 7.8], look: [.15, -.15, 0], fov: 40 },
-          { p: .3, pos: [.6, 1.1, 7.2], look: [.2, 0, 0], fov: 40 },
-          { p: .48, pos: [.25, .8, 7.6], look: [.15, 0, 0], fov: 40 },
-          { p: .65, pos: [0, .8, 10.6], look: [0, 0, 0], fov: 40 },
-          { p: .83, pos: [.3, 1, 8.2], look: [.25, 0, 0], fov: 40 },
-        ]
-      : [
-          { p: 0, pos: [0, .35, 10], look: [.35, 0, 0], fov: 35 },
-          { p: .1, pos: [1.8, .8, 5.6], look: [.8, .1, 0], fov: 32 },
-          { p: .3, pos: [3.3, 2.1, 5], look: [.55, 0, 0], fov: 30 },
-          { p: .47, pos: [1.1, 1.25, 6], look: [.4, 0, 0], fov: 31 },
-          { p: .64, pos: [0, 1, 11.4], look: [0, 0, 0], fov: 36 },
-          { p: .82, pos: [3.6, 2.2, 7.4], look: [.7, 0, 0], fov: 32 },
-        ];
-    let a = shots[0], b = shots[shots.length - 1];
-    for (let i = 0; i < shots.length - 1; i++) {
-      if (p >= shots[i].p && p <= shots[i + 1].p) { a = shots[i]; b = shots[i + 1]; break; }
-    }
-    const raw = Math.max(0, Math.min(1, (p - a.p) / Math.max(.001, b.p - a.p)));
-    const t = raw * raw * (3 - 2 * raw);
-    desired.set(
-      THREE.MathUtils.lerp(a.pos[0], b.pos[0], t),
-      THREE.MathUtils.lerp(a.pos[1], b.pos[1], t),
-      THREE.MathUtils.lerp(a.pos[2], b.pos[2], t),
-    );
-    const impact = Math.max(0, 1 - Math.abs(p - .748) / .012);
-    desired.x += Math.sin(p * 730) * impact * .025;
-    const follow = paused ? 1 : 1 - Math.exp(-delta * 8);
-    camera.position.lerp(desired, follow);
-    target.set(
-      THREE.MathUtils.lerp(a.look[0], b.look[0], t),
-      THREE.MathUtils.lerp(a.look[1], b.look[1], t),
-      THREE.MathUtils.lerp(a.look[2], b.look[2], t),
-    );
-    camera.lookAt(target);
-    const fov = THREE.MathUtils.lerp(a.fov, b.fov, t);
-    if (camera instanceof THREE.PerspectiveCamera && Math.abs(camera.fov - fov) > .01) {
-      camera.fov = fov;
-      camera.updateProjectionMatrix();
-    }
-    state.gl.toneMappingExposure = 1 + impact * .07;
-  });
-  return null;
+function Plate({ size, position = [0, 0, 0], color = "#555958", metal = .7, rough = .36 }: {
+  size: [number, number, number]; position?: [number, number, number]; color?: string; metal?: number; rough?: number;
+}) {
+  const [w, h, d] = size;
+  const geometry = useMemo(() => new RoundedBoxGeometry(w, h, d, 2, Math.min(.045, d / 3, h / 4)), [w, h, d]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return <mesh geometry={geometry} position={position}><meshStandardMaterial color={color} metalness={metal} roughness={rough} /></mesh>;
 }
 
-function StudioLights({ progress, quality }: { progress: number; quality: Quality }) {
-  const neutral = range(progress, .68, .8);
-  return (
-    <>
-      <ambientLight intensity={.15 + neutral * .09} />
-      <directionalLight
-        castShadow={quality !== "low"}
-        position={[-4, 6, 5]}
-        intensity={3.2 + neutral * .9}
-        color={new THREE.Color("#f3eee4").lerp(new THREE.Color("#ffffff"), neutral)}
-        shadow-mapSize-width={quality === "high" ? 1024 : 512}
-        shadow-mapSize-height={quality === "high" ? 1024 : 512}
-      />
-      <pointLight position={[4, 1.5, 4]} intensity={11} distance={12} color="#8d9aaa" />
-      <pointLight position={[1, 3, -3]} intensity={13} distance={11} color="#c7c2d4" />
-    </>
-  );
-}
-
-const attentionVertex = `
-  attribute vec3 aGrid;
-  attribute float aSeed;
-  uniform float uProgress;
-  uniform float uTime;
-  uniform vec2 uPointer;
-  varying float vAlpha;
-  void main(){
-    float organize = smoothstep(.09,.28,uProgress);
-    float converge = smoothstep(.58,.78,uProgress);
-    vec3 chaos = position;
-    chaos.x += sin(aSeed*31.7 + uTime*.16)*.16;
-    chaos.y += cos(aSeed*17.1 + uTime*.12)*.11;
-    vec3 p = mix(chaos,aGrid,organize);
-    vec2 delta = p.xy-uPointer*2.2;
-    float influence = exp(-dot(delta,delta)*1.5)*(1.0-organize);
-    p.xy += normalize(delta+vec2(.001))*influence*.22;
-    p = mix(p, vec3(-1.95 + mod(aSeed*19.0,1.0)*.55, (fract(aSeed*43.0)-.5)*2.25, .1), converge);
-    vec4 mv = modelViewMatrix*vec4(p,1.0);
-    gl_Position=projectionMatrix*mv;
-    gl_PointSize=3.5+fract(aSeed*71.0)*4.0;
-    float intro=mix(.2,1.0,smoothstep(.06,.12,uProgress));
-    float structuredDim=mix(1.0,.18,smoothstep(.24,.46,uProgress));
-    vAlpha=intro*structuredDim*(1.0-smoothstep(.79,.86,uProgress))*(.35+fract(aSeed*7.0)*.65);
-  }`;
-const attentionFragment = `
-  varying float vAlpha;
-  void main(){
-    vec2 p=abs(gl_PointCoord-.5);
-    float box=1.0-smoothstep(.36,.5,max(p.x*.56,p.y));
-    if(box<.05) discard;
-    gl_FragColor=vec4(vec3(.88,.85,.79),vAlpha*box);
-  }`;
-
-function AttentionField({ progress, paused, quality }: { progress: number; paused: boolean; quality: Quality }) {
-  const material = useRef<THREE.ShaderMaterial>(null);
-  const count = quality === "high" ? 4200 : quality === "medium" ? 2600 : 1200;
-  const mobile = useThree((state) => state.size.width < 820);
-  const data = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    const grids = new Float32Array(count * 3);
-    const seeds = new Float32Array(count);
-    let seed = 1001;
-    const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-    for (let i = 0; i < count; i++) {
-      const x = random(), y = random(), z = random();
-      positions.set([(x - .5) * 4.6, (y - .5) * 2.7, (z - .5) * 1.2], i * 3);
-      const col = i % 12, row = Math.floor(i / 12) % 7;
-      grids.set([-2.8 + col * .48, -1.45 + row * .44, (random() - .5) * .28], i * 3);
-      seeds[i] = random();
-    }
-    return { positions, grids, seeds };
-  }, [count]);
-  useFrame((state) => {
-    if (!material.current) return;
-    material.current.uniforms.uProgress.value = progress;
-    if (!paused) material.current.uniforms.uTime.value = state.clock.elapsedTime;
-    material.current.uniforms.uPointer.value.set(state.pointer.x, state.pointer.y);
-  });
-  return (
-    <points position={[mobile ? .3 : 2, mobile ? -.45 : -.05, 0]} frustumCulled={false}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[data.positions, 3]} />
-        <bufferAttribute attach="attributes-aGrid" args={[data.grids, 3]} />
-        <bufferAttribute attach="attributes-aSeed" args={[data.seeds, 1]} />
-      </bufferGeometry>
-      <shaderMaterial
-        ref={material}
-        vertexShader={attentionVertex}
-        fragmentShader={attentionFragment}
-        transparent
-        depthWrite={false}
-        uniforms={{ uProgress: { value: 0 }, uTime: { value: 0 }, uPointer: { value: new THREE.Vector2() } }}
-      />
-    </points>
-  );
-}
-
-function FormAssembly({ progress, paused }: { progress: number; paused: boolean }) {
-  const group = useRef<THREE.Group>(null);
-  const hover = useRef(-1);
-  const visible = range(progress, .25, .33) * (1 - range(progress, .61, .72));
-  useFrame((state, delta) => {
-    if (!group.current) return;
-    group.current.visible = visible > .01;
-    group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, -.16 + state.pointer.x * .025, 5, delta);
-    group.current.position.y = THREE.MathUtils.damp(group.current.position.y, state.pointer.y * .03, 5, delta);
-    group.current.children.forEach((child, index) => {
-      const target = !paused && index === hover.current ? .13 : 0;
-      child.position.z = THREE.MathUtils.damp(child.position.z, target, 7, delta);
-    });
-  });
-  return (
-    <group ref={group} position={[1.2, 0, -.4]}>
-      {Array.from({ length: 24 }, (_, index) => {
-        const col = index % 6, row = Math.floor(index / 6);
-        const strong = col < 3;
-        return (
-          <mesh key={index} position={[-1.5 + col * .6, -.9 + row * .6, 0]} onPointerOver={() => { hover.current = index; }} onPointerOut={() => { hover.current = -1; }} castShadow receiveShadow>
-            <boxGeometry args={[strong ? .46 : .32, .08, .2]} />
-            <meshStandardMaterial color={strong ? "#555a62" : "#30353b"} metalness={.5} roughness={.48} transparent opacity={visible} />
-          </mesh>
-        );
-      })}
-      {[0, 1, 2].map((index) => (
-        <mesh key={`plane-${index}`} position={[-.95 + index * 1.15, 0, -.18]}>
-          <boxGeometry args={[.01, 2.7 - index * .34, .02]} />
-          <meshStandardMaterial color="#aaa0c6" emissive="#494358" emissiveIntensity={.25} transparent opacity={visible * .55} />
-        </mesh>
-      ))}
-      <mesh position={[0, 0, -.33]} receiveShadow>
-        <boxGeometry args={[4.1, 2.8, .08]} />
-        <meshStandardMaterial color="#171b20" metalness={.38} roughness={.68} transparent opacity={visible * .78} />
-      </mesh>
-    </group>
-  );
-}
-
-const nodes = [
-  [-1.7, .5], [-.95, -.45], [-.25, .65], [.55, -.25], [1.35, .55], [2, -.35],
-] as const;
-const links: [number, number][] = [[0,1],[1,2],[2,3],[3,4],[4,5],[1,3]];
-
-function BehaviorNetwork({ progress, pulse, selected }: { progress: number; pulse: number; selected: number | null }) {
+function Instrument(props: SceneProps) {
   const root = useRef<THREE.Group>(null);
-  const visible = range(progress, .43, .51) * (1 - range(progress, .63, .72));
-  useFrame((state) => {
-    if (!root.current) return;
-    root.current.visible = visible > .01;
-    root.current.children.forEach((child, index) => {
-      if (!(child instanceof THREE.Mesh) || !Array.isArray(child.material)) {
-        const mat = child instanceof THREE.Mesh ? child.material as THREE.MeshStandardMaterial : null;
-        if (mat?.emissive) {
-          const active = (state.clock.elapsedTime * 2.1 + index + pulse) % 6 < 1 || selected === index + 1;
-          mat.emissiveIntensity = THREE.MathUtils.lerp(mat.emissiveIntensity, active ? 2.2 : .18, .1);
-        }
-      }
-    });
-  });
-  return (
-    <group ref={root} position={[1.5, 0, 0]}>
-      {links.map(([from, to], index) => {
-        const a = nodes[from], b = nodes[to];
-        const dx = b[0] - a[0], dy = b[1] - a[1];
-        return (
-          <mesh key={`line-${index}`} position={[(a[0]+b[0])/2,(a[1]+b[1])/2,-.05]} rotation={[0,0,Math.atan2(dy,dx)]}>
-            <boxGeometry args={[Math.hypot(dx,dy), .018, .018]} />
-            <meshStandardMaterial color="#52616a" emissive="#91aebc" emissiveIntensity={.12} transparent opacity={visible * .8} />
-          </mesh>
-        );
-      })}
-      {nodes.map((node, index) => (
-        <mesh key={`node-${index}`} position={[node[0],node[1],0]} castShadow>
-          <boxGeometry args={[index === 0 || index === 5 ? .42 : .26, .26, .2]} />
-          <meshStandardMaterial color="#333a40" emissive="#91aebc" emissiveIntensity={.18} metalness={.25} roughness={.58} transparent opacity={visible} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-function HeroCarriers({ progress }: { progress: number }) {
-  const refs = [useRef<RapierRigidBody>(null), useRef<RapierRigidBody>(null), useRef<RapierRigidBody>(null)];
-  const released = useRef(false);
-  const mobile = useThree((state) => state.size.width < 820);
-  const starts = mobile
-    ? [[-1.25,.25,.05],[.1,1.15,-.22],[1.2,-.65,.08]]
-    : [[-2.6,.55,.1],[.45,1.7,-.4],[2.3,-.75,.15]];
+  const inlet = useRef<THREE.Group>(null);
+  const organizer = useRef<THREE.Group>(null);
+  const outlet = useRef<THREE.Group>(null);
+  const p = props.progress;
+  const form = range(p, .25, .32);
+  const behavior = range(p, .45, .51);
+  const converge = range(p, .61, .65);
+  const anticipate = range(p, .665, .7);
+  // Slow approach, a held breath, then a short, weighted seating movement.
+  const close = range(p, .722, .758);
+  const settle = Math.sin(range(p, .758, .793) * Math.PI * 2) * (1 - range(p, .758, .793)) * .035;
+  const resolved = range(p, .78, .82);
   useFrame((_, delta) => {
-    const bodies = refs.map((ref) => ref.current).filter(Boolean) as RapierRigidBody[];
-    if (bodies.length !== 3) return;
-    if (progress < .695) {
-      released.current = false;
-      const orbit = range(progress, .63, .695);
-      bodies.forEach((body, index) => {
-        body.setBodyType(2, true);
-        const start = starts[index];
-        body.setNextKinematicTranslation({ x: start[0] * (1 - orbit * .16), y: start[1] * (1 - orbit * .12), z: start[2] });
-        body.setNextKinematicRotation({ x: 0, y: Math.sin(orbit * Math.PI) * .12 * (index - 1), z: (index - 1) * .07 * orbit, w: 1 });
-        body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-      });
-    } else if (progress < .805) {
-      if (!released.current) {
-        released.current = true;
-        bodies.forEach((body, index) => {
-          body.setBodyType(0, true);
-          const t = body.translation();
-          body.setLinvel({ x: -t.x * (1.4 + index * .08), y: -t.y * 1.4, z: -t.z }, true);
-          body.setAngvel({ x: .15 * index, y: (index - 1) * .45, z: (1 - index) * .18 }, true);
-        });
-      }
-      bodies.forEach((body) => {
-        const t = body.translation(), v = body.linvel();
-        const scale = Math.min(delta, .033);
-        body.applyImpulse({ x: (-t.x * 4.8 - v.x * 1.8) * scale, y: (-t.y * 4.8 - v.y * 1.8) * scale, z: (-t.z * 4 - v.z * 1.6) * scale }, true);
-      });
-    }
+    if (!root.current || !inlet.current || !organizer.current || !outlet.current) return;
+    const reveal = range(p, .035, .12);
+    root.current.position.x = THREE.MathUtils.damp(root.current.position.x, (2.4 - reveal * .4) * (1 - form), 8, delta);
+    root.current.scale.setScalar(THREE.MathUtils.damp(root.current.scale.x, 1 + (1 - reveal) * .42, 8, delta));
+    root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, -.08 + resolved * .04, 8, delta);
+    root.current.rotation.z = THREE.MathUtils.damp(root.current.rotation.z, -.14 * (1 - form) - .025 * (1 - resolved), 8, delta);
+    inlet.current.position.set(-1.67 - converge * (1 - close) * (.45 + anticipate * .15) - settle, 0, .02);
+    organizer.current.position.set(0, converge * (1 - close) * (.58 + anticipate * .12) - (1 - form) * 1.6, 0);
+    outlet.current.position.set(1.67 + converge * (1 - close) * (.45 + anticipate * .15) + settle, -converge * (1 - close) * .35 - (1 - behavior) * 1.2, .02);
+    inlet.current.rotation.y = converge * (1 - close) * -.15;
+    outlet.current.rotation.y = converge * (1 - close) * .18;
+    organizer.current.visible = form > .001;
+    outlet.current.visible = behavior > .001;
+
   });
-  const opacity = 1 - range(progress, .79, .84);
   return (
-    <group visible={progress > .6 && progress < .85}>
-      <RigidBody ref={refs[0]} type="kinematicPosition" colliders="cuboid" restitution={.04} friction={.7} linearDamping={1.2} angularDamping={1.6} position={starts[0] as [number,number,number]}>
-        <group>
-          <mesh castShadow><boxGeometry args={[1.28,1.75,.42]} /><meshStandardMaterial color="#22272c" metalness={.48} roughness={.48} transparent opacity={opacity} /></mesh>
-          <mesh position={[.43,0,.25]}><boxGeometry args={[.14,1.32,.09]} /><meshStandardMaterial color="#d5b48c" emissive="#5c432a" emissiveIntensity={.4} transparent opacity={opacity} /></mesh>
-        </group>
-      </RigidBody>
-      <RigidBody ref={refs[1]} type="kinematicPosition" colliders="cuboid" restitution={.04} friction={.7} linearDamping={1.2} angularDamping={1.6} position={starts[1] as [number,number,number]}>
-        <group>
-          <mesh castShadow><boxGeometry args={[1.55,1.22,.4]} /><meshStandardMaterial color="#292d33" metalness={.52} roughness={.4} transparent opacity={opacity} /></mesh>
-          {[-.38,0,.38].map((y) => <mesh key={y} position={[0,y,.24]}><boxGeometry args={[1.1,.08,.07]} /><meshStandardMaterial color="#aaa0c6" transparent opacity={opacity*.8} /></mesh>)}
-        </group>
-      </RigidBody>
-      <RigidBody ref={refs[2]} type="kinematicPosition" colliders="cuboid" restitution={.04} friction={.7} linearDamping={1.2} angularDamping={1.6} position={starts[2] as [number,number,number]}>
-        <group>
-          <mesh castShadow><boxGeometry args={[1.12,1.58,.4]} /><meshStandardMaterial color="#1d2328" metalness={.42} roughness={.55} transparent opacity={opacity} /></mesh>
-          {[-.42,0,.42].map((y) => <mesh key={y} position={[.25,y,.24]}><boxGeometry args={[.22,.12,.08]} /><meshStandardMaterial color="#91aebc" emissive="#3c5662" emissiveIntensity={.55} transparent opacity={opacity} /></mesh>)}
-        </group>
-      </RigidBody>
+    <group ref={root}>
+      <SignalStream {...props} />
+      <group ref={inlet} position={[-1.67, 0, .02]}>
+        <Plate size={[.48, 2.66, .45]} color="#817b70" metal={.82} rough={.32} />
+        <Plate size={[.28, 2.35, .05]} position={[0, 0, .25]} color="#202422" rough={.67} metal={.15} />
+        <mesh position={[0, 0, .285]}><boxGeometry args={[.035, 2.02, .015]} /><meshStandardMaterial color={AMBER} emissive={AMBER} emissiveIntensity={.6} /></mesh>
+        {[-1.18, 1.18].map(y => <Fastener key={y} position={[0, y, .255]} />)}
+      </group>
+      <group ref={organizer}>
+        <Plate size={[2.78, 2.66, .3]} color="#444a47" rough={.42} />
+        <Inscription text="001   /   SIGNAL COMPOSER" position={[0, 1.12, .201]} />
+        <Inscription text="INPUT     /     STRUCTURE     /     RESPONSE" position={[0, -1.13, .201]} />
+        <Plate size={[2.55, 2.4, .045]} position={[0, 0, .17]} color="#171d1c" metal={.3} rough={.68} />
+        {Array.from({ length: 6 }, (_, i) => <Channel key={i} index={i} {...props} />)}
+        {[-1.24, 1.24].flatMap(x => [-1.19, 1.19].map(y => <Fastener key={`${x}-${y}`} position={[x, y, .19]} />))}
+      </group>
+      <group ref={outlet} position={[1.67, 0, .02]}>
+        <Plate size={[.48, 2.66, .45]} color="#727977" rough={.3} />
+        <Plate size={[.28, 2.35, .05]} position={[0, 0, .25]} color="#171d1c" rough={.67} metal={.15} />
+        {Array.from({ length: 6 }, (_, i) => <OutputIndicator key={i} index={i} done={props.routed.includes(i + 1)} paused={props.paused} />)}
+        {[-1.18, 1.18].map(y => <Fastener key={y} position={[0, y, .255]} />)}
+      </group>
     </group>
   );
 }
 
-function SignalProduct({ progress, selected, routed }: { progress: number; selected: number | null; routed: number[] }) {
+function Fastener({ position }: { position: [number, number, number] }) {
+  return <group position={position}><mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.037, .037, .014, 12]} /><meshStandardMaterial color="#afb0a5" metalness={.85} roughness={.27} /></mesh><mesh position={[0, 0, .009]} rotation={[0, 0, -.5]}><boxGeometry args={[.038, .007, .003]} /><meshBasicMaterial color="#242826" /></mesh></group>;
+}
+
+function Channel({ index, progress, selected, routed, pulse, paused }: SceneProps & { index: number }) {
   const root = useRef<THREE.Group>(null);
-  const appear = range(progress, .8, .88);
-  useFrame((state, delta) => {
-    if (!root.current) return;
-    root.current.visible = appear > .001;
-    root.current.scale.setScalar(THREE.MathUtils.damp(root.current.scale.x, .82 + appear * .18, 8, delta));
-    root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, -.1 + state.pointer.x * .025, 4, delta);
-    root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, .04 - state.pointer.y * .018, 4, delta);
+  const marker = useRef<THREE.Mesh>(null);
+  const time = useRef(0);
+  const previousPulse = useRef(pulse);
+  const burst = useRef(-10);
+  const wasBehavior = useRef(false);
+  const wasDone = useRef(false);
+  const active = selected === index + 1;
+  const done = routed.includes(index + 1);
+  useFrame((_, delta) => {
+    if (!root.current || !marker.current) return;
+    if (!paused) time.current += Math.min(delta, .05);
+    if (pulse !== previousPulse.current) { previousPulse.current = pulse; burst.current = time.current; }
+    const organize = range(progress, .26 + index * .005, .325 + index * .005);
+    const seating = range(progress, .755, .8);
+    root.current.position.z = THREE.MathUtils.damp(root.current.position.z, .23 + (1 - organize) * (.3 + index * .1) + (active ? .09 : 0), 12, delta);
+    const inBehavior = progress >= .46 && progress < .64;
+    if (inBehavior && !wasBehavior.current) burst.current = time.current;
+    wasBehavior.current = inBehavior;
+    if (done && !wasDone.current) burst.current = time.current;
+    wasDone.current = done;
+    const elapsed = time.current - burst.current - (inBehavior ? index * .085 : 0);
+    const play = elapsed >= 0 && elapsed < 1.35;
+    const behavior = progress >= .46 && progress < .64;
+    marker.current.visible = done || active || (behavior && play) || (progress >= .76 && progress < .82);
+    const travel = (behavior || done) && play ? range(elapsed, 0, 1.1) : done ? 1 : progress < .82 ? seating : .06;
+    marker.current.position.x = -1.05 + travel * 2.1;
   });
-  return (
-    <group ref={root} position={[1.35, .25, 0]}>
-      <mesh castShadow receiveShadow><boxGeometry args={[4.8,2.9,.22]} /><meshStandardMaterial color="#171b20" metalness={.55} roughness={.44} transparent opacity={appear} /></mesh>
-      <mesh position={[-2.12,0,.24]} castShadow><boxGeometry args={[.46,2.42,.34]} /><meshStandardMaterial color="#262c31" metalness={.48} roughness={.5} transparent opacity={appear} /></mesh>
-      <mesh position={[-1.78,0,.43]}><boxGeometry args={[.05,2.04,.05]} /><meshStandardMaterial color="#d5b48c" emissive="#d5b48c" emissiveIntensity={.65} transparent opacity={appear} /></mesh>
-      <mesh position={[2.04,0,.24]} castShadow><boxGeometry args={[.55,2.42,.34]} /><meshStandardMaterial color="#22282d" metalness={.42} roughness={.58} transparent opacity={appear} /></mesh>
-      {Array.from({ length: 6 }, (_, index) => {
-        const id = index + 1, active = selected === id, done = routed.includes(id);
-        return (
-          <group key={id} position={[-.35, .94 - index * .37, .25]}>
-            <mesh castShadow position={[done ? .22 : 0, 0, active ? .14 : 0]}>
-              <boxGeometry args={[2.42,.2,.16]} />
-              <meshStandardMaterial color={done ? "#62707a" : active ? "#716a7e" : "#363c42"} metalness={.32} roughness={.55} emissive={active ? "#3d374a" : done ? "#30434b" : "#000000"} emissiveIntensity={active || done ? .8 : 0} transparent opacity={appear} />
-            </mesh>
-            <mesh position={[-1.03,0,.14]}><boxGeometry args={[.08,.08,.06]} /><meshStandardMaterial color={active ? "#d7cde9" : done ? "#91aebc" : "#5f666d"} emissive={active ? "#aaa0c6" : done ? "#91aebc" : "#000000"} emissiveIntensity={active || done ? 1.6 : 0} transparent opacity={appear} /></mesh>
-          </group>
-        );
-      })}
-      <mesh position={[1.72,-.72,.44]}><boxGeometry args={[.28,.28,.08]} /><meshStandardMaterial color="#91aebc" emissive="#91aebc" emissiveIntensity={routed.length ? 1.5 : .15} transparent opacity={appear} /></mesh>
-      <mesh position={[0,1.25,.18]}><boxGeometry args={[3.5,.03,.05]} /><meshStandardMaterial color="#626a72" transparent opacity={appear*.6} /></mesh>
-    </group>
-  );
+  return <group ref={root} position={[0, .875 - index * .35, .23]}>
+    <Plate size={[2.26, .255, .065]} color={active ? "#a29b87" : "#565e58"} metal={.78} rough={active ? .28 : .4} />
+    <mesh position={[0, 0, .041]}><boxGeometry args={[2.08, .035, .01]} /><meshStandardMaterial color="#151b19" metalness={.2} roughness={.8} /></mesh>
+    <mesh ref={marker} position={[-1, 0, .059]}><boxGeometry args={[.14, .034, .022]} /><meshStandardMaterial color={AMBER} emissive={AMBER} emissiveIntensity={.8} /></mesh>
+  </group>;
 }
 
-function ImpactWave({ progress }: { progress: number }) {
-  const material = useRef<THREE.MeshBasicMaterial>(null);
-  const group = useRef<THREE.Group>(null);
-  const strength = Math.max(0, 1 - Math.abs(progress - .748) / .018);
-  useFrame(() => {
-    if (!material.current || !group.current) return;
-    material.current.opacity = strength * .45;
-    group.current.scale.setScalar(.6 + (1 - strength) * 3.2);
-    group.current.visible = strength > .01;
-  });
-  return (
-    <group ref={group} rotation={[Math.PI/2,0,0]}>
-      <mesh><ringGeometry args={[.94, .97, 96]} /><meshBasicMaterial ref={material} color="#f2f0e9" transparent depthWrite={false} blending={THREE.AdditiveBlending} /></mesh>
-    </group>
-  );
+const streamVertex = `
+attribute float aSeed;
+uniform float uTime; uniform float uProgress; uniform vec2 uPointer;
+varying float vAlpha;
+void main(){
+ float focus=smoothstep(.09,.23,uProgress);
+ float leave=1.-smoothstep(.28,.35,uProgress);
+ float phase=fract(aSeed+uTime*.045);
+ float x=mix(-3.7,-1.7,phase);
+ float y=position.y*mix(1.0,.2,focus*phase);
+ float influence=exp(-pow(y-uPointer.y*1.8,2.)*5.0);
+ y*=1.0-influence*.12;
+ vec3 p=vec3(x,y,position.z*.4);
+ gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);
+ gl_PointSize=1.8+fract(aSeed*71.)*1.6;
+ vAlpha=sin(phase*3.14159)*leave*(.55+focus*.4);
+}`;
+const streamFragment = `varying float vAlpha; void main(){vec2 p=abs(gl_PointCoord-.5); float a=1.-smoothstep(.32,.5,max(p.x,p.y)); gl_FragColor=vec4(.88,.7,.48,a*vAlpha);}`;
+function SignalStream({ progress, paused, quality }: SceneProps) {
+  const ref = useRef<THREE.ShaderMaterial>(null);
+  const count = quality === "low" ? 100 : quality === "medium" ? 180 : 260;
+  const data = useMemo(() => {
+    const positions = new Float32Array(count * 3), seeds = new Float32Array(count);
+    for (let i = 0; i < count; i++) { const n = Math.sin(i * 127.1 + 13) * 43758.5453; const seed = n - Math.floor(n); positions.set([0, (seed - .5) * 3.6, Math.sin(i * 4.7)], i * 3); seeds[i] = i / count; }
+    return { positions, seeds };
+  }, [count]);
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uProgress: { value: 0 }, uPointer: { value: new THREE.Vector2() } }), []);
+  useFrame((state, delta) => { if (!ref.current) return; const u = ref.current.uniforms; if (!paused) u.uTime.value += Math.min(delta, .05); u.uProgress.value = progress; u.uPointer.value.lerp(state.pointer, .05); });
+  return <points visible={progress < .35} frustumCulled={false}><bufferGeometry><bufferAttribute attach="attributes-position" args={[data.positions, 3]} /><bufferAttribute attach="attributes-aSeed" args={[data.seeds, 1]} /></bufferGeometry><shaderMaterial ref={ref} vertexShader={streamVertex} fragmentShader={streamFragment} uniforms={uniforms} transparent depthWrite={false} /></points>;
 }
 
-function Ground() {
-  return (
-    <mesh position={[1,-1.72,-.3]} rotation={[-Math.PI/2,0,0]} receiveShadow>
-      <planeGeometry args={[14,10]} />
-      <meshStandardMaterial color="#0b0d10" metalness={.18} roughness={.76} />
-    </mesh>
-  );
+function Inscription({ text, position }: { text: string; position: [number, number, number] }) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas"); canvas.width = 1024; canvas.height = 64;
+    const ctx = canvas.getContext("2d")!;
+    ctx.clearRect(0, 0, 1024, 64); ctx.fillStyle = "#b3b7aa"; ctx.font = "24px monospace";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, 512, 32);
+    const map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace; return map;
+  }, [text]);
+  useEffect(() => () => texture.dispose(), [texture]);
+  return <mesh position={position}><planeGeometry args={[2.25, .14]} /><meshBasicMaterial map={texture} transparent depthWrite={false} /></mesh>;
+}
+
+function OutputIndicator({ index, done, paused }: { index: number; done: boolean; paused: boolean }) {
+  const material = useRef<THREE.MeshStandardMaterial>(null);
+  const elapsed = useRef(0);
+  const off = useMemo(() => new THREE.Color("#666f67"), []);
+  const on = useMemo(() => new THREE.Color(AMBER), []);
+  useFrame((_, delta) => {
+    if (!done) elapsed.current = 0;
+    else if (!paused) elapsed.current += Math.min(delta, .05);
+    if (!material.current) return;
+    const arrived = range(elapsed.current, 1.05, 1.22);
+    material.current.color.copy(off).lerp(on, arrived);
+    material.current.emissive.copy(on);
+    material.current.emissiveIntensity = arrived * .7;
+  });
+  return <mesh position={[0, .875 - index * .35, .285]}><boxGeometry args={[.105, .06, .025]} /><meshStandardMaterial ref={material} color="#666f67" /></mesh>;
 }

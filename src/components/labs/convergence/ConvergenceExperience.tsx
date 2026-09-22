@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PHASES, SIGNALS, phaseAt, type Quality } from "./model";
 import styles from "./convergence.module.css";
@@ -15,7 +16,6 @@ type Order = "arrival" | "priority";
 
 export function ConvergenceExperience() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const previousProgress = useRef(0);
   const previousAudioProgress = useRef(0);
   const audioRef = useRef<AudioContext | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -35,7 +35,7 @@ export function ConvergenceExperience() {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const forcedColors = window.matchMedia("(forced-colors: active)");
     const coarse = window.matchMedia("(pointer: coarse)").matches;
-    const update = () => setReduced(media.matches);
+    const update = () => setReduced(media.matches || forcedColors.matches);
     const raf = requestAnimationFrame(() => {
       update();
       setQuality(coarse || window.innerWidth < 820 ? "low" : window.devicePixelRatio > 1.5 ? "high" : "medium");
@@ -44,7 +44,8 @@ export function ConvergenceExperience() {
       setMounted(true);
     });
     media.addEventListener("change", update);
-    return () => { cancelAnimationFrame(raf); media.removeEventListener("change", update); };
+    forcedColors.addEventListener("change", update);
+    return () => { cancelAnimationFrame(raf); media.removeEventListener("change", update); forcedColors.removeEventListener("change", update); };
   }, []);
 
   useEffect(() => {
@@ -59,7 +60,6 @@ export function ConvergenceExperience() {
       if (travel <= 0) return;
       const next = Math.max(0, Math.min(1, -rect.top / travel));
       setProgress(next);
-      previousProgress.current = next;
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
@@ -74,15 +74,17 @@ export function ConvergenceExperience() {
 
   useEffect(() => {
     if (!sound || !audioRef.current || paused) return;
-    if (previousAudioProgress.current < .735 && progress >= .735 && progress < .79) {
+    const anticipation = previousAudioProgress.current < .695 && progress >= .695 && progress < .722;
+    const impact = previousAudioProgress.current < .758 && progress >= .758 && progress < .79;
+    if (anticipation || impact) {
       const ctx = audioRef.current;
       const oscillator = ctx.createOscillator();
       const gain = ctx.createGain();
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(82, ctx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(46, ctx.currentTime + .18);
+      oscillator.frequency.setValueAtTime(anticipation ? 48 : 82, ctx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(anticipation ? 58 : 46, ctx.currentTime + .18);
       gain.gain.setValueAtTime(.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(.12, ctx.currentTime + .012);
+      gain.gain.exponentialRampToValueAtTime(anticipation ? .018 : .09, ctx.currentTime + (anticipation ? .08 : .012));
       gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + .2);
       oscillator.connect(gain).connect(ctx.destination);
       oscillator.start();
@@ -108,7 +110,7 @@ export function ConvergenceExperience() {
     if (!track) return;
     const top = window.scrollY + track.getBoundingClientRect().top;
     const travel = track.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: top + travel * start, behavior: "auto" });
+    window.scrollTo({ top: top + travel * (start === 0 ? 0 : start + (start >= .82 ? .08 : .045)), behavior: "auto" });
   }, []);
 
   const displaySignals = useMemo(() => {
@@ -144,7 +146,8 @@ export function ConvergenceExperience() {
     <main className={styles.experience}>
       <a className={styles.skip} href="#chapter-nav">Skip to chapter navigation</a>
       <div ref={trackRef} className={styles.track}>
-        <div className={styles.stage}>
+        <div className={styles.stage} data-phase={phase}>
+          <div className={styles.sceneWindow}>
           <ConvergenceCanvas
             progress={progress}
             paused={paused}
@@ -154,6 +157,7 @@ export function ConvergenceExperience() {
             pulse={pulse}
             onSlow={reduceQuality}
           />
+          </div>
           <div className={styles.vignette} aria-hidden="true" />
 
           <header className={styles.topbar}>
@@ -162,7 +166,7 @@ export function ConvergenceExperience() {
             <div className={styles.toolbar}>
               <button onClick={() => setPaused((value) => !value)} aria-pressed={paused}>{paused ? "Resume" : "Pause"}</button>
               <button onClick={toggleSound} aria-pressed={sound}>Sound {sound ? "on" : "off"}</button>
-              <button onClick={() => setReading(true)}>Reading mode</button>
+              <button onClick={() => { window.scrollTo({ top: 0, behavior: "instant" }); setReading(true); }}>Reading mode</button>
             </div>
           </header>
 
@@ -172,7 +176,7 @@ export function ConvergenceExperience() {
 
           <div className={styles.chapters} aria-live="off">
             {PHASES.map((item) => (
-              <section key={item.id} className={styles.chapter} data-active={phase === item.id} aria-hidden={phase !== item.id}>
+              <section key={item.id} className={styles.chapter} data-phase={item.id} data-active={phase === item.id} aria-hidden={phase !== item.id}>
                 {item.id === "prelude" ? (
                   <>
                     <p className={styles.kicker}>THREE DISCIPLINES. ONE SYSTEM.</p>
@@ -183,8 +187,8 @@ export function ConvergenceExperience() {
                 ) : item.id === "product" ? (
                   <>
                     <p className={styles.kicker}>CONVERGENCE / LIVE SYSTEM</p>
-                    <h2 className={styles.finalTitle}>THE INTERESTING PART<br />HAPPENS BETWEEN DISCIPLINES.</h2>
-                    <p className={styles.lede}>Marketing brings attention.<br />Design gives it form.<br />Development makes it real.</p>
+                    <h2 className={styles.finalTitle}>THREE INPUTS.<br />ONE WORKING<br />SYSTEM.</h2>
+                    <p className={styles.lede}>Select a signal. Give it direction.</p>
                   </>
                 ) : (
                   <>
@@ -269,16 +273,17 @@ function StaticExperience(props: {
   return (
     <main className={styles.staticPage}>
       <header className={styles.staticHeader}><Link href="/labs">← Back to Labs</Link><span>RAÚL ROMERO / LAB 001</span>{props.onEnter && <button onClick={props.onEnter}>Enter interactive experience</button>}</header>
-      <section className={styles.staticHero}><p>THREE DISCIPLINES. ONE SYSTEM.</p><h1>CONVERGENCE</h1><span>Strategy × Design × Technology</span></section>
+      <section className={styles.staticHero}><p>THREE DISCIPLINES. ONE SYSTEM.</p><h1>CONVERGENCE</h1><span>Strategy × Design × Technology</span><div className={styles.staticHeroImage} aria-hidden="true"><Image src="/labs/convergence/stills/prelude.png" alt="" width={1440} height={900} sizes="(max-width: 820px) 180vw, 85vw" /></div></section>
       {PHASES.slice(1, 5).map((phase, index) => (
         <section key={phase.id} className={styles.staticChapter}>
           <span>{String(index + 1).padStart(2, "0")} / {phase.id === "attention" ? "MARKETING" : phase.id === "form" ? "DESIGN" : phase.id === "behavior" ? "DEVELOPMENT" : "SYSTEM"}</span>
-          <h2>{phase.label}</h2><p>{phase.line}</p><div className={styles.staticDiagram} data-phase={phase.id} aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
+          <h2>{phase.label}</h2><p>{phase.line}</p><div className={styles.staticDiagram} aria-hidden="true"><Image src={`/labs/convergence/stills/${phase.id}.png`} alt="" width={1440} height={900} sizes="(max-width: 820px) 180vw, 85vw" /></div>
         </section>
       ))}
       <section className={styles.staticProduct}>
-        <p>THE INTERESTING PART</p><h2>HAPPENS BETWEEN DISCIPLINES.</h2>
+        <p>CONVERGENCE / LIVE SYSTEM</p><h2>THREE INPUTS. ONE WORKING SYSTEM.</h2>
         <p>Marketing brings attention.<br />Design gives it form.<br />Development makes it real.</p>
+        <div className={styles.staticProductImage} aria-hidden="true"><Image src="/labs/convergence/stills/product.png" alt="" width={1440} height={900} sizes="(max-width: 820px) 180vw, 85vw" /></div>
         <ProductPanel {...props} />
       </section>
     </main>

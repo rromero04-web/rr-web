@@ -1,3 +1,5 @@
+> Historical planning document. The implemented art direction and current validation are recorded in [ART-DIRECTION-REVIEW.md](./ART-DIRECTION-REVIEW.md). That review supersedes the simulation, camera, material, particle and composition proposals below.
+
 # CONVERGENCE — LAB 001
 
 Production blueprint · 22 September 2026 · planning only
