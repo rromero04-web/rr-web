@@ -219,3 +219,73 @@
  .staticProductImage { float: none; width: 100%; margin-block: 24px; }
  .staticProduct .productPanel { width: 100%; }
 }
+
+/* Cinematic stage: the world occupies the full viewport; the copy has its own light. */
+.stage { background: #080b11; }
+.stage[data-phase=attention] { background: radial-gradient(ellipse at 69% 45%, #261712 0%, #0b0c10 54%, #08090c 100%); }
+.stage[data-phase=form] { background: radial-gradient(ellipse at 67% 45%, #222033 0%, #0c0d15 58%, #090a0e 100%); }
+.stage[data-phase=behavior] { background: radial-gradient(ellipse at 66% 45%, #112430 0%, #090e15 55%, #080b10 100%); }
+.stage[data-phase=convergence] { background: radial-gradient(ellipse at 56% 45%, #1c202e 0%, #080b11 70%); }
+.stage[data-phase=product] { background: radial-gradient(ellipse at 69% 45%, #283039 0%, #0a0e13 62%); }
+.sceneWindow { inset: 0; }
+.vignette { background: linear-gradient(90deg, #090b10 0%, rgb(9 11 16 / 96%) 12%, rgb(9 11 16 / 66%) 34%, transparent 59%), linear-gradient(0deg, rgb(7 9 12 / 52%), transparent 18%, transparent 80%, rgb(7 9 12 / 22%)); }
+.chapter { z-index: 2; width: min(38vw, 550px); top: 48%; }
+.chapter h2 { font-size: clamp(60px, 6.2vw, 108px); }
+.chapter[data-phase=convergence] h2 { font-size: clamp(50px, 5.1vw, 86px); }
+.statement { font-size: clamp(23px, 2.2vw, 34px); color: #e1ded8; }
+.stage[data-phase=attention] .kicker { color: #e3b687; }
+.stage[data-phase=form] .kicker { color: #c9bce7; }
+.stage[data-phase=behavior] .kicker { color: #a8d6e4; }
+.stage[data-phase=convergence] .kicker { color: #ebd8cd; }
+.stage[data-phase=product] .kicker { color: #e8c8a0; }
+.chapter[data-phase=product] { top: 21%; }
+.chapter[data-phase=convergence] { top: 25%; width: min(42vw, 580px); }
+.chapter[data-phase=convergence] h2 { font-size: clamp(46px, 4.8vw, 76px); }
+.chapter[data-phase=convergence] .statement { margin-top: 15px; font-size: clamp(18px, 1.6vw, 24px); }
+.productPanel { background: rgb(8 11 15 / 78%); backdrop-filter: blur(16px); border: 1px solid rgb(230 226 215 / 15%); padding: 14px; width: min(390px, 33vw); bottom: 7%; }
+.productHead { padding-top: 4px; }
+.behaviorTrigger { background: rgb(10 19 25 / 76%); backdrop-filter: blur(12px); }
+@media (max-width: 820px) {
+  .sceneWindow, .stage[data-phase=prelude] .sceneWindow, .stage[data-phase=product] .sceneWindow { inset: 0; }
+  .vignette { background: linear-gradient(180deg, #090b10 0%, rgb(9 11 16 / 91%) 11%, rgb(9 11 16 / 38%) 32%, transparent 53%, rgb(7 9 12 / 52%) 100%); }
+  .chapter { top: 115px; width: auto; }
+  .chapter h1 { font-size: clamp(36px, 9.7vw, 66px); }
+  .chapter h2 { font-size: clamp(43px, 10vw, 72px); }
+  .chapter[data-phase=convergence] h2 { font-size: clamp(38px, 9vw, 65px); }
+  .statement { font-size: clamp(20px, 5.3vw, 27px); }
+  .chapter[data-phase=product] { top: 106px; }
+  .chapter[data-phase=convergence] { top: 125px; width: auto; }
+  .chapter[data-phase=convergence] h2 { font-size: clamp(38px, 9vw, 65px); }
+  .productPanel { bottom: 45px; width: auto; padding: 10px; }
+  .behaviorTrigger { bottom: 11%; }
+}
+
+/* Reading mode follows the redesigned visual language without running WebGL. */
+.staticHeroImage,.staticDiagram,.staticProductImage { aspect-ratio: 1.12; overflow: visible; }
+.staticHeroImage { left: 52%; right: 7%; width: 41%; }
+.staticDiagram { width: 49%; right: 5%; }
+.staticArt { position: relative; width: 100%; height: 100%; min-height: 360px; overflow: hidden; background: radial-gradient(circle at 50% 50%, #291b1a, #0e1016 68%); }
+.staticArt[data-art=form] { background: radial-gradient(circle, #29263c, #101119 68%); }
+.staticArt[data-art=behavior] { background: radial-gradient(circle, #142938, #0c1119 68%); }
+.staticArt[data-art=convergence] { background: radial-gradient(circle, #242132, #0c1018 70%); }
+.staticArt[data-art=product] { background: radial-gradient(circle, #25323c, #0d1218 70%); }
+.staticParticles { position: absolute; inset: 5%; transform: rotate(-15deg); }
+.staticParticles i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #efb26b; box-shadow: 0 0 7px #e39a52; }
+.staticArt[data-art=convergence] .staticParticles { inset: 4% 50% 15% 0; }
+.staticGrid { position: absolute; inset: 12%; transform: perspective(700px) rotateY(-20deg) rotateZ(-6deg); background: repeating-linear-gradient(0deg, transparent 0 29px, rgb(219 200 249 / 24%) 30px 31px), repeating-linear-gradient(90deg, transparent 0 39px, rgb(219 200 249 / 25%) 40px 41px); border: 1px solid #c8b7e2; box-shadow: 18px 17px 0 -1px rgb(134 114 172 / 18%), 35px 31px 0 -1px rgb(134 114 172 / 10%); }
+.staticGrid b,.staticGrid em { position: absolute; color: #e1d2f4; font: 10px/1.2 var(--font-geist-mono), monospace; font-style: normal; letter-spacing: .1em; }
+.staticGrid b { top: 16px; left: 18px; }.staticGrid em { bottom: 16px; right: 18px; }
+.staticRoutes { position: absolute; inset: 8%; width: 84%; height: 84%; filter: drop-shadow(0 0 7px rgb(146 221 243 / 20%)); }
+.staticArt[data-art=convergence] .staticGrid { inset: 20% 39% 20% 34%; transform: rotate(-20deg); }
+.staticArt[data-art=convergence] .staticGrid b,.staticArt[data-art=convergence] .staticGrid em { display: none; }
+.staticArt[data-art=convergence] .staticRoutes { inset: 16% 0 16% 65%; width: 37%; height: 68%; }
+.staticSculpture { position: absolute; inset: 10%; }
+.staticOrbit { position: absolute; left: 12%; top: 10%; width: 65%; aspect-ratio: 1; border: 5px solid #c5c0b7; border-radius: 50%; box-shadow: 0 0 0 25px rgb(177 193 210 / 6%), inset 0 0 0 18px rgb(177 193 210 / 10%); transform: rotateY(17deg); }
+.staticInlet { position: absolute; left: 0; top: 28%; width: 28%; aspect-ratio: 1; border: 1px solid #e9ae71; border-radius: 50%; box-shadow: 0 0 18px rgb(236 169 94 / 18%); }
+.staticSculpture i { position: absolute; left: 48%; width: 52%; height: 8%; background: linear-gradient(90deg, #4b5965, #9aa7b0); transform-origin: left; box-shadow: 3px 5px 0 rgb(4 8 13 / 40%); }
+@media (max-width: 820px) {
+  .staticHeroImage { left: 5%; right: 5%; top: 340px; width: 90%; }
+  .staticDiagram { left: 5%; right: 5%; width: 90%; bottom: 34px; }
+  .staticProductImage { width: 100%; }
+  .staticArt { min-height: 300px; }
+}

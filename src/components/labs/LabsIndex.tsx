@@ -23,7 +23,7 @@ export function LabsIndex() {
           >
             <Image
               src="/labs/convergence/poster.png"
-              alt="Convergence Signal Composer, the completed spatial digital product"
+              alt="Convergence: a warm particle field, precise violet geometry and a responsive blue network merging into one system"
               fill
               priority
               sizes="(max-width: 900px) 100vw, 58vw"

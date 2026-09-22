@@ -2,9 +2,8 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PHASES, SIGNALS, phaseAt, type Quality } from "./model";
+import { PHASES, SIGNALS, phaseAt, type Phase, type Quality } from "./model";
 import styles from "./convergence.module.css";
 
 const ConvergenceCanvas = dynamic(
@@ -273,19 +272,30 @@ function StaticExperience(props: {
   return (
     <main className={styles.staticPage}>
       <header className={styles.staticHeader}><Link href="/labs">← Back to Labs</Link><span>RAÚL ROMERO / LAB 001</span>{props.onEnter && <button onClick={props.onEnter}>Enter interactive experience</button>}</header>
-      <section className={styles.staticHero}><p>THREE DISCIPLINES. ONE SYSTEM.</p><h1>CONVERGENCE</h1><span>Strategy × Design × Technology</span><div className={styles.staticHeroImage} aria-hidden="true"><Image src="/labs/convergence/stills/prelude.png" alt="" width={1440} height={900} sizes="(max-width: 820px) 180vw, 85vw" /></div></section>
+      <section className={styles.staticHero}><p>THREE DISCIPLINES. ONE SYSTEM.</p><h1>CONVERGENCE</h1><span>Strategy × Design × Technology</span><div className={styles.staticHeroImage} aria-hidden="true"><StaticArt phase="attention" /></div></section>
       {PHASES.slice(1, 5).map((phase, index) => (
         <section key={phase.id} className={styles.staticChapter}>
           <span>{String(index + 1).padStart(2, "0")} / {phase.id === "attention" ? "MARKETING" : phase.id === "form" ? "DESIGN" : phase.id === "behavior" ? "DEVELOPMENT" : "SYSTEM"}</span>
-          <h2>{phase.label}</h2><p>{phase.line}</p><div className={styles.staticDiagram} aria-hidden="true"><Image src={`/labs/convergence/stills/${phase.id}.png`} alt="" width={1440} height={900} sizes="(max-width: 820px) 180vw, 85vw" /></div>
+          <h2>{phase.label}</h2><p>{phase.line}</p><div className={styles.staticDiagram} aria-hidden="true"><StaticArt phase={phase.id} /></div>
         </section>
       ))}
       <section className={styles.staticProduct}>
         <p>CONVERGENCE / LIVE SYSTEM</p><h2>THREE INPUTS. ONE WORKING SYSTEM.</h2>
         <p>Marketing brings attention.<br />Design gives it form.<br />Development makes it real.</p>
-        <div className={styles.staticProductImage} aria-hidden="true"><Image src="/labs/convergence/stills/product.png" alt="" width={1440} height={900} sizes="(max-width: 820px) 180vw, 85vw" /></div>
+        <div className={styles.staticProductImage} aria-hidden="true"><StaticArt phase="product" /></div>
         <ProductPanel {...props} />
       </section>
     </main>
   );
+}
+
+function StaticArt({ phase }: { phase: Phase }) {
+  return <div className={styles.staticArt} data-art={phase}>
+    {(phase === "attention" || phase === "convergence") && <div className={styles.staticParticles}>{Array.from({ length: 108 }, (_, i) => <i key={i} style={{ left: `${(Math.sin(i * 127.1) * 43758.5 % 1 + 1) % 1 * 100}%`, top: `${(Math.sin(i * 38.7) * 8321.1 % 1 + 1) % 1 * 100}%`, opacity: .18 + (i % 7) * .1, transform: `scale(${.5 + i % 5 * .27})` }} />)}</div>}
+    {(phase === "form" || phase === "convergence") && <div className={styles.staticGrid}><b>01 / HIERARCHY</b><em>INFORMATION HAS SHAPE</em></div>}
+    {(phase === "behavior" || phase === "convergence") && <svg className={styles.staticRoutes} viewBox="0 0 600 480" fill="none" aria-hidden="true">
+      {Array.from({ length: 7 }, (_, i) => <g key={i}><path d={`M 25 ${55 + i * 60} L 200 ${55 + i * 60} L 255 ${75 + i * 60} L 410 ${75 + i * 60} L 460 ${55 + i * 60} L 575 ${55 + i * 60}`} stroke="#acd8e6" strokeOpacity=".5" strokeWidth="1.3" /><circle cx="255" cy={75 + i * 60} r="5" fill="#b9e7f1" /><circle cx="460" cy={55 + i * 60} r="4" fill="#d8f0f5" /></g>)}
+    </svg>}
+    {phase === "product" && <div className={styles.staticSculpture}><div className={styles.staticOrbit} /><div className={styles.staticInlet} />{Array.from({ length: 6 }, (_, i) => <i key={i} style={{ top: `${18 + i * 11}%`, transform: `rotate(${(i - 3) * 3}deg)` }} />)}</div>}
+  </div>;
 }
