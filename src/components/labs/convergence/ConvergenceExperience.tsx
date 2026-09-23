@@ -29,6 +29,7 @@ export function ConvergenceExperience() {
   const [selected, setSelected] = useState<number | null>(null);
   const [routed, setRouted] = useState<number[]>([]);
   const [pulse, setPulse] = useState(0);
+  const [productReady, setProductReady] = useState(false);
   const phase = phaseAt(progress);
 
   useEffect(() => {
@@ -71,22 +72,29 @@ export function ConvergenceExperience() {
     };
   }, [mounted, reduced, reading]);
 
-  const playCue = useCallback((cue: "alignment" | "anticipation" | "impact") => {
+  const playCue = useCallback((cue: "alignment" | "anticipation" | "escape" | "connection" | "impact" | "formation") => {
     if (!sound || !audioRef.current || paused) return;
-    {
-      const ctx = audioRef.current;
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(cue === "anticipation" ? 48 : cue === "alignment" ? 178 : 82, ctx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(cue === "anticipation" ? 58 : cue === "alignment" ? 126 : 46, ctx.currentTime + .18);
-      gain.gain.setValueAtTime(.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(cue === "anticipation" ? .018 : cue === "alignment" ? .035 : .09, ctx.currentTime + (cue === "anticipation" ? .08 : .012));
-      gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + .2);
-      oscillator.connect(gain).connect(ctx.destination);
-      oscillator.start();
-      oscillator.stop(ctx.currentTime + .21);
-    }
+    const ctx = audioRef.current;
+    const cues = {
+      alignment: { from: 178, to: 126, duration: .2, volume: .028, waveform: "sine" },
+      escape: { from: 83, to: 264, duration: .48, volume: .022, waveform: "triangle" },
+      connection: { from: 288, to: 174, duration: .38, volume: .027, waveform: "sine" },
+      anticipation: { from: 58, to: 43, duration: .42, volume: .015, waveform: "sine" },
+      impact: { from: 82, to: 34, duration: .26, volume: .085, waveform: "sine" },
+      formation: { from: 126, to: 188, duration: 1.05, volume: .018, waveform: "sine" },
+    } as const;
+    const spec = cues[cue];
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = spec.waveform;
+    oscillator.frequency.setValueAtTime(spec.from, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(spec.to, ctx.currentTime + spec.duration);
+    gain.gain.setValueAtTime(.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(spec.volume, ctx.currentTime + (cue === "impact" ? .012 : .065));
+    gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + spec.duration);
+    oscillator.connect(gain).connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + spec.duration + .02);
   }, [sound, paused]);
 
   useEffect(() => () => { void audioRef.current?.close(); }, []);
@@ -153,6 +161,7 @@ export function ConvergenceExperience() {
             pulse={pulse}
             calm={reduced || calmOverride}
             onSlow={reduceQuality}
+            onProductReady={setProductReady}
             onCue={playCue}
           />
           </div>
@@ -174,7 +183,7 @@ export function ConvergenceExperience() {
 
           <div className={styles.chapters} aria-live="off">
             {PHASES.map((item) => (
-              <section key={item.id} className={styles.chapter} data-phase={item.id} data-active={phase === item.id} aria-hidden={phase !== item.id}>
+              <section key={item.id} className={styles.chapter} data-phase={item.id} data-active={phase === item.id && (item.id !== "product" || productReady)} aria-hidden={phase !== item.id || (item.id === "product" && !productReady)}>
                 {item.id === "prelude" ? (
                   <>
                     <p className={styles.kicker}>THREE DISCIPLINES. ONE SYSTEM.</p>
@@ -203,7 +212,7 @@ export function ConvergenceExperience() {
             <button className={styles.behaviorTrigger} onClick={() => setPulse((value) => value + 1)}>Send test signal <span>→</span></button>
           )}
 
-          {phase === "product" && (
+          {phase === "product" && productReady && (
             <ProductPanel
               signals={displaySignals}
               order={order}

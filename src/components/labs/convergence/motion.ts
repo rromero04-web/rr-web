@@ -3,7 +3,7 @@ export type Spring = { value: number; velocity: number };
 // Exact critically damped solution for a fixed target during this frame.
 // Its timing is stable at 30, 60 and 120 fps.
 export function approach(state: Spring, target: number, frequency: number, dt: number) {
-  const step = Math.min(Math.max(dt, 0), .05);
+  const step = Math.min(Math.max(dt, 0), .5);
   const omega = Math.max(.001, frequency);
   const offset = state.value - target;
   const tangent = state.velocity + omega * offset;
@@ -14,7 +14,7 @@ export function approach(state: Spring, target: number, frequency: number, dt: n
 }
 
 export function decay(value: number, target: number, rate: number, dt: number) {
-  return target + (value - target) * Math.exp(-rate * Math.min(Math.max(dt, 0), .05));
+  return target + (value - target) * Math.exp(-rate * Math.min(Math.max(dt, 0), .5));
 }
 
 export function windowed(value: number, start: number, end: number) {
@@ -33,6 +33,8 @@ export type MotionState = {
   time: number;
   impactAge: number;
   impactSerial: number;
+  impactArmed: boolean;
+  stillAge: number;
   previousPlayhead: number;
   pointerX: number;
   pointerY: number;
@@ -48,16 +50,29 @@ export type MotionState = {
   pulseAge: number;
   pulseSerial: number;
   selectedSignal: number | null;
+  heroField: number;
+  heroConnection: number;
+  heroCompression: number;
+  heroStill: number;
+  heroDarkness: number;
+  heroFormation: number;
+  heroSignalX: number;
+  heroSignalY: number;
+  heroSignalZ: number;
+  heroSignalVelocity: number;
 };
 
 export function createMotionState(): MotionState {
   return {
     raw: 0, playhead: { value: 0, velocity: 0 }, rawVelocity: 0, previousRaw: 0,
     direction: 0, scrollEnergy: 0, cameraSpeed: 0, time: 0,
-    impactAge: 20, impactSerial: 0, previousPlayhead: 0,
+    impactAge: 20, impactSerial: 0, impactArmed: true, stillAge: 20, previousPlayhead: 0,
     pointerX: 0, pointerY: 0, pointerVx: 0, pointerVy: 0, pointerWake: 0,
     alignment: 0, previousAlignment: 0, alignmentAge: 20, fieldEnergy: 0,
     previousPointerX: 0, previousPointerY: 0, pulseAge: 20, pulseSerial: 0,
     selectedSignal: null,
+    heroField: 0, heroConnection: 0, heroCompression: 0, heroStill: 0,
+    heroDarkness: 0, heroFormation: 0,
+    heroSignalX: 0, heroSignalY: 0, heroSignalZ: 0, heroSignalVelocity: 0,
   };
 }

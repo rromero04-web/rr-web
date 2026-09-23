@@ -6,15 +6,14 @@ import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { range, type Quality } from "./model";
 import { approach, createMotionState, decay, windowed, type MotionState, type Spring } from "./motion";
+import { HeroSequence } from "./HeroSequence";
 
 type SceneProps = {
   progress: number; paused: boolean; quality: Quality; selected: number | null;
-  routed: number[]; pulse: number; calm: boolean; onSlow: () => void; onCue: (cue: "alignment" | "anticipation" | "impact") => void;
+  routed: number[]; pulse: number; calm: boolean; onSlow: () => void; onProductReady: (ready: boolean) => void;
+  onCue: (cue: "alignment" | "anticipation" | "escape" | "connection" | "impact" | "formation") => void;
 };
 
-const WARM = new THREE.Color("#f4ad58");
-const VIOLET = new THREE.Color("#b9a9e4");
-const COLD = new THREE.Color("#a9dded");
 const clamp = THREE.MathUtils.clamp;
 const ease = (t: number) => t * t * (3 - 2 * t);
 const MotionContext = createContext<MotionState | null>(null);
@@ -38,8 +37,9 @@ function Scene(props: SceneProps) {
   const motion = useMemo(() => createMotionState(), []);
   const { size } = useThree();
   const previousPulse = useRef(props.pulse);
+  const previousFormation = useRef(0);
   useFrame((state, frameDelta) => {
-    const dt = Math.min(frameDelta, .05);
+    const dt = Math.min(frameDelta, .5);
     const inputVelocity = clamp((props.progress - motion.previousRaw) / Math.max(dt, .001), -4, 4);
     motion.previousRaw = props.progress;
     motion.raw = props.progress;
@@ -49,17 +49,33 @@ function Scene(props: SceneProps) {
     const frequency = size.width < 820 ? 21 : 13 + motion.scrollEnergy * 6;
     const previous = motion.playhead.value;
     approach(motion.playhead, props.progress, frequency, dt);
+    if (motion.impactArmed && props.progress > .762 && motion.playhead.value > .76 && motion.stillAge < .36 && motion.direction >= 0) {
+      motion.playhead.value = .76;
+      motion.playhead.velocity = 0;
+    }
     if (Math.abs(props.progress - motion.playhead.value) < .00002 && Math.abs(motion.playhead.velocity) < .0002) {
       motion.playhead.value = props.progress;
       motion.playhead.velocity = 0;
     }
     if (previous < .695 && motion.playhead.value >= .695 && motion.direction >= 0) props.onCue("anticipation");
+    if (previous < .595 && motion.playhead.value >= .595 && motion.direction >= 0) props.onCue("escape");
+    if (previous < .675 && motion.playhead.value >= .675 && motion.direction >= 0) props.onCue("connection");
+    if (previousFormation.current < .55 && motion.heroFormation >= .55 && motion.direction >= 0) props.onCue("formation");
+    previousFormation.current = motion.heroFormation;
     if (motion.previousAlignment < .82 && motion.alignment >= .82 && motion.direction >= 0) {
       motion.alignmentAge = 0;
       props.onCue("alignment");
     }
     motion.previousAlignment = motion.alignment;
-    if (previous < .763 && motion.playhead.value >= .763 && motion.direction >= 0) {
+    if (motion.playhead.value < .72) {
+      motion.impactArmed = true;
+      motion.impactAge = 20;
+      motion.stillAge = 20;
+    } else if (previous < .738 && motion.playhead.value >= .738) {
+      motion.stillAge = 0;
+    }
+    if (motion.playhead.value >= .763 && motion.impactArmed && motion.stillAge >= .28 && motion.direction >= 0) {
+      motion.impactArmed = false;
       motion.impactSerial++;
       motion.impactAge = 0;
       props.onCue("impact");
@@ -75,6 +91,7 @@ function Scene(props: SceneProps) {
       motion.time += dt;
       motion.alignmentAge += dt;
       motion.impactAge += dt;
+      motion.stillAge += dt;
       motion.pulseAge += dt;
     }
     const x = state.pointer.x, y = state.pointer.y;
@@ -96,13 +113,12 @@ function Scene(props: SceneProps) {
     <AttentionField {...props} />
     <FormArchitecture {...props} />
     <BehaviorNetwork {...props} />
-    <Collision {...props} />
-    <SpatialProduct {...props} />
+    <HeroSequence {...props} motion={motion} />
   </MotionContext.Provider>;
 }
 
-// Each hold is a real shot: the camera crosses the field, tracks past the grid,
-// retreats for the three-body reveal and finally approaches the finished object.
+// The camera follows the outgoing signal, discovers the three worlds, then moves
+// inward with the field before it discovers the resolved system.
 const shots = [
   { at: 0, pos: [3.9, .5, 3.4], aim: [1.9, 0, -1.6], fov: 52 },
   { at: .12, pos: [3.5, .1, 2.1], aim: [1.8, 0, -2.1], fov: 62 },
@@ -110,13 +126,14 @@ const shots = [
   { at: .34, pos: [4.2, 1.4, 8.2], aim: [1.5, 0, 0], fov: 40 },
   { at: .44, pos: [2.4, .1, 11.2], aim: [1.6, 0, 0], fov: 40 },
   { at: .55, pos: [4.8, 2.2, 9.8], aim: [1.5, 0, 0], fov: 42 },
-  { at: .635, pos: [2.5, .2, 11], aim: [1.4, 0, 0], fov: 42 },
-  { at: .685, pos: [0, 3.2, 22], aim: [0, 0, 0], fov: 43 },
-  { at: .738, pos: [2.1, 2.8, 20], aim: [0, 0, 0], fov: 43 },
-  { at: .765, pos: [1.1, .7, 15.5], aim: [0, 0, 0], fov: 47 },
-  { at: .805, pos: [0, 0, 18], aim: [0, 0, 0], fov: 42 },
-  { at: .88, pos: [3.6, 1.7, 11], aim: [1.4, 0, 0], fov: 40 },
-  { at: 1, pos: [4.3, 1.2, 10.6], aim: [1.4, 0, 0], fov: 40 },
+  { at: .605, pos: [6.1, .6, 5.5], aim: [5.1, .2, -2], fov: 47 },
+  { at: .655, pos: [2.4, 2.2, 13.8], aim: [1.2, 0, -5.5], fov: 47 },
+  { at: .705, pos: [-1.5, 3.9, 12.8], aim: [.2, 0, -6], fov: 46 },
+  { at: .745, pos: [1.3, 1.6, 10.8], aim: [.35, 0, -6], fov: 42 },
+  { at: .78, pos: [1.5, .8, 10.5], aim: [.35, 0, -6], fov: 42 },
+  { at: .84, pos: [3.4, 1.4, 13.2], aim: [1.3, 0, -2.2], fov: 43 },
+  { at: .92, pos: [4.2, 1.6, 9.8], aim: [1.2, 0, -2.2], fov: 39 },
+  { at: 1, pos: [4.4, 1.25, 9.1], aim: [1.2, 0, -2.2], fov: 39 },
 ] as const;
 function shotValue(index: number, key: "pos" | "aim", axis: number, t: number) {
   const a = shots[index], b = shots[index + 1];
@@ -150,9 +167,21 @@ function Director({ calm }: { calm: boolean }) {
     const mobile = size.width < 820;
     const desired = new THREE.Vector3(...[0, 1, 2].map(axis => shotValue(i, "pos", axis, t)) as [number, number, number]);
     const look = new THREE.Vector3(...[0, 1, 2].map(axis => shotValue(i, "aim", axis, t)) as [number, number, number]);
+    const follow = range(progress, .548, .58) * (1 - range(progress, .625, .66));
+    if (follow > 0) {
+      const signal = new THREE.Vector3(motion.heroSignalX, motion.heroSignalY, motion.heroSignalZ);
+      desired.lerp(signal.clone().add(new THREE.Vector3(1.8, .85, 5.8)), follow * .78);
+      look.lerp(signal, follow * .88);
+    }
+    if (progress > .67 && progress < .79 && !calm) {
+      const orbit = motion.heroField * (1 - motion.heroCompression * .65);
+      desired.x += Math.sin(motion.time * .33) * orbit * .48;
+      desired.y += Math.cos(motion.time * .27) * orbit * .21;
+      desired.z -= motion.heroCompression * 1.2;
+    }
     if (mobile) {
-      desired.z *= progress >= .81 ? 1.85 : progress >= .64 ? 1.55 : 1.38;
-      look.x += progress >= .64 && progress < .81 ? 2 : 0;
+      desired.z *= progress >= .82 ? 1.65 : progress >= .64 ? 1.75 : 1.38;
+      look.x += progress >= .82 ? 1.25 : progress >= .64 ? .55 : 0;
       look.y += .45;
     }
     if (calm) {
@@ -179,12 +208,14 @@ function Director({ calm }: { calm: boolean }) {
     camera.up.set(Math.sin(actualRoll), Math.cos(actualRoll), 0);
     camera.lookAt(lookAt);
     const perspective = camera as THREE.PerspectiveCamera;
-    const fovTarget = THREE.MathUtils.lerp(a.fov, b.fov, ease(t)) * (mobile ? 1.1 : 1) + (calm ? 0 : Math.min(1.8, motion.scrollEnergy * 1.8)) + impact * (calm ? 0 : 1.1);
+    const fovTarget = THREE.MathUtils.lerp(a.fov, b.fov, ease(t)) * (mobile ? 1.1 : 1)
+      + (calm ? 0 : Math.min(1.8, motion.scrollEnergy * 1.8) + Math.min(3.2, motion.heroSignalVelocity * .13) * follow)
+      + impact * (calm ? 0 : 1.1);
     perspective.fov = approach(lens.current, fovTarget, 8.7, delta);
     perspective.updateProjectionMatrix();
     motion.cameraSpeed = decay(motion.cameraSpeed, camera.position.distanceTo(previous.current) / Math.max(delta, .001), 7, delta);
     previous.current.copy(camera.position);
-    gl.toneMappingExposure = 1.25 + impact * (calm ? .18 : .65);
+    gl.toneMappingExposure = (1.25 + impact * (calm ? .12 : .42)) * (1 - motion.heroDarkness * .93);
   });
   return null;
 }
@@ -205,25 +236,17 @@ function PerformanceGovernor({ quality, onSlow }: { quality: Quality; onSlow: ()
 
 const fieldVertex = `
 attribute float aSeed;
-uniform float uTime,uProgress,uSatellite,uStreak,uAlignment;
+uniform float uTime,uProgress,uStreak,uAlignment;
 varying float vAlpha,vHeat,vAlignment;
 void main(){
   vec3 p=position;
-  if(uSatellite>.5){
-    float influence=smoothstep(.65,.73,uProgress);
-    float brake=smoothstep(.727,.744,uProgress)*(1.-smoothstep(.745,.758,uProgress));
-    float a=influence*(1.-brake)*1.5+uTime*.12*(1.-brake);
-    p=vec3(-5.3+p.x*.72,1.1+p.y*.7,p.z*.5);
-    p.xy=mat2(cos(a),-sin(a),sin(a),cos(a))*p.xy;
-    p.xy=mix(p.xy,vec2(3.,0.),smoothstep(.742,.764,uProgress)*.92);
-  }
   vec4 view=modelViewMatrix*vec4(p,1.);
   gl_Position=projectionMatrix*view;
   float perspective=7./max(1.,-view.z);
-  gl_PointSize=clamp((2.1+fract(aSeed*91.)*2.7)*perspective*(1.+uStreak*.32)*(uSatellite>.5?2.1:1.),1.,11.);
+  gl_PointSize=clamp((2.1+fract(aSeed*91.)*2.7)*perspective*(1.+uStreak*.32),1.,11.);
   vHeat=fract(aSeed*43.);
-  vAlignment=uSatellite>.5?0.:uAlignment;
-  vAlpha=(.27+.33*fract(aSeed*23.))*(uSatellite>.5?1.35:1.);
+  vAlignment=uAlignment;
+  vAlpha=(.27+.33*fract(aSeed*23.));
 }`;
 const fieldFragment = `
 varying float vAlpha,vHeat,vAlignment;
@@ -243,7 +266,6 @@ function AttentionField({ progress, quality, paused, calm }: SceneProps) {
   const motion = useMotion();
   const count = quality === "low" ? 1600 : quality === "medium" ? 3000 : 4800;
   const material = useRef<THREE.ShaderMaterial>(null);
-  const satellite = useRef<THREE.ShaderMaterial>(null);
   const release = useRef({ active: false, until: -1 });
   const field = useMemo(() => {
     const positions = new Float32Array(count * 3);
@@ -278,19 +300,12 @@ function AttentionField({ progress, quality, paused, calm }: SceneProps) {
     const position = new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage);
     geometry.setAttribute("position", position);
     geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
-    const satelliteGeometry = new THREE.BufferGeometry();
-    satelliteGeometry.setAttribute("position", new THREE.BufferAttribute(original, 3));
-    satelliteGeometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
-    return { positions, original, targets, velocity, thresholds, seeds, geometry, satelliteGeometry, position };
+    return { positions, original, targets, velocity, thresholds, seeds, geometry, position };
   }, [count]);
-  useEffect(() => () => { field.geometry.dispose(); field.satelliteGeometry.dispose(); }, [field]);
+  useEffect(() => () => field.geometry.dispose(), [field]);
   const uniforms = useMemo(() => ({
-    uTime: { value: 0 }, uProgress: { value: 0 }, uSatellite: { value: 0 },
+    uTime: { value: 0 }, uProgress: { value: 0 },
     uOpacity: { value: 1 }, uStreak: { value: 0 }, uAlignment: { value: 0 },
-  }), []);
-  const satelliteUniforms = useMemo(() => ({
-    uTime: { value: 0 }, uProgress: { value: 0 }, uSatellite: { value: 1 },
-    uOpacity: { value: 0 }, uStreak: { value: 0 }, uAlignment: { value: 0 },
   }), []);
   useFrame((_, frameDelta) => {
     const dt = paused ? 0 : Math.min(frameDelta, .032);
@@ -347,21 +362,12 @@ function AttentionField({ progress, quality, paused, calm }: SceneProps) {
       u.uTime.value = motion.time; u.uProgress.value = p;
       u.uAlignment.value = motion.alignment;
       u.uStreak.value = calm ? 0 : Math.min(1, motion.scrollEnergy * .9 + motion.cameraSpeed * .015);
-      u.uOpacity.value = 1 - range(p, .49, .68) * .85;
-    }
-    if (satellite.current) {
-      const u = satellite.current.uniforms;
-      u.uTime.value = motion.time; u.uProgress.value = p;
-      u.uStreak.value = calm ? 0 : motion.scrollEnergy * .7;
-      u.uOpacity.value = 3.8 * range(p, .61, .69) * (1 - range(p, .79, .87));
+      u.uOpacity.value = 1 - range(p, .49, .7);
     }
   });
   return <>
     <points geometry={field.geometry} frustumCulled={false} visible={progress < .95}>
       <shaderMaterial ref={material} uniforms={uniforms} vertexShader={fieldVertex} fragmentShader={fieldFragment} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-    </points>
-    <points geometry={field.satelliteGeometry} frustumCulled={false} visible={progress > .55 && progress < .89}>
-      <shaderMaterial ref={satellite} uniforms={satelliteUniforms} vertexShader={fieldVertex} fragmentShader={fieldFragment} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
     </points>
   </>;
 }
@@ -475,10 +481,14 @@ function BehaviorNetwork({ progress, paused, calm }: SceneProps) {
       mat.transparent = true;
       mat.opacity = mat.userData.baseOpacity * presence;
     });
-    root.current.position.x = 2.2;
-    root.current.position.z = -.12;
-    root.current.scale.setScalar(.88);
-    root.current.rotation.y = decay(root.current.rotation.y, -.17 + (calm ? 0 : motion.pointerWake * motion.pointerX * .012), 8, delta);
+    const field = motion.heroField;
+    const compression = motion.heroCompression;
+    root.current.position.x = 2.2 - field * 1.25 - compression * 1.1;
+    root.current.position.y = field * .42;
+    root.current.position.z = -.12 - field * 1.9 - compression * 1.8;
+    root.current.scale.setScalar(.88 * (1 - compression * .53));
+    root.current.rotation.y = decay(root.current.rotation.y, -.17 + field * .45 + (calm ? 0 : motion.pointerWake * motion.pointerX * .012), 8, delta);
+    root.current.rotation.z = decay(root.current.rotation.z, field * .17 + compression * .28, 8, delta);
     const activeRoute = event.current.route;
     root.current.traverse((object) => {
       if (!(object instanceof THREE.Mesh) || typeof object.userData.route !== "number") return;
@@ -534,219 +544,5 @@ function BehaviorNetwork({ progress, paused, calm }: SceneProps) {
     </group>)}
     <TypePlane text="INPUT / STATE / RESPONSE" position={[0, -3.3, .5]} width={4.7} color="#bde1ec" />
     </group>
-  </group>;
-}
-function Collision({ progress, paused, calm }: SceneProps) {
-  const motion = useMotion();
-  const { size } = useThree();
-  const root = useRef<THREE.Group>(null);
-  const form = useRef<THREE.Group>(null), behavior = useRef<THREE.Group>(null), ring = useRef<THREE.Mesh>(null);
-  const core = useRef<THREE.Mesh>(null), light = useRef<THREE.PointLight>(null);
-  const shards = useRef<(THREE.Mesh | null)[]>([]);
-  const bodies = useRef([
-    [{ value: -2.8, velocity: 0 }, { value: 2.2, velocity: 0 }, { value: 0, velocity: 0 }],
-    [{ value: 2.1, velocity: 0 }, { value: -2.3, velocity: 0 }, { value: 0, velocity: 0 }],
-  ] as Spring[][]);
-  const seenImpact = useRef(0);
-  const debrisVelocity = useRef(Array.from({ length: 38 }, () => new THREE.Vector3()));
-  useFrame((_, delta) => {
-    if (!root.current || !form.current || !behavior.current || !ring.current || !core.current || !light.current) return;
-    const p = motion.playhead.value;
-    const dt = paused ? 0 : Math.min(delta, .05);
-    const entrance = range(p, .61, .685);
-    const orbit = range(p, .66, .728);
-    const hold = range(p, .724, .739) * (1 - range(p, .743, .751));
-    const compression = range(p, .744, .766);
-    const exit = range(p, .8, .87);
-    const presence = entrance * (1 - exit * .98);
-    root.current.position.x = 3;
-    root.current.scale.setScalar(size.width < 820 ? .62 : 1);
-    const motionBrake = 1 - hold * .93;
-    const angle = orbit * 1.5 + (calm ? 0 : motion.time * .035 * orbit * motionBrake);
-    const radius = 5.5 * (1 - compression * .93);
-    [form.current, behavior.current].forEach((body, index) => {
-      const phase = index === 0 ? 2.1 : -1.2;
-      const targetX = Math.cos(angle + phase) * radius;
-      const targetY = Math.sin(angle + phase) * radius * .47;
-      const frequency = hold > .5 ? 11 : compression > .1 ? 15 : index === 0 ? 5.4 : 6.8;
-      const state = bodies.current[index];
-      body.position.set(approach(state[0], targetX, frequency, dt), approach(state[1], targetY, frequency, dt), -.8);
-      body.rotation.z = approach(state[2], (index === 0 ? 1 : -1) * (angle * .65 + compression * 1.1), 6.5, dt);
-      body.scale.setScalar((index === 0 ? 1.45 : 1.5) * (1 + (motion.impactAge < .3 ? Math.exp(-motion.impactAge * 11) * .045 : 0)));
-    });
-    root.current.traverse((object) => {
-      if (!(object instanceof THREE.Mesh) || object.userData.effect) return;
-      const mat = object.material;
-      if (!(mat instanceof THREE.MeshBasicMaterial)) return;
-      if (mat.userData.baseOpacity === undefined) mat.userData.baseOpacity = mat.opacity;
-      mat.transparent = true;
-      mat.opacity = mat.userData.baseOpacity * presence;
-    });
-    const age = motion.impactAge;
-    if (seenImpact.current !== motion.impactSerial) {
-      seenImpact.current = motion.impactSerial;
-      shards.current.forEach((mesh, i) => {
-        if (!mesh) return;
-        mesh.position.set(0, 0, 0);
-        const a = i * 2.399;
-        const speed = 4.2 + (i % 7) * .55;
-        debrisVelocity.current[i].set(Math.cos(a) * speed, Math.sin(a) * speed, Math.sin(a * 2) * speed * .3);
-      });
-    }
-    const wave = age > .035 && age < .72 ? (age - .035) / .685 : -1;
-    ring.current.scale.setScalar(wave < 0 ? .001 : .4 + wave * (calm ? 6 : 12));
-    (ring.current.material as THREE.MeshBasicMaterial).opacity = wave < 0 ? 0 : (1 - wave) * (1 - wave) * (calm ? .27 : .62);
-    core.current.scale.setScalar(age < .13 ? .05 + Math.sin(Math.min(1, age / .13) * Math.PI) * (calm ? .42 : .72) : .001);
-    (core.current.material as THREE.MeshBasicMaterial).opacity = age < .13 ? Math.sin(Math.min(1, age / .13) * Math.PI) * (calm ? .28 : .8) : 0;
-    light.current.intensity = age < .32 ? Math.exp(-age * 16) * (calm ? 9 : 48) : 0;
-    shards.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const v = debrisVelocity.current[i];
-      const drag = Math.exp(-dt * (3.1 + i % 4 * .22));
-      const move = dt > 0 ? (1 - drag) / (3.1 + i % 4 * .22) : 0;
-      mesh.position.addScaledVector(v, move);
-      v.multiplyScalar(drag);
-      mesh.rotation.x += dt * (i % 2 ? 1.7 : -.9);
-      mesh.rotation.y += dt * (i % 3 ? .8 : -1.2);
-      const fade = age < .12 ? age / .12 : Math.max(0, 1 - (age - .12) / .75);
-      mesh.scale.setScalar(age < .88 ? Math.max(0, fade) * (calm ? .35 : .65) : 0);
-    });
-  });
-  return <group ref={root} visible={progress > .58 && progress < .89}>
-    <group ref={form} scale={1.45}>
-      {Array.from({ length: 6 }, (_, i) => {
-        const w = 1.2 + i * .16, h = 1.75 + i * .13, z = -.7 + i * .25;
-        return <group key={i} rotation={[i * .04, i * .09, i * .025]}>
-          <Segment from={[-w, -h, z]} to={[w, -h, z]} color="#d7c4ef" opacity={.35 + i * .08} radius={.012} />
-          <Segment from={[w, -h, z]} to={[w, h, z]} color="#e2d3f4" opacity={.35 + i * .08} radius={.012} />
-          <Segment from={[w, h, z]} to={[-w, h, z]} color="#d7c4ef" opacity={.35 + i * .08} radius={.012} />
-          <Segment from={[-w, h, z]} to={[-w, -h, z]} color="#e2d3f4" opacity={.35 + i * .08} radius={.012} />
-        </group>;
-      })}
-      <mesh position={[0, 0, .3]} rotation={[0, -.25, 0]}><planeGeometry args={[1.8, 2.4]} /><meshBasicMaterial color="#cbbde8" transparent opacity={.12} side={THREE.DoubleSide} /></mesh>
-      <Segment from={[-2.1, 0, .2]} to={[2.1, 0, .2]} color="#fff3ff" opacity={.83} radius={.019} />
-      <Segment from={[0, -2.25, .2]} to={[0, 2.25, .2]} color="#fff3ff" opacity={.83} radius={.019} />
-    </group>
-    <group ref={behavior} scale={1.5}>
-      {Array.from({ length: 17 }, (_, i) => {
-        const angle = i * 2.399, radius = 1.1 + (i % 4) * .34;
-        const node: [number, number, number] = [Math.cos(angle) * radius, Math.sin(angle) * radius, Math.sin(i * 1.7) * .8];
-        const nextAngle = (i + 5) * 2.399, nextRadius = 1.1 + ((i + 5) % 4) * .34;
-        const next: [number, number, number] = [Math.cos(nextAngle) * nextRadius, Math.sin(nextAngle) * nextRadius, Math.sin((i + 5) * 1.7) * .8];
-        return <group key={i}>
-          <Segment from={node} to={next} color="#9fd9e9" opacity={.48} radius={.013} />
-          <mesh position={node}><octahedronGeometry args={[i % 4 === 0 ? .14 : .075]} /><meshBasicMaterial color={i % 4 === 0 ? "#e0f8ff" : "#87c1d3"} /></mesh>
-        </group>;
-      })}
-      <mesh><icosahedronGeometry args={[.34, 1]} /><meshBasicMaterial color="#bbebf5" wireframe /></mesh>
-    </group>
-    <Segment from={[-6.1, 1.2, -1.5]} to={[-2.4, 1.8, -1.2]} color="#d6a875" opacity={.3} radius={.014} />
-    <Segment from={[-2.3, 1.8, -1.2]} to={[1.8, -.9, -.8]} color="#d7c5ed" opacity={.35} radius={.012} />
-    <mesh ref={ring} userData={{ effect: true }}><ringGeometry args={[.97, 1, 96]} /><meshBasicMaterial color="#fffaf0" transparent opacity={0} side={THREE.DoubleSide} depthWrite={false} /></mesh>
-    <mesh ref={core} userData={{ effect: true }}><sphereGeometry args={[1, 32, 20]} /><meshBasicMaterial color="#fff8e8" transparent opacity={0} depthWrite={false} /></mesh>
-    {Array.from({ length: 38 }, (_, i) => <mesh key={i} userData={{ effect: true }} ref={(element) => { shards.current[i] = element; }}><tetrahedronGeometry args={[.07 + i % 4 * .025]} /><meshBasicMaterial color={i % 3 === 0 ? WARM : i % 3 === 1 ? VIOLET : COLD} transparent opacity={.8} /></mesh>)}
-    <pointLight ref={light} color="#ffffff" intensity={0} distance={18} decay={2} />
-  </group>;
-}
-
-function productRoutePoint(age: number, signal: number) {
-  const index = Math.max(0, Math.min(5, signal - 1));
-  const angle = -.75 + index * .31;
-  const fin = new THREE.Vector3(1.05 + Math.cos(angle) * 1.15, Math.sin(angle) * 2.45, .52 + index * .08);
-  const points = [
-    { at: 0, point: new THREE.Vector3(-2.65, .15, .55) },
-    { at: .29, point: new THREE.Vector3(-.1, 0, .25) },
-    { at: .42, point: new THREE.Vector3(-.1, 0, .25) },
-    { at: .79, point: fin },
-    { at: 1.13, point: new THREE.Vector3(3.05, -2.1 + index * .68, .2) },
-  ];
-  for (let i = 0; i < points.length - 1; i++) {
-    if (age <= points[i + 1].at) {
-      const t = clamp((age - points[i].at) / (points[i + 1].at - points[i].at), 0, 1);
-      return points[i].point.lerp(points[i + 1].point, ease(t));
-    }
-  }
-  return points[points.length - 1].point;
-}
-
-function SpatialProduct({ progress, paused, calm, selected, routed }: SceneProps) {
-  const motion = useMotion();
-  const { size } = useThree();
-  const root = useRef<THREE.Group>(null), stream = useRef<THREE.Group>(null), marker = useRef<THREE.Mesh>(null);
-  const trails = useRef<(THREE.Mesh | null)[]>([]);
-  const fins = useRef<(THREE.Group | null)[]>([]);
-  const hub = useRef<THREE.Mesh>(null), output = useRef<THREE.Mesh>(null);
-  const birth = useRef<Spring>({ value: 0, velocity: 0 });
-  const x = useRef<Spring>({ value: 3, velocity: 0 }), yaw = useRef<Spring>({ value: 1.15, velocity: 0 });
-  const finSprings = useRef(Array.from({ length: 6 }, () => ({ value: 0, velocity: 0 })));
-  useFrame((_, delta) => {
-    if (!root.current || !stream.current || !marker.current || !hub.current || !output.current) return;
-    const p = motion.playhead.value;
-    const entry = range(p, .755, .855);
-    const formed = approach(birth.current, entry, 11, delta);
-    const mobileScale = size.width < 820 ? .68 : .8;
-    root.current.scale.setScalar((.74 + formed * .26) * mobileScale);
-    root.current.position.set(approach(x.current, size.width < 820 ? 2.05 : 2.6, 6.8, delta), -.12, 0);
-    root.current.rotation.y = approach(yaw.current, -.27 + (calm ? 0 : Math.sin(motion.time * .17) * .018), 6.7, delta);
-    stream.current.rotation.z += paused ? 0 : delta * (calm ? .018 : .055);
-    root.current.traverse((object) => {
-      if (!(object instanceof THREE.Mesh) || object.userData.effect) return;
-      const mat = object.material;
-      if (!(mat instanceof THREE.MeshBasicMaterial || mat instanceof THREE.MeshStandardMaterial)) return;
-      if (mat.userData.baseOpacity === undefined) mat.userData.baseOpacity = mat.opacity;
-      mat.transparent = true;
-      mat.opacity = mat.userData.baseOpacity * formed;
-    });
-    fins.current.forEach((fin, i) => {
-      if (!fin) return;
-      const angle = -.75 + i * .31;
-      const baseY = Math.sin(angle) * 2.45;
-      const response = motion.selectedSignal === i + 1 && motion.pulseAge > .45 && motion.pulseAge < 1.05
-        ? Math.sin((motion.pulseAge - .45) / .6 * Math.PI) * .22 : 0;
-      fin.position.y = approach(finSprings.current[i], baseY * (.45 + formed * .55) + response, 13.5, delta);
-      fin.position.z = .28 + i * .08 - (1 - formed) * .85;
-    });
-    const age = motion.pulseAge;
-    const route = motion.selectedSignal ?? selected ?? 1;
-    const markerMesh = marker.current;
-    markerMesh.visible = age < 1.13 && p > .78;
-    if (markerMesh.visible) markerMesh.position.copy(productRoutePoint(age, route));
-    trails.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const lag = (i + 1) * .045;
-      mesh.visible = markerMesh.visible && age > lag;
-      if (mesh.visible) mesh.position.copy(productRoutePoint(age - lag, route));
-    });
-    const hubResponse = age > .22 && age < .52 ? Math.sin((age - .22) / .3 * Math.PI) : 0;
-    (hub.current.material as THREE.MeshStandardMaterial).emissiveIntensity = .08 + Math.max(0, hubResponse) * (calm ? .3 : 1.3);
-    const outputResponse = age > .9 && age < 1.4 ? Math.sin((age - .9) / .5 * Math.PI) : 0;
-    output.current.scale.setScalar(1 + Math.max(0, outputResponse) * .65);
-  });
-  return <group ref={root} visible={progress > .72}>
-    <mesh rotation={[.16, .24, -.18]}><torusGeometry args={[2.45, .075, 12, 96, Math.PI * 1.83]} /><meshStandardMaterial color="#d2ccc2" metalness={.82} roughness={.23} /></mesh>
-    <mesh position={[0, 0, -.2]} rotation={[.1, .26, -.18]}><torusGeometry args={[2.17, .014, 8, 96]} /><meshBasicMaterial color="#918fa4" transparent opacity={.75} /></mesh>
-    <mesh position={[0, 0, -.7]} rotation={[.08, .3, -.18]}><torusGeometry args={[2.72, .012, 8, 96, Math.PI * 1.68]} /><meshBasicMaterial color="#718f9b" transparent opacity={.6} /></mesh>
-    <group ref={stream} position={[-2.6, .15, .35]}>
-      <mesh rotation={[0, .2, 0]}><torusGeometry args={[1.35, .018, 8, 96, Math.PI * 1.6]} /><meshBasicMaterial color="#f1b577" /></mesh>
-      {Array.from({ length: 42 }, (_, i) => <mesh key={i} position={[Math.sin(i * 2.4) * 1.27, Math.cos(i * 2.4) * 1.27, Math.sin(i * 3.2) * .35]}><sphereGeometry args={[.022 + i % 4 * .01, 6, 6]} /><meshBasicMaterial color={i % 3 ? "#e6b483" : "#fff1d3"} /></mesh>)}
-    </group>
-    <mesh ref={marker} userData={{ effect: true }} visible={false}><sphereGeometry args={[.12, 12, 12]} /><meshBasicMaterial color="#fff4de" /></mesh>
-    {Array.from({ length: 3 }, (_, i) => <mesh key={i} userData={{ effect: true }} ref={(element) => { trails.current[i] = element; }} visible={false} scale={1 - i * .18}><sphereGeometry args={[.075, 10, 10]} /><meshBasicMaterial color="#eac694" transparent opacity={.24 - i * .06} depthWrite={false} /></mesh>)}
-    <mesh ref={hub} position={[-.1, 0, -.17]} rotation={[.1, .25, -.18]}><cylinderGeometry args={[.36, .36, .14, 48]} /><meshStandardMaterial color="#efece3" emissive="#f2d0aa" emissiveIntensity={.08} metalness={.42} roughness={.34} /></mesh>
-    <mesh position={[-.1, 0, -.03]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[.25, .025, 8, 48]} /><meshBasicMaterial color="#d4c6e9" /></mesh>
-    <TypePlane text="SIGNAL / COMPOSER" position={[1.5, 2.65, .28]} width={3.5} color="#ede8dd" />
-    {Array.from({ length: 6 }, (_, i) => {
-      const active = selected === i + 1, done = routed.includes(i + 1);
-      const angle = -.75 + i * .31;
-      const x = 1.05 + Math.cos(angle) * 1.15, y = Math.sin(angle) * 2.45;
-      return <group key={i} ref={(element) => { fins.current[i] = element; }} position={[x, y, .28 + i * .08]} rotation={[.09, -.25 + i * .045, angle * .32]}>
-        <mesh><boxGeometry args={[2.85, .31, .12]} /><meshStandardMaterial color={active ? "#c7b8d7" : done ? "#a3c1ca" : "#777f84"} metalness={.64} roughness={.3} /></mesh>
-        <mesh position={[-1.18, 0, .08]}><boxGeometry args={[.22, .05, .025]} /><meshBasicMaterial color={done ? "#f1c98d" : active ? "#fff6ea" : "#202f37"} /></mesh>
-        <mesh position={[1.3, 0, .09]}><sphereGeometry args={[.045, 10, 10]} /><meshBasicMaterial color={done ? "#e5faff" : active ? "#f5c289" : "#303f48"} /></mesh>
-      </group>;
-    })}
-    <Segment from={[3.05, -2.1, .1]} to={[3.05, 2.2, .1]} color="#96dce7" opacity={.65} radius={.016} />
-    <mesh ref={output} position={[3.05, -2.1 + routed.length * .68, .15]}><sphereGeometry args={[.11, 12, 12]} /><meshBasicMaterial color="#bdeef3" /></mesh>
-    <TypePlane text="IN / STRUCTURE / OUT" position={[1.5, -2.65, .15]} width={3.5} color="#a9bac2" />
   </group>;
 }
