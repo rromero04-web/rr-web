@@ -15,10 +15,11 @@ type Order = "arrival" | "priority";
 
 export function ConvergenceExperience() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const previousAudioProgress = useRef(0);
   const audioRef = useRef<AudioContext | null>(null);
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
+  const [calmOverride, setCalmOverride] = useState(false);
+  const [forcedColors, setForcedColors] = useState(false);
   const [reading, setReading] = useState(false);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -34,12 +35,11 @@ export function ConvergenceExperience() {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const forcedColors = window.matchMedia("(forced-colors: active)");
     const coarse = window.matchMedia("(pointer: coarse)").matches;
-    const update = () => setReduced(media.matches || forcedColors.matches);
+    const update = () => { setReduced(media.matches); setForcedColors(forcedColors.matches); };
     const raf = requestAnimationFrame(() => {
       update();
       setQuality(coarse || window.innerWidth < 820 ? "low" : window.devicePixelRatio > 1.5 ? "high" : "medium");
       if (window.innerHeight < 480 && window.innerWidth > window.innerHeight) setReading(true);
-      if (forcedColors.matches) setReduced(true);
       setMounted(true);
     });
     media.addEventListener("change", update);
@@ -48,7 +48,7 @@ export function ConvergenceExperience() {
   }, []);
 
   useEffect(() => {
-    if (!mounted || reduced || reading) return;
+    if (!mounted || reading) return;
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -71,26 +71,23 @@ export function ConvergenceExperience() {
     };
   }, [mounted, reduced, reading]);
 
-  useEffect(() => {
+  const playCue = useCallback((cue: "alignment" | "anticipation" | "impact") => {
     if (!sound || !audioRef.current || paused) return;
-    const anticipation = previousAudioProgress.current < .695 && progress >= .695 && progress < .722;
-    const impact = previousAudioProgress.current < .758 && progress >= .758 && progress < .79;
-    if (anticipation || impact) {
+    {
       const ctx = audioRef.current;
       const oscillator = ctx.createOscillator();
       const gain = ctx.createGain();
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(anticipation ? 48 : 82, ctx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(anticipation ? 58 : 46, ctx.currentTime + .18);
+      oscillator.frequency.setValueAtTime(cue === "anticipation" ? 48 : cue === "alignment" ? 178 : 82, ctx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(cue === "anticipation" ? 58 : cue === "alignment" ? 126 : 46, ctx.currentTime + .18);
       gain.gain.setValueAtTime(.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(anticipation ? .018 : .09, ctx.currentTime + (anticipation ? .08 : .012));
+      gain.gain.exponentialRampToValueAtTime(cue === "anticipation" ? .018 : cue === "alignment" ? .035 : .09, ctx.currentTime + (cue === "anticipation" ? .08 : .012));
       gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + .2);
       oscillator.connect(gain).connect(ctx.destination);
       oscillator.start();
       oscillator.stop(ctx.currentTime + .21);
     }
-    previousAudioProgress.current = progress;
-  }, [progress, sound, paused]);
+  }, [sound, paused]);
 
   useEffect(() => () => { void audioRef.current?.close(); }, []);
 
@@ -124,11 +121,11 @@ export function ConvergenceExperience() {
     setPulse((value) => value + 1);
   };
 
-  if (!mounted || reduced || reading) {
+  if (!mounted || forcedColors || reading) {
     return (
       <StaticExperience
         reading={reading}
-        onEnter={mounted && !reduced ? () => setReading(false) : undefined}
+        onEnter={mounted && !forcedColors ? () => setReading(false) : undefined}
         order={order}
         setOrder={setOrder}
         selected={selected}
@@ -154,7 +151,9 @@ export function ConvergenceExperience() {
             selected={selected}
             routed={routed}
             pulse={pulse}
+            calm={reduced || calmOverride}
             onSlow={reduceQuality}
+            onCue={playCue}
           />
           </div>
           <div className={styles.vignette} aria-hidden="true" />
@@ -210,7 +209,7 @@ export function ConvergenceExperience() {
               order={order}
               setOrder={setOrder}
               selected={selected}
-              setSelected={(id) => { setSelected(id); setPulse((value) => value + 1); }}
+              setSelected={setSelected}
               routed={routed}
               routeSignal={routeSignal}
               reset={() => { setSelected(null); setRouted([]); setOrder("arrival"); }}
@@ -225,8 +224,9 @@ export function ConvergenceExperience() {
             ))}
           </nav>
 
-          <div className={styles.quality} aria-label={`Graphics quality: ${quality}`}>
+          <div className={styles.quality} aria-label="Experience settings">
             <button onClick={() => setQuality(quality === "high" ? "medium" : quality === "medium" ? "low" : "high")}>QUALITY / {quality.toUpperCase()}</button>
+            <button onClick={() => setCalmOverride((value) => !value)} aria-pressed={reduced || calmOverride} disabled={reduced}>CALM / {reduced || calmOverride ? "ON" : "OFF"}</button>
           </div>
         </div>
       </div>
@@ -291,7 +291,7 @@ function StaticExperience(props: {
 
 function StaticArt({ phase }: { phase: Phase }) {
   return <div className={styles.staticArt} data-art={phase}>
-    {(phase === "attention" || phase === "convergence") && <div className={styles.staticParticles}>{Array.from({ length: 108 }, (_, i) => <i key={i} style={{ left: `${(Math.sin(i * 127.1) * 43758.5 % 1 + 1) % 1 * 100}%`, top: `${(Math.sin(i * 38.7) * 8321.1 % 1 + 1) % 1 * 100}%`, opacity: .18 + (i % 7) * .1, transform: `scale(${.5 + i % 5 * .27})` }} />)}</div>}
+    {(phase === "attention" || phase === "convergence") && <div className={styles.staticParticles}>{Array.from({ length: 108 }, (_, i) => <i key={i} style={{ left: `${(((Math.sin(i * 127.1) * 43758.5 % 1 + 1) % 1) * 100).toFixed(3)}%`, top: `${(((Math.sin(i * 38.7) * 8321.1 % 1 + 1) % 1) * 100).toFixed(3)}%`, opacity: Number((.18 + (i % 7) * .1).toFixed(2)), transform: `scale(${(.5 + i % 5 * .27).toFixed(2)})` }} />)}</div>}
     {(phase === "form" || phase === "convergence") && <div className={styles.staticGrid}><b>01 / HIERARCHY</b><em>INFORMATION HAS SHAPE</em></div>}
     {(phase === "behavior" || phase === "convergence") && <svg className={styles.staticRoutes} viewBox="0 0 600 480" fill="none" aria-hidden="true">
       {Array.from({ length: 7 }, (_, i) => <g key={i}><path d={`M 25 ${55 + i * 60} L 200 ${55 + i * 60} L 255 ${75 + i * 60} L 410 ${75 + i * 60} L 460 ${55 + i * 60} L 575 ${55 + i * 60}`} stroke="#acd8e6" strokeOpacity=".5" strokeWidth="1.3" /><circle cx="255" cy={75 + i * 60} r="5" fill="#b9e7f1" /><circle cx="460" cy={55 + i * 60} r="4" fill="#d8f0f5" /></g>)}
