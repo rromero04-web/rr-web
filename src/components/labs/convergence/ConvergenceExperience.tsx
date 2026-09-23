@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PHASES, SIGNALS, phaseAt, type Phase, type Quality } from "./model";
+import { ConvergenceAudio, type AudioCue, type AudioSnapshot, type SignalEvent } from "./ConvergenceAudio";
 import styles from "./convergence.module.css";
 
 const ConvergenceCanvas = dynamic(
@@ -15,7 +16,7 @@ type Order = "arrival" | "priority";
 
 export function ConvergenceExperience() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<AudioContext | null>(null);
+  const audioRef = useRef<ConvergenceAudio | null>(null);
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [calmOverride, setCalmOverride] = useState(false);
@@ -24,6 +25,7 @@ export function ConvergenceExperience() {
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sound, setSound] = useState(false);
+  const [soundPreference, setSoundPreference] = useState<"on" | "off">("off");
   const [quality, setQuality] = useState<Quality>("medium");
   const [order, setOrder] = useState<Order>("arrival");
   const [selected, setSelected] = useState<number | null>(null);
@@ -39,6 +41,7 @@ export function ConvergenceExperience() {
     const update = () => { setReduced(media.matches); setForcedColors(forcedColors.matches); };
     const raf = requestAnimationFrame(() => {
       update();
+      try { if (localStorage.getItem("convergence-sound") === "on") setSoundPreference("on"); } catch { /* local storage may be unavailable */ }
       setQuality(coarse || window.innerWidth < 820 ? "low" : window.devicePixelRatio > 1.5 ? "high" : "medium");
       if (window.innerHeight < 480 && window.innerWidth > window.innerHeight) setReading(true);
       setMounted(true);
@@ -72,38 +75,30 @@ export function ConvergenceExperience() {
     };
   }, [mounted, reduced, reading]);
 
-  const playCue = useCallback((cue: "alignment" | "anticipation" | "escape" | "connection" | "impact" | "formation") => {
-    if (!sound || !audioRef.current || paused) return;
-    const ctx = audioRef.current;
-    const cues = {
-      alignment: { from: 178, to: 126, duration: .2, volume: .028, waveform: "sine" },
-      escape: { from: 83, to: 264, duration: .48, volume: .022, waveform: "triangle" },
-      connection: { from: 288, to: 174, duration: .38, volume: .027, waveform: "sine" },
-      anticipation: { from: 58, to: 43, duration: .42, volume: .015, waveform: "sine" },
-      impact: { from: 82, to: 34, duration: .26, volume: .085, waveform: "sine" },
-      formation: { from: 126, to: 188, duration: 1.05, volume: .018, waveform: "sine" },
-    } as const;
-    const spec = cues[cue];
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.type = spec.waveform;
-    oscillator.frequency.setValueAtTime(spec.from, ctx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(spec.to, ctx.currentTime + spec.duration);
-    gain.gain.setValueAtTime(.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(spec.volume, ctx.currentTime + (cue === "impact" ? .012 : .065));
-    gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + spec.duration);
-    oscillator.connect(gain).connect(ctx.destination);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + spec.duration + .02);
-  }, [sound, paused]);
+  const playCue = useCallback((cue: AudioCue) => { if (!paused) audioRef.current?.cue(cue); }, [paused]);
+  const playSignal = useCallback((event: SignalEvent) => { if (!paused) audioRef.current?.signalEvent(event); }, [paused]);
+  const updateAudio = useCallback((snapshot: AudioSnapshot) => { audioRef.current?.update(snapshot); }, []);
 
-  useEffect(() => () => { void audioRef.current?.close(); }, []);
+  useEffect(() => () => { void audioRef.current?.dispose(); }, []);
 
   const toggleSound = useCallback(async () => {
-    if (!audioRef.current) audioRef.current = new AudioContext();
-    if (audioRef.current.state === "suspended") await audioRef.current.resume();
-    setSound((value) => !value);
-  }, []);
+    if (sound) {
+      audioRef.current?.disable();
+      setSound(false);
+      setSoundPreference("off");
+      try { localStorage.setItem("convergence-sound", "off"); } catch { /* optional preference */ }
+      return;
+    }
+    try {
+      if (!audioRef.current) audioRef.current = new ConvergenceAudio(new AudioContext());
+      await audioRef.current.enable();
+      setSound(true);
+      setSoundPreference("on");
+      try { localStorage.setItem("convergence-sound", "on"); } catch { /* optional preference */ }
+    } catch {
+      setSound(false);
+    }
+  }, [sound]);
 
   const reduceQuality = useCallback(() => {
     setQuality((current) => current === "high" ? "medium" : "low");
@@ -125,9 +120,11 @@ export function ConvergenceExperience() {
 
   const routeSignal = () => {
     if (selected === null || routed.includes(selected)) return;
+    audioRef.current?.route(selected, routed.length);
     setRouted((current) => [...current, selected]);
     setPulse((value) => value + 1);
   };
+  const selectSignal = (id: number) => { setSelected(id); audioRef.current?.select(id); };
 
   if (!mounted || forcedColors || reading) {
     return (
@@ -163,6 +160,8 @@ export function ConvergenceExperience() {
             onSlow={reduceQuality}
             onProductReady={setProductReady}
             onCue={playCue}
+            onSignal={playSignal}
+            onAudioFrame={updateAudio}
           />
           </div>
           <div className={styles.vignette} aria-hidden="true" />
@@ -172,8 +171,8 @@ export function ConvergenceExperience() {
             <span className={styles.labMark}>RAÚL ROMERO / LAB 001</span>
             <div className={styles.toolbar}>
               <button onClick={() => setPaused((value) => !value)} aria-pressed={paused}>{paused ? "Resume" : "Pause"}</button>
-              <button onClick={toggleSound} aria-pressed={sound}>Sound {sound ? "on" : "off"}</button>
-              <button onClick={() => { window.scrollTo({ top: 0, behavior: "instant" }); setReading(true); }}>Reading mode</button>
+              <button onClick={toggleSound} aria-pressed={sound}>Sound {sound ? "on" : soundPreference === "on" ? "resume" : "off"}</button>
+              <button onClick={() => { audioRef.current?.disable(); setSound(false); window.scrollTo({ top: 0, behavior: "instant" }); setReading(true); }}>Reading mode</button>
             </div>
           </header>
 
@@ -218,7 +217,7 @@ export function ConvergenceExperience() {
               order={order}
               setOrder={setOrder}
               selected={selected}
-              setSelected={setSelected}
+              setSelected={selectSignal}
               routed={routed}
               routeSignal={routeSignal}
               reset={() => { setSelected(null); setRouted([]); setOrder("arrival"); }}

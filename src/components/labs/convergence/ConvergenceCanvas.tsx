@@ -7,11 +7,13 @@ import * as THREE from "three";
 import { range, type Quality } from "./model";
 import { approach, createMotionState, decay, windowed, type MotionState, type Spring } from "./motion";
 import { HeroSequence } from "./HeroSequence";
+import type { AudioCue, AudioSnapshot, SignalEvent } from "./ConvergenceAudio";
 
 type SceneProps = {
   progress: number; paused: boolean; quality: Quality; selected: number | null;
   routed: number[]; pulse: number; calm: boolean; onSlow: () => void; onProductReady: (ready: boolean) => void;
-  onCue: (cue: "alignment" | "anticipation" | "escape" | "connection" | "impact" | "formation") => void;
+  onCue: (cue: AudioCue) => void; onSignal: (event: SignalEvent) => void;
+  onAudioFrame: (snapshot: AudioSnapshot) => void;
 };
 
 const clamp = THREE.MathUtils.clamp;
@@ -38,6 +40,7 @@ function Scene(props: SceneProps) {
   const { size } = useThree();
   const previousPulse = useRef(props.pulse);
   const previousFormation = useRef(0);
+  const formStep = useRef(0);
   useFrame((state, frameDelta) => {
     const dt = Math.min(frameDelta, .5);
     const inputVelocity = clamp((props.progress - motion.previousRaw) / Math.max(dt, .001), -4, 4);
@@ -62,6 +65,12 @@ function Scene(props: SceneProps) {
     if (previous < .675 && motion.playhead.value >= .675 && motion.direction >= 0) props.onCue("connection");
     if (previousFormation.current < .55 && motion.heroFormation >= .55 && motion.direction >= 0) props.onCue("formation");
     previousFormation.current = motion.heroFormation;
+    if (motion.playhead.value < .27) formStep.current = 0;
+    if (motion.direction >= 0 && motion.playhead.value >= .28 && motion.playhead.value < .46) {
+      const nextStep = motion.alignment >= .62 ? 2 : motion.alignment >= .32 ? 1 : 0;
+      if (nextStep > formStep.current) props.onCue("formStep");
+      formStep.current = Math.max(formStep.current, nextStep);
+    }
     if (motion.previousAlignment < .82 && motion.alignment >= .82 && motion.direction >= 0) {
       motion.alignmentAge = 0;
       props.onCue("alignment");
@@ -114,7 +123,24 @@ function Scene(props: SceneProps) {
     <FormArchitecture {...props} />
     <BehaviorNetwork {...props} />
     <HeroSequence {...props} motion={motion} />
+    <AudioBridge motion={motion} paused={props.paused} onAudioFrame={props.onAudioFrame} />
   </MotionContext.Provider>;
+}
+
+function AudioBridge({ motion, paused, onAudioFrame }: {
+  motion: MotionState; paused: boolean; onAudioFrame: (snapshot: AudioSnapshot) => void;
+}) {
+  const { size } = useThree();
+  useFrame(() => onAudioFrame({
+    progress: motion.playhead.value, direction: motion.direction, scrollEnergy: motion.scrollEnergy,
+    pointerX: motion.pointerX, pointerWake: motion.pointerWake, alignment: motion.alignment,
+    fieldEnergy: motion.fieldEnergy, cameraSpeed: motion.cameraSpeed,
+    signalX: motion.heroSignalX, signalVelocity: motion.heroSignalVelocity,
+    connection: motion.heroConnection, field: motion.heroField, compression: motion.heroCompression,
+    stillness: motion.heroStill, darkness: motion.heroDarkness, formation: motion.heroFormation,
+    paused, mobile: size.width < 820,
+  }));
+  return null;
 }
 
 // The camera follows the outgoing signal, discovers the three worlds, then moves
@@ -450,7 +476,7 @@ const routes: [number, number, number][][] = Array.from({ length: 7 }, (_, i) =>
   return [[-4.6, y, -1], [-2.8, y, -.2], [-2.05, y + (i % 2 ? .32 : -.32), .4], [-.25, y + (i % 2 ? .32 : -.32), .4], [.55, y, .75], [2.6, y, .2], [4.4, y, -.8]];
 });
 
-function BehaviorNetwork({ progress, paused, calm }: SceneProps) {
+function BehaviorNetwork({ progress, paused, calm, onSignal }: SceneProps) {
   const motion = useMotion();
   const root = useRef<THREE.Group>(null);
   const fixtures = useRef<THREE.Group>(null);
@@ -460,6 +486,7 @@ function BehaviorNetwork({ progress, paused, calm }: SceneProps) {
   const previousSerial = useRef(0);
   const introduced = useRef(false);
   const event = useRef({ at: -100, route: 3 });
+  const lastTravel = useRef(-1);
   useFrame((_, delta) => {
     if (!root.current) return;
     const p = motion.playhead.value;
@@ -467,12 +494,29 @@ function BehaviorNetwork({ progress, paused, calm }: SceneProps) {
     if (p > .475 && !introduced.current) {
       introduced.current = true;
       event.current = { at: motion.time, route: 3 };
+      lastTravel.current = -1;
+      if (p < .66) onSignal({ stage: "input", route: 3, pan: -.48, energy: .68 });
     }
     if (previousSerial.current !== motion.pulseSerial) {
       previousSerial.current = motion.pulseSerial;
       event.current = { at: motion.time, route: motion.selectedSignal === null ? 3 : (motion.selectedSignal - 1) % 7 };
+      lastTravel.current = -1;
+      if (p < .66) onSignal({ stage: "input", route: event.current.route, pan: -.48, energy: 1 });
     }
     const age = motion.time - event.current.at;
+    const travel = age * (calm ? 4.4 : 5.8);
+    if (p >= .46 && p < .67 && !paused) {
+      const crossed = [
+        { distance: 2, stage: "route" as const, pan: -.13, energy: .72 },
+        { distance: 4, stage: "split" as const, pan: .18, energy: .67 },
+        { distance: 6, stage: "terminal" as const, pan: .48, energy: .83 },
+      ].filter(node => lastTravel.current < node.distance && travel >= node.distance);
+      crossed.forEach((node, index) => onSignal({
+        stage: node.stage, route: event.current.route, pan: node.pan,
+        energy: node.energy, delay: index * .065,
+      }));
+    }
+    lastTravel.current = travel;
     const presence = range(p, .43, .53) * (1 - range(p, .73, .86));
     fixtures.current?.traverse((object) => {
       if (!(object instanceof THREE.Mesh) || !(object.material instanceof THREE.MeshBasicMaterial)) return;
