@@ -25,7 +25,7 @@ export type AudioSnapshot = {
 
 export type AudioCue = "formStep" | "alignment" | "anticipation" | "escape" | "connection" | "impact" | "formation";
 export type SignalStage = "input" | "route" | "split" | "terminal";
-export type SignalEvent = { stage: SignalStage; route: number; pan: number; energy: number; delay?: number };
+export type SignalEvent = { stage: SignalStage; route: number; pan: number; energy: number; delay?: number; composer?: boolean };
 
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value));
 const smooth = (value: number, a: number, b: number) => {
@@ -120,6 +120,11 @@ export class ConvergenceAudio {
   private random() {
     this.randomState = (Math.imul(this.randomState, 1664525) + 1013904223) >>> 0;
     return this.randomState / 4294967296;
+  }
+
+  private routeBase(route: number) {
+    const intervals = [0, 2, 3, 5, 7, 10, 12];
+    return 153 * Math.pow(2, intervals[Math.round(clamp(route, 0, 6))] / 12);
   }
 
   private target(param: AudioParam, value: number, seconds = .08) {
@@ -274,8 +279,11 @@ export class ConvergenceAudio {
         this.tone(126, 84, .15, .055, "impact", 0, now + .047);
         break;
       case "formation":
-        this.tone(164, 165, .67, .015, "interaction", -.09, now);
-        this.tone(246, 247, .78, .009, "interaction", .12, now + .045);
+        // The system resolves into the same interval family used by its signals.
+        this.tone(164.8, 164.8, .48, .025, "interaction", -.12, now);
+        this.tone(207.65, 207.65, .47, .027, "interaction", 0, now + .12);
+        this.tone(246.94, 246.94, .75, .034, "interaction", .12, now + .25);
+        this.tone(493.88, 493.88, .3, .006, "interaction", .12, now + .26);
         break;
     }
   }
@@ -286,13 +294,19 @@ export class ConvergenceAudio {
     const energy = clamp(event.energy, .2, 1.4);
     // A shared interval family gives each route a distinct destination without
     // turning six signals into unrelated instruments.
-    const intervals = [0, 2, 3, 5, 7, 10, 12];
-    const base = 153 * Math.pow(2, intervals[Math.round(route)] / 12);
+    const base = this.routeBase(route);
     const ratio = event.stage === "route" ? 1.12 : event.stage === "split" ? 1.32
       : event.stage === "terminal" ? .84 : 1;
     const pan = clamp(event.pan, -.66, .66);
+    if (event.composer && event.stage === "terminal") {
+      // A short rising resolution reads as completed work, even on small speakers.
+      this.tone(base * 1.25, base * 1.25, .26, .034 * energy, "signals", pan, start);
+      this.tone(base * 1.5, base * 1.5, .42, .036 * energy, "signals", pan, start + .095);
+      this.tone(base * 2, base * 2, .28, .009 * energy, "signals", pan, start + .19);
+      return;
+    }
     const duration = event.stage === "terminal" ? .27 : .15;
-    this.noiseTick(event.stage === "terminal" ? 1250 : 2400, .018, .008 * energy, pan, "signals", start);
+    if (!event.composer) this.noiseTick(event.stage === "terminal" ? 1250 : 2400, .018, .008 * energy, pan, "signals", start);
     this.tone(base * ratio, base * ratio * (event.stage === "terminal" ? .93 : 1.025),
       duration, .026 * energy, "signals", pan, start + .006, event.stage === "split" ? "triangle" : "sine");
     if (event.stage === "split" && !this.mobile) {
@@ -306,7 +320,8 @@ export class ConvergenceAudio {
 
   select(id: number) {
     if (!this.enabled || this.ctx.state !== "running") return;
-    this.noiseTick(1550 + id * 115, .016, .012, -.1 + id * .035, "ui", this.ctx.currentTime);
+    this.tone(this.routeBase(id - 1) * 1.5, this.routeBase(id - 1) * 1.5,
+      .11, .014, "ui", -.1 + id * .035, this.ctx.currentTime);
   }
 
   route(id: number, priorRoutes: number) {
@@ -316,10 +331,10 @@ export class ConvergenceAudio {
     const energy = .82 + Math.min(.26, priorRoutes * .045);
     const baseAngle = route / 9 * Math.PI * 2 - .18;
     const panAt = (fraction: number) => clamp((2.35 + Math.cos(baseAngle + fraction * 1.14) * (.3 + fraction * 2.55)) / 5.2, -.55, .55);
-    this.signal({ stage: "input", route, pan: -.04, energy }, now);
-    this.signal({ stage: "route", route, pan: .44, energy: energy * .79 }, now + .42);
-    this.signal({ stage: "split", route, pan: panAt(.5), energy: energy * .71 }, now + .76);
-    this.signal({ stage: "terminal", route, pan: panAt(1), energy: energy * .88 }, now + 1.14);
+    this.signal({ stage: "input", route, pan: -.04, energy, composer: true }, now);
+    this.signal({ stage: "route", route, pan: .44, energy: energy * .79, composer: true }, now + .42);
+    this.signal({ stage: "split", route, pan: panAt(.5), energy: energy * .71, composer: true }, now + .76);
+    this.signal({ stage: "terminal", route, pan: panAt(1), energy: energy * .88, composer: true }, now + 1.14);
   }
 
   async dispose() {
