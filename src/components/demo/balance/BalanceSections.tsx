@@ -1,4 +1,4 @@
-import { ArrowRight, Check, X, ChevronDown } from "lucide-react";
+import { Check, X, Plus } from "lucide-react";
 import {
   getProblems,
   getBalanceServices,
@@ -9,15 +9,11 @@ import {
 } from "./content";
 import type { Locale } from "@/lib/i18n/config";
 
-const PROBLEMS_STRINGS: Record<Locale, { eyebrow: string; title: string }> = {
-  es: {
-    eyebrow: "Para quién",
-    title: "Problemas que reconocerás si gestionas tu propia actividad.",
-  },
-  en: {
-    eyebrow: "Who it's for",
-    title: "Problems you'll recognize if you manage your own activity.",
-  },
+const SECTION_TITLE = "text-3xl leading-[1.1] font-extrabold tracking-[-0.02em] text-[#14213D] sm:text-[2.5rem]";
+
+const PROBLEMS_STRINGS: Record<Locale, { title: string }> = {
+  es: { title: "Problemas que reconocerás si gestionas tu propia actividad." },
+  en: { title: "Problems you'll recognize if you manage your own activity." },
 };
 
 export function Problems({ locale }: { locale: Locale }) {
@@ -25,43 +21,32 @@ export function Problems({ locale }: { locale: Locale }) {
   const problems = getProblems(locale);
 
   return (
-    <section id="para-quien" className="border-b border-[#16233A]/10 bg-[#F6F4EF] py-20">
+    <section id="para-quien" className="scroll-mt-20 bg-white py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight text-[#16233A] sm:text-4xl">
-          {t.title}
-        </h2>
+        <h2 className={`max-w-2xl ${SECTION_TITLE}`}>{t.title}</h2>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+        <ul className="mt-12 grid gap-x-12 border-t-2 border-[#14213D] sm:grid-cols-2">
           {problems.map((item) => (
-            <div key={item.problem} className="border border-[#16233A]/10 bg-white p-5">
-              <p className="flex items-start gap-2 text-sm font-semibold text-[#16233A]">
-                <X size={16} className="mt-0.5 shrink-0 text-[#B4483A]" aria-hidden="true" />
+            <li key={item.problem} className="border-b border-[#CFE0D3] py-6">
+              <p className="flex items-start gap-3 text-lg font-semibold text-[#14213D]">
+                <X size={18} className="mt-1 shrink-0 text-[#B4483A]" aria-hidden="true" />
                 {item.problem}
               </p>
-              <p className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-[#4B5568]">
-                <Check size={16} className="mt-0.5 shrink-0 text-[#2F8F5B]" aria-hidden="true" />
+              <p className="mt-2 flex items-start gap-3 text-base leading-relaxed text-[#4A5670]">
+                <Check size={18} className="mt-0.5 shrink-0 text-[#1F6F4A]" aria-hidden="true" />
                 {item.solution}
               </p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );
 }
 
-const SERVICES_STRINGS: Record<Locale, { eyebrow: string; title: string }> = {
-  es: {
-    eyebrow: "Servicios",
-    title: "Lo que gestionamos por ti",
-  },
-  en: {
-    eyebrow: "Services",
-    title: "What we manage for you",
-  },
+const SERVICES_STRINGS: Record<Locale, { title: string }> = {
+  es: { title: "Lo que gestionamos por ti" },
+  en: { title: "What we manage for you" },
 };
 
 export function Services({ locale }: { locale: Locale }) {
@@ -69,92 +54,87 @@ export function Services({ locale }: { locale: Locale }) {
   const services = getBalanceServices(locale);
 
   return (
-    <section id="servicios" className="border-b border-[#16233A]/10 bg-white py-20">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight text-[#16233A] sm:text-4xl">
-          {t.title}
-        </h2>
-
-        <div className="mt-12 grid gap-px overflow-hidden border border-[#16233A]/10 bg-[#16233A]/10 sm:grid-cols-2 lg:grid-cols-3">
+    <section id="servicios" className="scroll-mt-20 bg-[#F5F7F2] py-24">
+      <div className="mx-auto grid max-w-6xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <h2 className={SECTION_TITLE}>{t.title}</h2>
+        <dl className="border-t-2 border-[#14213D]">
           {services.map((service) => (
-            <div key={service.title} className="bg-white p-6">
-              <h3 className="text-base font-bold text-[#16233A]">{service.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#4B5568]">
-                {service.description}
-              </p>
+            <div key={service.title} className="grid gap-1 border-b border-[#CFE0D3] py-5 sm:grid-cols-[1fr_1.3fr] sm:gap-8">
+              <dt className="text-lg font-semibold text-[#14213D]">{service.title}</dt>
+              <dd className="text-base leading-relaxed text-[#4A5670]">{service.description}</dd>
             </div>
           ))}
-        </div>
+        </dl>
       </div>
     </section>
   );
 }
 
 const COMPARISON_STRINGS: Record<Locale, {
-  eyebrow: string;
   title: string;
+  caption: string;
   beforeHeading: string;
   afterHeading: string;
 }> = {
   es: {
-    eyebrow: "Antes y después",
     title: "De la gestión desordenada a la gestión centralizada.",
+    caption: "Cómo cambia tu gestión al trabajar con una asesoría",
     beforeHeading: "Gestión desordenada",
     afterHeading: "Gestión centralizada",
   },
   en: {
-    eyebrow: "Before and after",
     title: "From scattered management to centralized management.",
+    caption: "How your paperwork changes when you work with an advisor",
     beforeHeading: "Scattered management",
     afterHeading: "Centralized management",
   },
 };
 
+// Antes y después como una hoja de libro contable: dos columnas enfrentadas,
+// fila a fila, con el "saldo" a favor en la columna verde.
 export function Comparison({ locale }: { locale: Locale }) {
   const t = COMPARISON_STRINGS[locale];
   const beforeItems = getBeforeItems(locale);
   const afterItems = getAfterItems(locale);
+  const rows = Math.max(beforeItems.length, afterItems.length);
 
   return (
-    <section className="border-b border-[#16233A]/10 bg-[#F6F4EF] py-20">
+    <section className="bg-white py-24">
       <div className="mx-auto max-w-5xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight text-[#16233A] sm:text-4xl">
-          {t.title}
-        </h2>
+        <h2 className={`max-w-2xl ${SECTION_TITLE}`}>{t.title}</h2>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2">
-          <div className="border border-[#16233A]/10 bg-white p-6">
-            <h3 className="text-sm font-bold tracking-wide text-[#4B5568] uppercase">
-              {t.beforeHeading}
-            </h3>
-            <ul className="mt-4 space-y-3">
-              {beforeItems.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-[#4B5568]">
-                  <X size={15} className="mt-0.5 shrink-0 text-[#B4483A]" aria-hidden="true" />
-                  {item}
-                </li>
+        <div className="mt-12 overflow-x-auto">
+          <table className="w-full min-w-[34rem] border-collapse text-left">
+            <caption className="sr-only">{t.caption}</caption>
+            <thead>
+              <tr className="border-b-2 border-[#14213D]">
+                <th scope="col" className="w-1/2 py-3 pr-6 text-base font-semibold text-[#4A5670]">{t.beforeHeading}</th>
+                <th scope="col" className="w-1/2 bg-[#EAF3EC] px-5 py-3 text-base font-semibold text-[#1F6F4A]">{t.afterHeading}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: rows }, (_, index) => (
+                <tr key={index} className="border-b border-[#CFE0D3] align-top">
+                  <td className="py-4 pr-6 text-base text-[#4A5670]">
+                    {beforeItems[index] && (
+                      <span className="flex items-start gap-3">
+                        <X size={17} className="mt-1 shrink-0 text-[#B4483A]" aria-hidden="true" />
+                        {beforeItems[index]}
+                      </span>
+                    )}
+                  </td>
+                  <td className="bg-[#EAF3EC] px-5 py-4 text-base text-[#14213D]">
+                    {afterItems[index] && (
+                      <span className="flex items-start gap-3">
+                        <Check size={17} className="mt-1 shrink-0 text-[#1F6F4A]" aria-hidden="true" />
+                        {afterItems[index]}
+                      </span>
+                    )}
+                  </td>
+                </tr>
               ))}
-            </ul>
-          </div>
-          <div className="border border-[#2F8F5B]/40 bg-[#2F8F5B]/5 p-6">
-            <h3 className="text-sm font-bold tracking-wide text-[#26744A] uppercase">
-              {t.afterHeading}
-            </h3>
-            <ul className="mt-4 space-y-3">
-              {afterItems.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-[#16233A]">
-                  <Check size={15} className="mt-0.5 shrink-0 text-[#2F8F5B]" aria-hidden="true" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -162,20 +142,17 @@ export function Comparison({ locale }: { locale: Locale }) {
 }
 
 const PROCESS_STRINGS: Record<Locale, {
-  eyebrow: string;
   title: string;
   disclaimer: string;
   cta: string;
 }> = {
   es: {
-    eyebrow: "Proceso",
     title: "Cómo funciona la primera valoración",
     disclaimer:
       "Se trata de una simulación con fines de demostración: no se está prestando asesoramiento fiscal real en ningún momento.",
     cta: "Solicitar valoración inicial",
   },
   en: {
-    eyebrow: "Process",
     title: "How the first assessment works",
     disclaimer:
       "This is a simulation for demonstration purposes: no real tax advice is being provided at any point.",
@@ -188,52 +165,37 @@ export function Process({ locale }: { locale: Locale }) {
   const steps = getProcessSteps(locale);
 
   return (
-    <section id="como-funciona" className="border-b border-[#16233A]/10 bg-white py-20">
+    <section id="como-funciona" className="scroll-mt-20 bg-[#14213D] py-24 text-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight text-[#16233A] sm:text-4xl">
-          {t.title}
-        </h2>
+        <h2 className="max-w-2xl text-3xl leading-[1.1] font-extrabold tracking-[-0.02em] sm:text-[2.5rem]">{t.title}</h2>
 
-        <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, index) => (
-            <div key={step.title}>
-              <span className="font-mono text-sm text-[#2F8F5B]">0{index + 1}</span>
-              <h3 className="mt-2 text-base font-bold text-[#16233A]">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#4B5568]">
-                {step.description}
-              </p>
-            </div>
+            <li key={step.title} className="border-t-2 border-[#7FC4A0] pt-5">
+              <span className="text-4xl font-extrabold text-[#7FC4A0] tabular-nums" aria-hidden="true">{index + 1}</span>
+              <h3 className="mt-3 text-lg font-semibold">{step.title}</h3>
+              <p className="mt-2 text-base leading-relaxed text-white/75">{step.description}</p>
+            </li>
           ))}
+        </ol>
+
+        <div className="mt-14 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-xl text-sm leading-relaxed text-white/65">{t.disclaimer}</p>
+          <a
+            href="#valoracion"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-md bg-white px-6 text-base font-semibold text-[#14213D] transition-colors hover:bg-[#EAF3EC]"
+          >
+            {t.cta}
+          </a>
         </div>
-
-        <p className="mt-10 max-w-xl text-xs leading-relaxed text-[#4B5568]/80">
-          {t.disclaimer}
-        </p>
-
-        <a
-          href="#valoracion"
-          className="mt-6 inline-flex items-center gap-2 bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
-        >
-          {t.cta}
-          <ArrowRight size={15} aria-hidden="true" />
-        </a>
       </div>
     </section>
   );
 }
 
-const FAQ_STRINGS: Record<Locale, { eyebrow: string; title: string }> = {
-  es: {
-    eyebrow: "Preguntas frecuentes",
-    title: "Antes de solicitar información",
-  },
-  en: {
-    eyebrow: "FAQ",
-    title: "Before you request information",
-  },
+const FAQ_STRINGS: Record<Locale, { title: string }> = {
+  es: { title: "Antes de solicitar información" },
+  en: { title: "Before you request information" },
 };
 
 export function Faq({ locale }: { locale: Locale }) {
@@ -241,27 +203,22 @@ export function Faq({ locale }: { locale: Locale }) {
   const faqItems = getFaqItems(locale);
 
   return (
-    <section id="faq" className="border-b border-[#16233A]/10 bg-[#F6F4EF] py-20">
+    <section id="faq" className="scroll-mt-20 bg-white py-24">
       <div className="mx-auto max-w-3xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#16233A] sm:text-4xl">
-          {t.title}
-        </h2>
+        <h2 className={SECTION_TITLE}>{t.title}</h2>
 
-        <div className="mt-10 divide-y divide-[#16233A]/10 border-y border-[#16233A]/10">
+        <div className="mt-10 border-t-2 border-[#14213D]">
           {faqItems.map((item) => (
-            <details key={item.question} className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#16233A] marker:content-none">
+            <details key={item.question} className="group border-b border-[#CFE0D3]">
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-4 text-lg font-semibold text-[#14213D] marker:content-none">
                 {item.question}
-                <ChevronDown
-                  size={16}
+                <Plus
+                  size={20}
                   aria-hidden="true"
-                  className="shrink-0 text-[#2F8F5B] transition-transform duration-200 group-open:rotate-180"
+                  className="shrink-0 text-[#1F6F4A] transition-transform duration-200 group-open:rotate-45"
                 />
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-[#4B5568]">{item.answer}</p>
+              <p className="pb-6 text-base leading-relaxed text-[#4A5670]">{item.answer}</p>
             </details>
           ))}
         </div>

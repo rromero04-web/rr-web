@@ -1,7 +1,8 @@
 import type { Locale } from "@/lib/i18n/config";
+import { TaxCalendar } from "./TaxCalendar";
 
 const STRINGS: Record<Locale, {
-  eyebrow: string;
+  audience: string;
   title: string;
   subtitle: string;
   ctaPrimary: string;
@@ -9,22 +10,22 @@ const STRINGS: Record<Locale, {
   disclaimer: string;
 }> = {
   es: {
-    eyebrow: "Asesoría fiscal para autónomos y pequeñas empresas",
-    title: "Tus obligaciones fiscales, explicadas con claridad y sin sorpresas.",
+    audience: "Asesoría fiscal para autónomos y pequeñas empresas",
+    title: "Tus impuestos, claros y a tiempo.",
     subtitle:
-      "Revisamos tu situación, te ayudamos a ordenar la gestión y te indicamos cuáles deberían ser tus próximos pasos.",
+      "Revisamos tu situación, ordenamos tu gestión y te decimos qué toca presentar y cuándo, antes de que llegue el plazo.",
     ctaPrimary: "Solicitar valoración inicial",
     ctaSecondary: "Ver cómo funciona",
-    disclaimer: "Sin compromiso · Respuesta simulada · Datos ficticios",
+    disclaimer: "Sin compromiso. Respuesta simulada con datos ficticios.",
   },
   en: {
-    eyebrow: "Tax advisory for freelancers and small businesses",
-    title: "Your tax obligations, explained clearly and without surprises.",
+    audience: "Tax advisory for freelancers and small businesses",
+    title: "Your taxes, clear and on time.",
     subtitle:
-      "We review your situation, help you organize your management, and tell you what your next steps should be.",
+      "We review your situation, organize your paperwork and tell you what to file and when, before the deadline arrives.",
     ctaPrimary: "Request an initial assessment",
     ctaSecondary: "See how it works",
-    disclaimer: "No obligation · Simulated response · Fictional data",
+    disclaimer: "No obligation. Simulated response with fictional data.",
   },
 };
 
@@ -32,36 +33,32 @@ export function BalanceHero({ locale }: { locale: Locale }) {
   const t = STRINGS[locale];
 
   return (
-    <section id="hero" className="border-b border-[#16233A]/10 bg-[#F6F4EF] py-16 sm:py-24">
-      <div className="mx-auto max-w-3xl px-5 text-center sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          {t.eyebrow}
-        </p>
-        <h1 className="mt-5 text-4xl leading-[1.1] font-extrabold tracking-tight text-[#16233A] sm:text-5xl">
-          {t.title}
-        </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[#4B5568]">
-          {t.subtitle}
-        </p>
-
-        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="#valoracion"
-            className="inline-flex items-center justify-center bg-[#2F8F5B] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
-          >
-            {t.ctaPrimary}
-          </a>
-          <a
-            href="#como-funciona"
-            className="inline-flex items-center justify-center border border-[#16233A]/20 px-6 py-3.5 text-sm font-semibold text-[#16233A] transition-colors hover:border-[#16233A]/50"
-          >
-            {t.ctaSecondary}
-          </a>
+    <section id="hero" className="border-b border-[#CFE0D3] bg-[#F5F7F2] py-16 sm:py-24">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="text-base font-semibold text-[#1F6F4A]">{t.audience}</p>
+          <h1 className="mt-4 text-[2.75rem] leading-[1.05] font-extrabold tracking-[-0.025em] text-[#14213D] sm:text-6xl">
+            {t.title}
+          </h1>
+          <p className="mt-6 max-w-[32em] text-lg leading-relaxed text-[#4A5670]">{t.subtitle}</p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a
+              href="#valoracion"
+              className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#1F6F4A] px-6 text-base font-semibold text-white transition-colors hover:bg-[#185A3C]"
+            >
+              {t.ctaPrimary}
+            </a>
+            <a
+              href="#como-funciona"
+              className="inline-flex min-h-12 items-center justify-center rounded-md border border-[#14213D]/20 px-6 text-base font-semibold text-[#14213D] transition-colors hover:border-[#14213D]"
+            >
+              {t.ctaSecondary}
+            </a>
+          </div>
+          <p className="mt-5 text-sm text-[#4A5670]">{t.disclaimer}</p>
         </div>
 
-        <p className="mt-5 text-xs font-medium tracking-wide text-[#4B5568]">
-          {t.disclaimer}
-        </p>
+        <TaxCalendar locale={locale} />
       </div>
     </section>
   );

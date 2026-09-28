@@ -182,39 +182,36 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
   }
 
   return (
-    <section id="valoracion" className="bg-white py-20">
+    <section id="valoracion" className="scroll-mt-20 bg-white py-24">
       <div className="mx-auto max-w-2xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#2F8F5B] uppercase">
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#16233A] sm:text-4xl">
+        <h2 className="text-3xl leading-[1.1] font-extrabold tracking-[-0.02em] text-[#14213D] sm:text-[2.5rem]">
           {t.title}
         </h2>
-        <p className="mt-3 flex items-start gap-2 text-xs text-[#4B5568]/80">
+        <p className="mt-4 flex items-start gap-2 text-sm text-[#4A5670]">
           <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
           {t.formNotice}
         </p>
 
-        <div className="mt-8 border border-[#16233A]/10 bg-[#F6F4EF] p-6 sm:p-8">
+        <div className="mt-8 rounded-lg border border-[#CFE0D3] bg-[#F5F7F2] p-6 sm:p-8">
           {completed ? (
             <div role="status" className="flex flex-col items-start gap-3">
-              <CheckCircle2 size={28} className="text-[#2F8F5B]" aria-hidden="true" />
-              <p className="text-base font-bold text-[#16233A]">{t.completedTitle}</p>
-              <p className="text-sm leading-relaxed text-[#4B5568]">
+              <CheckCircle2 size={28} className="text-[#1F6F4A]" aria-hidden="true" />
+              <p className="text-xl font-bold text-[#14213D]">{t.completedTitle}</p>
+              <p className="text-base leading-relaxed text-[#4A5670]">
                 {t.completedBody}
               </p>
               <div className="mt-2 flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="inline-flex items-center gap-2 border border-[#16233A]/20 px-4 py-2.5 text-sm font-semibold text-[#16233A] hover:border-[#16233A]/50"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[#14213D]/20 px-5 text-base font-semibold text-[#14213D] hover:border-[#14213D]/50"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
                   {t.restart}
                 </button>
                 <Link
                   href={localizePath("/#contacto", locale)}
-                  className="inline-flex items-center gap-2 bg-[#2F8F5B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#26744A]"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#1F6F4A] px-5 text-base font-semibold text-white hover:bg-[#185A3C]"
                 >
                   {t.ctaAfterCompletion}
                   <ArrowRight size={14} aria-hidden="true" />
@@ -224,13 +221,13 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
           ) : (
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold tracking-wide text-[#4B5568]">
+                <p className="text-sm font-semibold text-[#4A5670]">
                   {t.stepOf(step, TOTAL_STEPS)}
                 </p>
               </div>
-              <div className="mt-2 h-1.5 w-full bg-[#16233A]/10">
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#14213D]/10">
                 <div
-                  className="h-1.5 bg-[#2F8F5B] transition-all duration-300"
+                  className="h-1.5 bg-[#1F6F4A] transition-all duration-300"
                   style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
                 />
               </div>
@@ -238,7 +235,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
               <div className="mt-6">
                 {step === 1 && (
                   <fieldset>
-                    <legend className="text-sm font-bold text-[#16233A]">
+                    <legend className="text-base font-semibold text-[#14213D]">
                       {t.situationLegend}
                     </legend>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -249,10 +246,10 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                           onClick={() => update("situation", option)}
                           aria-pressed={values.situation === option}
                           className={cn(
-                            "border px-4 py-3 text-left text-sm font-medium transition-colors",
+                            "min-h-12 rounded-md border bg-white px-4 py-3 text-left text-base font-medium transition-colors",
                             values.situation === option
-                              ? "border-[#2F8F5B] bg-[#2F8F5B]/10 text-[#16233A]"
-                              : "border-[#16233A]/15 text-[#16233A] hover:border-[#2F8F5B]/50"
+                              ? "border-[#1F6F4A] bg-[#EAF3EC] text-[#14213D] shadow-[inset_0_0_0_1px_#1F6F4A]"
+                              : "border-[#14213D]/15 text-[#14213D] hover:border-[#14213D]/50"
                           )}
                         >
                           {option}
@@ -265,7 +262,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                 {step === 2 && (
                   <div className="space-y-5">
                     <fieldset>
-                      <legend className="text-sm font-bold text-[#16233A]">
+                      <legend className="text-base font-semibold text-[#14213D]">
                         {t.needLegend}
                       </legend>
                       <div className="mt-3 grid gap-2">
@@ -276,10 +273,10 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                             onClick={() => update("need", option)}
                             aria-pressed={values.need === option}
                             className={cn(
-                              "border px-4 py-3 text-left text-sm font-medium transition-colors",
+                              "min-h-12 rounded-md border bg-white px-4 py-3 text-left text-base font-medium transition-colors",
                               values.need === option
-                                ? "border-[#2F8F5B] bg-[#2F8F5B]/10 text-[#16233A]"
-                                : "border-[#16233A]/15 text-[#16233A] hover:border-[#2F8F5B]/50"
+                                ? "border-[#1F6F4A] bg-[#EAF3EC] text-[#14213D] shadow-[inset_0_0_0_1px_#1F6F4A]"
+                                : "border-[#14213D]/15 text-[#14213D] hover:border-[#14213D]/50"
                             )}
                           >
                             {option}
@@ -288,7 +285,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                       </div>
                     </fieldset>
                     <div>
-                      <label htmlFor="balance-need-detail" className="mb-1.5 block text-sm font-medium text-[#16233A]">
+                      <label htmlFor="balance-need-detail" className="mb-2 block text-base font-semibold text-[#14213D]">
                         {t.needDetailLabel}
                       </label>
                       <textarea
@@ -297,7 +294,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                         value={values.needDetail}
                         onChange={(e) => update("needDetail", e.target.value)}
                         placeholder={t.needDetailPlaceholder}
-                        className="w-full resize-none border border-[#16233A]/20 bg-white px-4 py-3 text-sm text-[#16233A] outline-none focus:border-[#2F8F5B]"
+                        className="w-full resize-none rounded-md border border-[#14213D]/20 bg-white px-4 py-3 text-base text-[#14213D] outline-none focus:border-[#1F6F4A] focus:ring-4 focus:ring-[#1F6F4A]/15"
                       />
                     </div>
                   </div>
@@ -306,7 +303,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                 {step === 3 && (
                   <div className="space-y-5">
                     <div>
-                      <label htmlFor="balance-name" className="mb-1.5 block text-sm font-medium text-[#16233A]">
+                      <label htmlFor="balance-name" className="mb-2 block text-base font-semibold text-[#14213D]">
                         {t.nameLabel}
                       </label>
                       <input
@@ -315,11 +312,11 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                         value={values.name}
                         onChange={(e) => update("name", e.target.value)}
                         autoComplete="name"
-                        className="w-full border border-[#16233A]/20 bg-white px-4 py-3 text-sm text-[#16233A] outline-none focus:border-[#2F8F5B]"
+                        className="w-full rounded-md border border-[#14213D]/20 bg-white px-4 py-3 text-base text-[#14213D] outline-none focus:border-[#1F6F4A] focus:ring-4 focus:ring-[#1F6F4A]/15"
                       />
                     </div>
                     <div>
-                      <label htmlFor="balance-email" className="mb-1.5 block text-sm font-medium text-[#16233A]">
+                      <label htmlFor="balance-email" className="mb-2 block text-base font-semibold text-[#14213D]">
                         {t.emailLabel}
                       </label>
                       <input
@@ -328,11 +325,11 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                         value={values.email}
                         onChange={(e) => update("email", e.target.value)}
                         autoComplete="email"
-                        className="w-full border border-[#16233A]/20 bg-white px-4 py-3 text-sm text-[#16233A] outline-none focus:border-[#2F8F5B]"
+                        className="w-full rounded-md border border-[#14213D]/20 bg-white px-4 py-3 text-base text-[#14213D] outline-none focus:border-[#1F6F4A] focus:ring-4 focus:ring-[#1F6F4A]/15"
                       />
                     </div>
                     <div>
-                      <label htmlFor="balance-phone" className="mb-1.5 block text-sm font-medium text-[#16233A]">
+                      <label htmlFor="balance-phone" className="mb-2 block text-base font-semibold text-[#14213D]">
                         {t.phoneLabel}
                       </label>
                       <input
@@ -341,18 +338,18 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                         value={values.phone}
                         onChange={(e) => update("phone", e.target.value)}
                         autoComplete="tel"
-                        className="w-full border border-[#16233A]/20 bg-white px-4 py-3 text-sm text-[#16233A] outline-none focus:border-[#2F8F5B]"
+                        className="w-full rounded-md border border-[#14213D]/20 bg-white px-4 py-3 text-base text-[#14213D] outline-none focus:border-[#1F6F4A] focus:ring-4 focus:ring-[#1F6F4A]/15"
                       />
                     </div>
                     <div>
-                      <label htmlFor="balance-preference" className="mb-1.5 block text-sm font-medium text-[#16233A]">
+                      <label htmlFor="balance-preference" className="mb-2 block text-base font-semibold text-[#14213D]">
                         {t.preferenceLabel}
                       </label>
                       <select
                         id="balance-preference"
                         value={values.contactPreference}
                         onChange={(e) => update("contactPreference", e.target.value)}
-                        className="w-full border border-[#16233A]/20 bg-white px-4 py-3 text-sm text-[#16233A] outline-none focus:border-[#2F8F5B]"
+                        className="w-full rounded-md border border-[#14213D]/20 bg-white px-4 py-3 text-base text-[#14213D] outline-none focus:border-[#1F6F4A] focus:ring-4 focus:ring-[#1F6F4A]/15"
                       >
                         <option value="">{t.preferenceNone}</option>
                         {contactPreferences.map((pref) => (
@@ -362,12 +359,12 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                         ))}
                       </select>
                     </div>
-                    <label className="flex items-start gap-3 text-sm text-[#4B5568]">
+                    <label className="flex items-start gap-3 text-sm text-[#4A5670]">
                       <input
                         type="checkbox"
                         checked={values.consent}
                         onChange={(e) => update("consent", e.target.checked)}
-                        className="mt-1 h-4 w-4 shrink-0 border border-[#16233A]/30 accent-[#2F8F5B]"
+                        className="mt-1 h-4 w-4 shrink-0 border border-[#14213D]/30 accent-[#1F6F4A]"
                       />
                       {t.consentLabel}
                     </label>
@@ -386,7 +383,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                   type="button"
                   onClick={goBack}
                   disabled={step === 1}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#16233A] disabled:cursor-not-allowed disabled:opacity-30"
+                  className="inline-flex min-h-11 items-center gap-1.5 px-3 text-base font-semibold text-[#14213D] disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   <ArrowLeft size={15} aria-hidden="true" />
                   {t.back}
@@ -396,7 +393,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                   <button
                     type="button"
                     onClick={goNext}
-                    className="inline-flex items-center gap-2 bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#1F6F4A] px-5 text-base font-semibold text-white transition-colors hover:bg-[#185A3C]"
                   >
                     {t.continue}
                     <ArrowRight size={15} aria-hidden="true" />
@@ -405,7 +402,7 @@ export function BalanceContactWizard({ locale }: { locale: Locale }) {
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    className="inline-flex items-center gap-2 bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#1F6F4A] px-5 text-base font-semibold text-white transition-colors hover:bg-[#185A3C]"
                   >
                     {t.submit}
                   </button>

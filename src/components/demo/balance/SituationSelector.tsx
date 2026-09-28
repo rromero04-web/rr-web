@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
 import { getSituations, type SituationId } from "./content";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/config";
@@ -24,9 +23,9 @@ export function SituationSelector({ locale }: { locale: Locale }) {
   const active = situations.find((s) => s.id === selected);
 
   return (
-    <section className="border-b border-[#16233A]/10 bg-white py-16">
+    <section className="border-b border-[#CFE0D3] bg-white py-20">
       <div className="mx-auto max-w-3xl px-5 sm:px-8">
-        <h2 className="text-center text-2xl font-extrabold tracking-tight text-[#16233A] sm:text-3xl">
+        <h2 className="text-2xl leading-tight font-extrabold tracking-[-0.02em] text-[#14213D] sm:text-3xl">
           {t.heading}
         </h2>
 
@@ -40,10 +39,10 @@ export function SituationSelector({ locale }: { locale: Locale }) {
                 onClick={() => setSelected(situation.id)}
                 aria-pressed={isActive}
                 className={cn(
-                  "border px-4 py-3.5 text-left text-sm font-semibold transition-colors",
+                  "min-h-14 rounded-md border px-5 py-3.5 text-left text-base font-semibold transition-colors",
                   isActive
-                    ? "border-[#2F8F5B] bg-[#2F8F5B]/10 text-[#16233A]"
-                    : "border-[#16233A]/15 text-[#16233A] hover:border-[#2F8F5B]/50"
+                    ? "border-[#1F6F4A] bg-[#EAF3EC] text-[#14213D] shadow-[inset_0_0_0_1px_#1F6F4A]"
+                    : "border-[#14213D]/15 text-[#14213D] hover:border-[#14213D]/50"
                 )}
               >
                 {situation.label}
@@ -53,14 +52,13 @@ export function SituationSelector({ locale }: { locale: Locale }) {
         </div>
 
         {active && (
-          <div className="mt-6 flex flex-col items-start gap-4 border border-[#2F8F5B]/30 bg-[#2F8F5B]/5 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm leading-relaxed text-[#16233A]">{active.message}</p>
+          <div role="status" className="mt-6 flex flex-col items-start gap-4 rounded-md border-l-4 border-[#1F6F4A] bg-[#EAF3EC] p-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-base leading-relaxed text-[#14213D]">{active.message}</p>
             <a
               href="#valoracion"
-              className="inline-flex shrink-0 items-center gap-2 bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-md bg-[#1F6F4A] px-5 text-base font-semibold text-white transition-colors hover:bg-[#185A3C]"
             >
               {t.cta}
-              <ArrowRight size={15} aria-hidden="true" />
             </a>
           </div>
         )}

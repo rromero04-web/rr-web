@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./site.css";
+@import "./demos.css";
 
 :root {
   --color-navy: #081b2e;

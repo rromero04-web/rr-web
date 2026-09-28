@@ -9,10 +9,10 @@ export function MobileStickyCta({ locale }: { locale: Locale }) {
   const t = STRINGS[locale];
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#16233A]/10 bg-white/95 p-3 backdrop-blur md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#CFE0D3] bg-white p-3 md:hidden">
       <a
         href="#valoracion"
-        className="flex items-center justify-center bg-[#2F8F5B] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#26744A]"
+        className="flex min-h-12 items-center justify-center rounded-md bg-[#1F6F4A] px-4 text-base font-semibold text-white transition-colors hover:bg-[#185A3C]"
       >
         {t.cta}
       </a>

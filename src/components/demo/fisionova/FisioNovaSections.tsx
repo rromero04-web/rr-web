@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Info } from "lucide-react";
+import { Check, Info, Plus } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import {
   getTrustSignals,
@@ -12,67 +12,64 @@ import {
 } from "./content";
 
 const STRINGS: Record<Locale, {
-  treatmentsEyebrow: string;
   treatmentsTitle: string;
+  treatmentsIntro: string;
   seeLess: string;
   seeMore: string;
-  howItWorksEyebrow: string;
   howItWorksTitle: string;
-  aboutEyebrow: string;
   aboutTitle: string;
+  aboutIntro: string;
   aboutDisclaimer: string;
-  faqEyebrow: string;
   faqTitle: string;
   faqDisclaimer: string;
 }> = {
   es: {
-    treatmentsEyebrow: "Tratamientos",
     treatmentsTitle: "Un plan pensado para tu caso, no una plantilla.",
+    treatmentsIntro: "Estas son las molestias que más tratamos. Si la tuya no aparece, cuéntanosla igualmente.",
     seeLess: "Ver menos",
     seeMore: "Ampliar información",
-    howItWorksEyebrow: "Cómo funciona",
-    howItWorksTitle: "Tres pasos, sin complicaciones.",
-    aboutEyebrow: "La clínica",
+    howItWorksTitle: "Tu primera visita, paso a paso.",
     aboutTitle: "Un equipo cercano, centrado en tu recuperación.",
+    aboutIntro: "Te atiende siempre el mismo fisioterapeuta, que conoce tu historia y tu evolución.",
     aboutDisclaimer:
       "El equipo y los datos mostrados son ficticios, creados únicamente para esta demostración.",
-    faqEyebrow: "Preguntas frecuentes",
     faqTitle: "Antes de escribirnos",
     faqDisclaimer:
       "Estas respuestas son orientativas y no constituyen consejo médico personalizado.",
   },
   en: {
-    treatmentsEyebrow: "Treatments",
     treatmentsTitle: "A plan built for your case, not a template.",
+    treatmentsIntro: "These are the problems we treat most often. If yours isn't listed, tell us about it anyway.",
     seeLess: "See less",
     seeMore: "Read more",
-    howItWorksEyebrow: "How it works",
-    howItWorksTitle: "Three steps, no complications.",
-    aboutEyebrow: "The clinic",
+    howItWorksTitle: "Your first visit, step by step.",
     aboutTitle: "A close-knit team, focused on your recovery.",
+    aboutIntro: "You're always seen by the same physiotherapist, who knows your history and your progress.",
     aboutDisclaimer:
       "The team and data shown are fictional, created solely for this demonstration.",
-    faqEyebrow: "FAQ",
     faqTitle: "Before you reach out",
     faqDisclaimer:
       "These answers are for guidance only and do not constitute personalized medical advice.",
   },
 };
 
+const SECTION_TITLE = "text-3xl leading-[1.1] font-bold tracking-[-0.015em] text-[#0F4C45] sm:text-[2.75rem]";
+
 export function TrustBar({ locale }: { locale: Locale }) {
   const trustSignals = getTrustSignals(locale);
   return (
-    <section className="border-b border-[#E4DFD3] bg-[#0B4F49] py-10">
-      <div className="mx-auto grid max-w-6xl gap-6 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+    <section className="border-y border-[#D6E2DD] bg-[#F2F7F4] py-12">
+      <ul className="mx-auto grid max-w-6xl gap-8 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
         {trustSignals.map((item) => (
-          <div key={item.title}>
-            <p className="text-sm font-bold text-white">{item.title}</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-white/70">
-              {item.description}
-            </p>
-          </div>
+          <li key={item.title} className="flex gap-3">
+            <Check size={20} className="mt-0.5 shrink-0 text-[#1C7F9C]" aria-hidden="true" />
+            <div>
+              <p className="text-base font-bold text-[#0F4C45]">{item.title}</p>
+              <p className="mt-1 text-base leading-relaxed text-[#5E716C]">{item.description}</p>
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }
@@ -83,46 +80,44 @@ export function Treatments({ locale }: { locale: Locale }) {
   const treatments = getTreatments(locale);
 
   return (
-    <section id="tratamientos" className="border-b border-[#E4DFD3] bg-[#FAF9F5] py-20">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#0E6E64] uppercase">
-          {t.treatmentsEyebrow}
-        </p>
-        <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight text-[#123832] sm:text-4xl">
-          {t.treatmentsTitle}
-        </h2>
+    <section id="tratamientos" className="scroll-mt-20 bg-[#FBFCFA] py-24">
+      <div className="mx-auto grid max-w-6xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <div>
+          <h2 className={SECTION_TITLE}>{t.treatmentsTitle}</h2>
+          <p className="mt-5 max-w-[30em] text-lg leading-relaxed text-[#5E716C]">{t.treatmentsIntro}</p>
+        </div>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2">
+        <ul className="border-t border-[#0F4C45]">
           {treatments.map((treatment) => {
             const isOpen = openId === treatment.id;
+            const panelId = `fn-treatment-${treatment.id}`;
             return (
-              <div key={treatment.id} className="border border-[#E4DFD3] bg-white p-6">
-                <h3 className="text-lg font-bold text-[#123832]">{treatment.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[#5C726D]">
-                  {treatment.summary}
-                </p>
-                {isOpen && (
-                  <p className="mt-3 border-t border-[#E4DFD3] pt-3 text-sm leading-relaxed text-[#5C726D]">
-                    {treatment.detail}
-                  </p>
-                )}
+              <li key={treatment.id} className="border-b border-[#D6E2DD] py-6">
                 <button
                   type="button"
                   onClick={() => setOpenId(isOpen ? null : treatment.id)}
                   aria-expanded={isOpen}
-                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0E6E64] hover:text-[#0B4F49]"
+                  aria-controls={panelId}
+                  className="flex w-full items-start justify-between gap-6 text-left"
                 >
-                  {isOpen ? t.seeLess : t.seeMore}
-                  <ChevronDown
-                    size={15}
-                    aria-hidden="true"
-                    className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
-                  />
+                  <span>
+                    <span className="block text-xl font-bold text-[#0F4C45]">{treatment.title}</span>
+                    <span className="mt-1.5 block text-base leading-relaxed text-[#5E716C]">{treatment.summary}</span>
+                  </span>
+                  <span className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D6E2DD] text-[#0F4C45]">
+                    <Plus size={18} aria-hidden="true" className={`transition-transform ${isOpen ? "rotate-45" : ""}`} />
+                    <span className="sr-only">{isOpen ? t.seeLess : t.seeMore}</span>
+                  </span>
                 </button>
-              </div>
+                {isOpen && (
+                  <p id={panelId} className="mt-4 max-w-[36em] text-base leading-relaxed text-[#3F5752]">
+                    {treatment.detail}
+                  </p>
+                )}
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     </section>
   );
@@ -133,28 +128,23 @@ export function HowItWorks({ locale }: { locale: Locale }) {
   const steps = getHowItWorks(locale);
 
   return (
-    <section className="border-b border-[#E4DFD3] bg-[#F1EFE7] py-20">
+    <section className="bg-[#0F4C45] py-24 text-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#0E6E64] uppercase">
-          {t.howItWorksEyebrow}
-        </p>
-        <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight text-[#123832] sm:text-4xl">
+        <h2 className="max-w-xl text-3xl leading-[1.1] font-bold tracking-[-0.015em] sm:text-[2.75rem]">
           {t.howItWorksTitle}
         </h2>
 
-        <div className="mt-12 grid gap-8 sm:grid-cols-3">
+        <ol className="mt-14 grid gap-10 sm:grid-cols-3">
           {steps.map((step, index) => (
-            <div key={step.title}>
-              <span className="font-mono text-sm text-[#0E6E64]">
-                0{index + 1}
+            <li key={step.title} className="border-t-2 border-[#1C9CC0] pt-6">
+              <span className="text-5xl font-bold text-[#8CCFE0] tabular-nums" aria-hidden="true">
+                {index + 1}
               </span>
-              <h3 className="mt-2 text-lg font-bold text-[#123832]">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#5C726D]">
-                {step.description}
-              </p>
-            </div>
+              <h3 className="mt-4 text-xl font-bold">{step.title}</h3>
+              <p className="mt-2 text-base leading-relaxed text-white/80">{step.description}</p>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );
@@ -165,36 +155,33 @@ export function About({ locale }: { locale: Locale }) {
   const team = getTeam(locale);
 
   return (
-    <section id="clinica" className="border-b border-[#E4DFD3] bg-[#FAF9F5] py-20">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#0E6E64] uppercase">
-          {t.aboutEyebrow}
-        </p>
-        <h2 className="mt-3 max-w-xl text-3xl font-extrabold tracking-tight text-[#123832] sm:text-4xl">
-          {t.aboutTitle}
-        </h2>
-
-        <div className="mt-10 grid gap-5 sm:grid-cols-2">
-          {team.map((member) => (
-            <div key={member.id} className="flex items-center gap-4 border border-[#E4DFD3] bg-white p-5">
-              <span
-                aria-hidden="true"
-                className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0E6E64]/10 text-base font-bold text-[#0B4F49]"
-              >
-                {member.initials}
-              </span>
-              <div>
-                <p className="text-base font-bold text-[#123832]">{member.name}</p>
-                <p className="text-sm text-[#5C726D]">{member.role}</p>
-              </div>
-            </div>
-          ))}
+    <section id="clinica" className="scroll-mt-20 bg-[#FBFCFA] py-24">
+      <div className="mx-auto grid max-w-6xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <div>
+          <h2 className={SECTION_TITLE}>{t.aboutTitle}</h2>
+          <p className="mt-5 max-w-[30em] text-lg leading-relaxed text-[#5E716C]">{t.aboutIntro}</p>
         </div>
 
-        <p className="mt-6 flex items-start gap-2 text-xs text-[#5C726D]/80">
-          <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-          {t.aboutDisclaimer}
-        </p>
+        <div>
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {team.map((member) => (
+              <li key={member.id} className="rounded-2xl bg-[#F2F7F4] p-6">
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#DDEDE6] text-xl font-bold text-[#0F4C45]"
+                >
+                  {member.initials}
+                </span>
+                <p className="mt-5 text-xl font-bold text-[#0F4C45]">{member.name}</p>
+                <p className="mt-1 text-base text-[#5E716C]">{member.role}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-5 flex items-start gap-2 text-sm text-[#5E716C]">
+            <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+            {t.aboutDisclaimer}
+          </p>
+        </div>
       </div>
     </section>
   );
@@ -205,35 +192,26 @@ export function Faq({ locale }: { locale: Locale }) {
   const faqItems = getFaqItems(locale);
 
   return (
-    <section id="faq" className="border-b border-[#E4DFD3] bg-[#F1EFE7] py-20">
+    <section id="faq" className="scroll-mt-20 border-t border-[#D6E2DD] bg-[#FBFCFA] py-24">
       <div className="mx-auto max-w-3xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#0E6E64] uppercase">
-          {t.faqEyebrow}
-        </p>
-        <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#123832] sm:text-4xl">
-          {t.faqTitle}
-        </h2>
+        <h2 className={SECTION_TITLE}>{t.faqTitle}</h2>
 
-        <div className="mt-10 divide-y divide-[#E4DFD3] border-y border-[#E4DFD3]">
+        <div className="mt-10 border-t border-[#0F4C45]">
           {faqItems.map((item) => (
-            <details key={item.question} className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#123832] marker:content-none">
+            <details key={item.question} className="group border-b border-[#D6E2DD]">
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-4 text-lg font-bold text-[#0F4C45] marker:content-none">
                 {item.question}
-                <ChevronDown
-                  size={16}
+                <Plus
+                  size={20}
                   aria-hidden="true"
-                  className="shrink-0 text-[#0E6E64] transition-transform duration-200 group-open:rotate-180"
+                  className="shrink-0 text-[#1C7F9C] transition-transform duration-200 group-open:rotate-45"
                 />
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-[#5C726D]">
-                {item.answer}
-              </p>
+              <p className="pb-6 text-base leading-relaxed text-[#3F5752]">{item.answer}</p>
             </details>
           ))}
         </div>
-        <p className="mt-4 text-xs text-[#5C726D]/70">
-          {t.faqDisclaimer}
-        </p>
+        <p className="mt-5 text-sm text-[#5E716C]">{t.faqDisclaimer}</p>
       </div>
     </section>
   );

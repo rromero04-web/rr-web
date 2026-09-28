@@ -1,0 +1,23 @@
+/* Animaciones de las demos de negocio ficticio. Cada demo tiene una única
+   animación de carga; el resto del movimiento responde al usuario. */
+
+/* FisioNova: el goniómetro del hero recorre de 0° a 150°. */
+.fn-goniometer-arc {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: fn-arc 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+.fn-goniometer-arm {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
+  transform: rotate(-150deg);
+  animation: fn-arm 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+.fn-goniometer-value { animation: fn-value 0.5s ease-out 1.5s both; }
+@keyframes fn-arc { from { stroke-dashoffset: 1; } }
+@keyframes fn-arm { from { transform: rotate(0deg); } }
+@keyframes fn-value { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fn-goniometer-arc, .fn-goniometer-arm, .fn-goniometer-value { animation: none; }
+}

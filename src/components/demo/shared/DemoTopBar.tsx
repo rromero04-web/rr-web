@@ -9,13 +9,13 @@ import { localizePath } from "@/lib/i18n/config";
 
 const STRINGS: Record<Locale, { badge: string; back: string; cta: string; configuratorCta: string }> = {
   es: {
-    badge: "DEMO CREADA POR RAÚL ROMERO · Negocio y datos ficticios",
+    badge: "Demo creada por Raúl Romero. Negocio y datos ficticios.",
     back: "Volver a raulromero.es",
     cta: "Quiero una web como esta",
     configuratorCta: "Configura tu proyecto",
   },
   en: {
-    badge: "DEMO BY RAÚL ROMERO · Fictional business and data",
+    badge: "Demo by Raúl Romero. Fictional business and data.",
     back: "Back to raulromero.es",
     cta: "I want a website like this",
     configuratorCta: "Build your project",
@@ -33,27 +33,28 @@ export function DemoTopBar({
   return (
     <div
       className={`flex flex-col items-center justify-center gap-2 px-4 py-2.5 text-center sm:flex-row sm:justify-between sm:text-left ${toneClassName}`}
+      style={{ fontFamily: "var(--font-instrument), ui-sans-serif, system-ui, sans-serif" }}
     >
-      <p className="text-xs font-semibold tracking-wide sm:text-sm">
+      <p className="text-sm font-medium">
         {t.badge}
       </p>
       <div className="flex flex-wrap shrink-0 items-center justify-center gap-3 sm:gap-4">
         <Link
           href={localizePath("/", locale)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold underline underline-offset-2 opacity-90 hover:opacity-100"
+          className="inline-flex min-h-9 items-center gap-1.5 text-sm font-medium underline underline-offset-4 opacity-90 hover:opacity-100"
         >
           <ArrowLeft size={13} aria-hidden="true" />
           {t.back}
         </Link>
         <Link
           href={localizePath("/configurador", locale)}
-          className="inline-flex items-center border border-current px-3 py-1.5 text-xs font-semibold opacity-90 transition-opacity hover:opacity-100"
+          className="inline-flex min-h-9 items-center rounded-md border border-current/40 px-3 text-sm font-medium transition-colors hover:border-current"
         >
           {t.configuratorCta}
         </Link>
         <Link
           href={locale === "es" ? "/#contacto" : "/en#contacto"}
-          className="inline-flex items-center border border-current px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
+          className="inline-flex min-h-9 items-center rounded-md bg-white px-3 text-sm font-semibold text-[#081B2E] transition-opacity hover:opacity-90"
         >
           {t.cta}
         </Link>

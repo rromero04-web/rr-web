@@ -38,17 +38,17 @@ export function BalanceHeader({ locale }: { locale: Locale }) {
   const navLinks = getNavLinks(locale);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#16233A]/10 bg-[#F6F4EF]/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
+    <header className="sticky top-0 z-30 border-b border-[#CFE0D3] bg-[#F5F7F2]">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
         <a href="#hero" aria-label={t.homeAria}>
           <BalanceLogo />
         </a>
 
         <nav aria-label={t.mainNavAria} className="hidden md:block">
-          <ul className="flex items-center gap-7 text-sm font-medium text-[#16233A]">
+          <ul className="flex items-center gap-7 text-base text-[#14213D]">
             {navLinks.map((link) => (
               <li key={link.href}>
-                <a href={link.href} className="transition-colors hover:text-[#2F8F5B]">
+                <a href={link.href} className="transition-colors hover:text-[#1F6F4A]">
                   {link.label}
                 </a>
               </li>
@@ -58,7 +58,7 @@ export function BalanceHeader({ locale }: { locale: Locale }) {
 
         <a
           href="#valoracion"
-          className="hidden items-center bg-[#2F8F5B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#26744A] md:inline-flex"
+          className="hidden min-h-11 items-center rounded-md bg-[#1F6F4A] px-5 text-base font-semibold text-white transition-colors hover:bg-[#185A3C] md:inline-flex"
         >
           {t.cta}
         </a>
@@ -69,21 +69,21 @@ export function BalanceHeader({ locale }: { locale: Locale }) {
           aria-expanded={open}
           aria-controls="balance-mobile-menu"
           aria-label={open ? t.closeMenu : t.openMenu}
-          className="inline-flex h-10 w-10 items-center justify-center border border-[#16233A]/15 text-[#16233A] md:hidden"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-[#14213D]/15 text-[#14213D] md:hidden"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       {open && (
-        <div id="balance-mobile-menu" className="border-t border-[#16233A]/10 bg-[#F6F4EF] md:hidden">
+        <div id="balance-mobile-menu" className="border-t border-[#CFE0D3] bg-[#F5F7F2] md:hidden">
           <nav aria-label={t.mobileNavAria} className="flex flex-col gap-1 px-5 py-4">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="border-b border-[#16233A]/10 py-3 text-base font-medium text-[#16233A] last:border-none"
+                className="border-b border-[#CFE0D3] py-3.5 text-lg text-[#14213D] last:border-none"
               >
                 {link.label}
               </a>
@@ -91,7 +91,7 @@ export function BalanceHeader({ locale }: { locale: Locale }) {
             <a
               href="#valoracion"
               onClick={() => setOpen(false)}
-              className="mt-3 inline-flex items-center justify-center bg-[#2F8F5B] px-5 py-3 text-sm font-semibold text-white"
+              className="mt-4 inline-flex min-h-12 items-center justify-center rounded-md bg-[#1F6F4A] px-5 text-base font-semibold text-white"
             >
               {t.cta}
             </a>

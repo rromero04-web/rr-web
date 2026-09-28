@@ -24,7 +24,6 @@ const EMPTY_FORM: FormValues = {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const STRINGS: Record<Locale, {
-  eyebrow: string;
   title: string;
   demoNotice: string;
   successTitle: string;
@@ -47,7 +46,6 @@ const STRINGS: Record<Locale, {
   };
 }> = {
   es: {
-    eyebrow: "Contacto",
     title: "Solicita tu primera valoración",
     demoNotice:
       "Formulario de demostración: no envía ni almacena ninguna información. Nada de lo que escribas sale de tu navegador.",
@@ -71,7 +69,6 @@ const STRINGS: Record<Locale, {
     },
   },
   en: {
-    eyebrow: "Contact",
     title: "Request your first assessment",
     demoNotice:
       "Demo form: it doesn't send or store any information. Nothing you type leaves your browser.",
@@ -130,33 +127,30 @@ export function FisioNovaContactForm({ locale }: { locale: Locale }) {
   }
 
   return (
-    <section id="contacto" className="bg-[#FAF9F5] py-20">
+    <section id="contacto" className="scroll-mt-20 bg-[#DDEDE6] py-24">
       <div className="mx-auto max-w-2xl px-5 sm:px-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#0E6E64] uppercase">
-          {t.eyebrow}
-        </p>
-        <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#123832] sm:text-4xl">
+        <h2 className="text-3xl leading-[1.1] font-bold tracking-[-0.015em] text-[#0F4C45] sm:text-[2.75rem]">
           {t.title}
         </h2>
-        <p className="mt-3 flex items-start gap-2 text-xs text-[#5C726D]/80">
+        <p className="mt-4 flex items-start gap-2 text-sm text-[#3F5752]">
           <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
           {t.demoNotice}
         </p>
 
-        <div className="mt-8 border border-[#E4DFD3] bg-white p-6 sm:p-8">
+        <div className="mt-8 rounded-3xl bg-white p-6 shadow-[0_1px_2px_rgb(15_76_69/0.06)] sm:p-10">
           {submitted ? (
             <div role="status" className="flex flex-col items-start gap-3">
-              <CheckCircle2 size={28} className="text-[#0E6E64]" aria-hidden="true" />
-              <p className="text-base font-bold text-[#123832]">
+              <CheckCircle2 size={28} className="text-[#1C7F9C]" aria-hidden="true" />
+              <p className="text-xl font-bold text-[#0F4C45]">
                 {t.successTitle}
               </p>
-              <p className="text-sm leading-relaxed text-[#5C726D]">
+              <p className="text-base leading-relaxed text-[#5E716C]">
                 {t.successBody}
               </p>
               <button
                 type="button"
                 onClick={handleReset}
-                className="mt-2 inline-flex items-center gap-2 border border-[#0E6E64]/30 px-4 py-2 text-sm font-semibold text-[#123832] hover:border-[#0E6E64] hover:text-[#0E6E64]"
+                className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-full border border-[#D6E2DD] px-5 text-base font-semibold text-[#0F4C45] hover:border-[#0F4C45]"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 {t.fillAnother}
@@ -181,7 +175,7 @@ export function FisioNovaContactForm({ locale }: { locale: Locale }) {
               />
 
               <div>
-                <label htmlFor="fn-reason" className="mb-1.5 block text-sm font-medium text-[#123832]">
+                <label htmlFor="fn-reason" className="mb-2 block text-base font-bold text-[#0F4C45]">
                   {t.reasonLabel}
                 </label>
                 <select
@@ -190,7 +184,7 @@ export function FisioNovaContactForm({ locale }: { locale: Locale }) {
                   onChange={(e) => update("reason", e.target.value)}
                   aria-invalid={Boolean(errors.reason)}
                   aria-describedby={errors.reason ? "fn-reason-error" : undefined}
-                  className="w-full border border-[#123832]/20 bg-[#FAF9F5] px-4 py-3 text-sm text-[#123832] outline-none focus:border-[#0E6E64]"
+                  className="w-full rounded-xl border border-[#B9CCC5] bg-[#FBFCFA] px-4 py-3.5 text-base text-[#0F4C45] outline-none focus:border-[#1C9CC0] focus:ring-4 focus:ring-[#1C9CC0]/15"
                 >
                   <option value="">{t.reasonPlaceholder}</option>
                   {consultationReasons.map((reason) => (
@@ -200,21 +194,21 @@ export function FisioNovaContactForm({ locale }: { locale: Locale }) {
                   ))}
                 </select>
                 {errors.reason && (
-                  <p id="fn-reason-error" className="mt-1.5 text-xs text-red-700">
+                  <p id="fn-reason-error" className="mt-2 text-sm text-red-700">
                     {errors.reason}
                   </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="fn-time" className="mb-1.5 block text-sm font-medium text-[#123832]">
+                <label htmlFor="fn-time" className="mb-2 block text-base font-bold text-[#0F4C45]">
                   {t.timeLabel}
                 </label>
                 <select
                   id="fn-time"
                   value={values.timePreference}
                   onChange={(e) => update("timePreference", e.target.value)}
-                  className="w-full border border-[#123832]/20 bg-[#FAF9F5] px-4 py-3 text-sm text-[#123832] outline-none focus:border-[#0E6E64]"
+                  className="w-full rounded-xl border border-[#B9CCC5] bg-[#FBFCFA] px-4 py-3.5 text-base text-[#0F4C45] outline-none focus:border-[#1C9CC0] focus:ring-4 focus:ring-[#1C9CC0]/15"
                 >
                   <option value="">{t.timePlaceholder}</option>
                   {timePreferences.map((pref) => (
@@ -226,7 +220,7 @@ export function FisioNovaContactForm({ locale }: { locale: Locale }) {
               </div>
 
               <div>
-                <label htmlFor="fn-message" className="mb-1.5 block text-sm font-medium text-[#123832]">
+                <label htmlFor="fn-message" className="mb-2 block text-base font-bold text-[#0F4C45]">
                   {t.messageLabel}
                 </label>
                 <textarea
@@ -237,10 +231,10 @@ export function FisioNovaContactForm({ locale }: { locale: Locale }) {
                   aria-invalid={Boolean(errors.message)}
                   aria-describedby={errors.message ? "fn-message-error" : undefined}
                   placeholder={t.messagePlaceholder}
-                  className="w-full resize-none border border-[#123832]/20 bg-[#FAF9F5] px-4 py-3 text-sm text-[#123832] outline-none focus:border-[#0E6E64]"
+                  className="w-full resize-none rounded-xl border border-[#B9CCC5] bg-[#FBFCFA] px-4 py-3.5 text-base text-[#0F4C45] outline-none focus:border-[#1C9CC0] focus:ring-4 focus:ring-[#1C9CC0]/15"
                 />
                 {errors.message && (
-                  <p id="fn-message-error" className="mt-1.5 text-xs text-red-700">
+                  <p id="fn-message-error" className="mt-2 text-sm text-red-700">
                     {errors.message}
                   </p>
                 )}
@@ -248,7 +242,7 @@ export function FisioNovaContactForm({ locale }: { locale: Locale }) {
 
               <button
                 type="submit"
-                className="mt-2 inline-flex items-center justify-center bg-[#0E6E64] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0B4F49]"
+                className="mt-2 inline-flex min-h-12 items-center justify-center rounded-full bg-[#0F4C45] px-7 text-base font-semibold text-white transition-colors hover:bg-[#0A3A34]"
               >
                 {t.submit}
               </button>
@@ -278,7 +272,7 @@ function Field({
   const id = `fn-${label.toLowerCase().replace(/\s+/g, "-")}`;
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-[#123832]">
+      <label htmlFor={id} className="mb-2 block text-base font-bold text-[#0F4C45]">
         {label}
       </label>
       <input
@@ -289,10 +283,10 @@ function Field({
         autoComplete={autoComplete}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="w-full border border-[#123832]/20 bg-[#FAF9F5] px-4 py-3 text-sm text-[#123832] outline-none focus:border-[#0E6E64]"
+        className="w-full rounded-xl border border-[#B9CCC5] bg-[#FBFCFA] px-4 py-3.5 text-base text-[#0F4C45] outline-none focus:border-[#1C9CC0] focus:ring-4 focus:ring-[#1C9CC0]/15"
       />
       {error && (
-        <p id={`${id}-error`} className="mt-1.5 text-xs text-red-700">
+        <p id={`${id}-error`} className="mt-2 text-sm text-red-700">
           {error}
         </p>
       )}
