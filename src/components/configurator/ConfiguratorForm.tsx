@@ -31,8 +31,8 @@ export function ConfiguratorForm({ locale }: { locale: Locale }) {
   const errors = formState.fieldErrors ?? {};
 
   return (
-    <form ref={formRef} action={formAction} noValidate className="flex flex-col gap-4 border-t border-line/70 pt-6">
-      <h3 className="text-lg font-bold text-navy">{t.title}</h3>
+    <form ref={formRef} action={formAction} noValidate className="rr-panel flex flex-col gap-4 p-6 sm:p-8">
+      <h3 className="rr-display text-4xl text-navy">{t.title}</h3>
       <p className="text-sm text-slate">{t.intro}</p>
 
       <input type="hidden" name="language" value={locale} />

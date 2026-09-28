@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Laptop, Tablet, Smartphone, Layers } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
-import { cn } from "@/lib/utils";
 import { estimate } from "@/lib/configurator/engine";
 import { PREVIEW_STRINGS } from "@/lib/configurator/strings";
 import { useConfigurator } from "@/lib/configurator/state";
@@ -35,9 +34,9 @@ export function PreviewFrame({ locale }: { locale: Locale }) {
   const devices: PreviewDevice[] = ["desktop", "tablet", "mobile"];
 
   return (
-    <div className="studio-builder-preview flex h-full flex-col border border-line/70 bg-cream">
+    <div className="rr-builder-preview flex h-full flex-col">
       <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
-        <p className="text-xs font-semibold tracking-[0.1em] text-navy uppercase">{t.title}</p>
+        <p className="text-sm font-semibold text-navy">{t.title}</p>
         <div role="radiogroup" aria-label={t.deviceLabel} className="flex items-center gap-1">
           {devices.map((device) => {
             const Icon = DEVICE_ICON[device];
@@ -51,10 +50,7 @@ export function PreviewFrame({ locale }: { locale: Locale }) {
                 aria-checked={active}
                 aria-label={deviceLabel}
                 onClick={() => setDevice(device)}
-                className={cn(
-                  "inline-flex h-8 w-8 items-center justify-center border transition-colors motion-reduce:transition-none",
-                  active ? "border-cobalt bg-cobalt text-cream" : "border-line/70 text-slate hover:border-navy/30"
-                )}
+                className="rr-device"
               >
                 <Icon size={14} aria-hidden="true" />
               </button>
@@ -67,7 +63,7 @@ export function PreviewFrame({ locale }: { locale: Locale }) {
         <motion.div
           animate={{ width: DEVICE_WIDTH[state.device] }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="h-[420px] max-h-full overflow-hidden border border-line/70 bg-white shadow-sm motion-reduce:transition-none"
+          className="h-[420px] max-h-full overflow-hidden rounded-lg border border-line/70 bg-white shadow-sm motion-reduce:transition-none"
         >
           {result.previewMode === "web" && <WebPreview config={state.config} locale={locale} />}
           {result.previewMode === "app" && <AppPreview config={state.config} locale={locale} />}
@@ -82,7 +78,7 @@ export function PreviewFrame({ locale }: { locale: Locale }) {
             setArchitectureOpen(true);
             architectureOpened();
           }}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-navy hover:text-cobalt"
+          className="inline-flex min-h-9 items-center gap-2 text-sm font-semibold text-navy hover:text-cobalt"
         >
           <Layers size={14} aria-hidden="true" />
           {t.architectureCta}

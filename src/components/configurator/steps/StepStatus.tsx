@@ -34,7 +34,7 @@ export function StepStatus({ locale }: { locale: Locale }) {
       </div>
 
       <div className="mt-8">
-        <h3 className="text-sm font-bold text-navy">{URGENCY_LABEL[locale]}</h3>
+        <h3 className="text-base font-semibold text-navy">{URGENCY_LABEL[locale]}</h3>
         <div className="mt-3">
           <SegmentedControl
             label={URGENCY_LABEL[locale]}

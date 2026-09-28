@@ -1,70 +1,89 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Check, PanelTop, Target, LayoutDashboard, SlidersHorizontal } from "lucide-react";
+import { Check } from "lucide-react";
 import { getServices } from "@/content/services";
-import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
-import { DepthReveal } from "@/components/ui/DepthReveal";
-import { TiltCard } from "@/components/ui/TiltCard";
-import { Magnetic } from "@/components/ui/Magnetic";
+import { getProjects } from "@/content/projects";
 import { localizePath, type Locale } from "@/lib/i18n/config";
-import { CTA_STRINGS } from "@/lib/configurator/strings";
 
 const COPY = {
   es: {
-    eyebrow: "01 / Servicios", title: "Lo que necesita tu negocio.\nHecho a tu medida.",
-    intro: "Una presencia que transmite confianza, una web que genera oportunidades o una herramienta que te hace el día más fácil.",
-    tags: ["Presencia", "Conversión", "Productividad"],
-    benefits: ["Que te encuentren. Que te elijan.", "Convierte el interés en oportunidades.", "Tu forma de trabajar, mejor conectada."],
-    details: "Qué puede incluir", contact: "Hablemos de tu proyecto",
-    note: "Prueba ejemplos interactivos del tipo de solución que puedo crear para tu negocio.",
+    title: "Qué puedo hacer por tu negocio.",
+    intro: "Una web que transmite confianza, una web que convierte visitas en consultas o una herramienta que te ahorra trabajo. Cada una tiene una demo que puedes probar ahora.",
+    includes: "Qué incluye",
+    concept: "Proyecto conceptual:",
+    alt: "Vista del proyecto conceptual",
+    builderTitle: "¿No sabes cuál encaja contigo?",
+    builderText: "Responde unas preguntas en el configurador y verás una propuesta orientativa de alcance y plazos.",
+    builder: "Configura tu proyecto",
+    newTab: "(se abre en una pestaña nueva)",
   },
   en: {
-    eyebrow: "01 / Services", title: "What your business needs.\nMade for you.",
-    intro: "A presence that builds trust, a website that creates opportunities, or an internal tool that makes your day easier.",
-    tags: ["Presence", "Conversion", "Productivity"],
-    benefits: ["Get found. Become the first choice.", "Turn interest into opportunities.", "A more connected way to work."],
-    details: "What it can include", contact: "Let's discuss your project",
-    note: "Explore the live demos. Test three interactive examples and see how a professional website, a lead-generation experience and a custom internal application could work.",
+    title: "What I can do for your business.",
+    intro: "A website that builds trust, a website that turns visits into enquiries, or a tool that saves you work. Each one has a demo you can try right now.",
+    includes: "What's included",
+    concept: "Concept project:",
+    alt: "Preview of the concept project",
+    builderTitle: "Not sure which one fits?",
+    builderText: "Answer a few questions in the project builder and get an indicative proposal for scope and timeline.",
+    builder: "Build your project",
+    newTab: "(opens in a new tab)",
   },
 };
-const ICONS = [PanelTop, Target, LayoutDashboard];
 
 export function Services({ locale }: { locale: Locale }) {
   const t = COPY[locale];
+  const projects = getProjects(locale);
+
   return (
-    <section id="servicios" className="studio-section studio-services">
+    <section id="servicios" className="rr-section">
       <div className="container-page">
-        <div className="studio-section-heading">
-          <DepthReveal><p className="studio-eyebrow">{t.eyebrow}</p><h2 className="studio-section-title">{t.title}</h2></DepthReveal>
-          <p className="studio-section-intro">{t.intro}</p>
+        <div className="rr-section-head">
+          <h2 className="rr-display rr-section-title">{t.title}</h2>
+          <p className="rr-section-intro">{t.intro}</p>
         </div>
-        <div className="studio-service-grid">
+
+        <div className="rr-offer-list">
           {getServices(locale).map((service, index) => {
-            const Icon = ICONS[index];
-            return <TiltCard key={service.slug} maxTilt={6} className="h-full">
-              <article className={"studio-service-card service-" + index}>
-                <div className="studio-service-top"><span>{service.number} / {t.tags[index]}</span><Icon size={25} strokeWidth={1.4} aria-hidden="true" /></div>
-                <h3>{service.title}</h3>
-                <p className="studio-service-benefit">{t.benefits[index]}</p>
-                <p className="studio-service-audience">{service.audience}</p>
-                <details className="studio-service-details"><summary>{t.details}<span aria-hidden="true">+</span></summary><p>{service.problem}</p><ul>{service.includes.map((item) => <li key={item}><Check size={14} aria-hidden="true" /><span>{item}</span></li>)}</ul></details>
-                <div className="studio-service-actions">
-                  {service.demoHref && <Link href={localizePath(service.demoHref, locale)} className="studio-service-demo">{service.demoLabel}<ArrowUpRight size={18} aria-hidden="true" /></Link>}
-                  <a href="#contacto" className="studio-service-contact" title={service.nextStep}>{t.contact}<ArrowUpRight size={14} aria-hidden="true" /></a>
+            const project = projects[index];
+            return (
+              <article key={service.slug} className="rr-offer">
+                <div>
+                  <h3 className="rr-display">{service.title}</h3>
+                  <p className="rr-offer-audience">{service.audience}</p>
+                  {service.demoHref && (
+                    <div className="rr-offer-actions">
+                      <a href={localizePath(service.demoHref, locale)} target="_blank" rel="noopener noreferrer" className="rr-link">
+                        {service.demoLabel}
+                        <span className="sr-only"> {t.newTab}</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
+                <div className="rr-offer-includes">
+                  <h4>{t.includes}</h4>
+                  <ul>
+                    {service.includes.map((item) => (
+                      <li key={item}><Check size={16} aria-hidden="true" /><span>{item}</span></li>
+                    ))}
+                  </ul>
+                </div>
+                {project && (
+                  <figure>
+                    <div className="rr-offer-image">
+                      <Image src={project.image} alt={`${t.alt}: ${project.name}`} fill sizes="(min-width: 1060px) 24vw, (min-width: 640px) 45vw, 100vw" className="object-cover" />
+                    </div>
+                    <figcaption>{t.concept} {project.name}</figcaption>
+                  </figure>
+                )}
               </article>
-            </TiltCard>;
+            );
           })}
         </div>
-        <p className="studio-demo-note">{t.note}</p>
-        <RevealOnScroll>
-          <div className="studio-builder-banner">
-            <span className="studio-builder-symbol" aria-hidden="true"><SlidersHorizontal size={28} /></span>
-            <div><h3>{CTA_STRINGS[locale].label}</h3><p>{CTA_STRINGS[locale].supportingText}</p></div>
-            <Magnetic strength={0.2}>
-              <Link href={localizePath("/configurador", locale)} className="studio-button studio-button-light">{CTA_STRINGS[locale].label}<ArrowUpRight size={18} aria-hidden="true" /></Link>
-            </Magnetic>
-          </div>
-        </RevealOnScroll>
+
+        <div className="rr-builder-note">
+          <p><strong>{t.builderTitle}</strong>{t.builderText}</p>
+          <Link href={localizePath("/configurador", locale)} className="rr-button">{t.builder}</Link>
+        </div>
       </div>
     </section>
   );

@@ -1,52 +1,37 @@
 import { Plus } from "lucide-react";
 import { getFaqItems } from "@/content/faq";
-import { DepthReveal } from "@/components/ui/DepthReveal";
 import type { Locale } from "@/lib/i18n/config";
 
-const STRINGS: Record<Locale, { eyebrow: string; title: string }> = {
+const STRINGS: Record<Locale, { title: string; intro: string }> = {
   es: {
-    eyebrow: "Preguntas frecuentes",
-    title: "Lo que sueles preguntarme antes de empezar",
+    title: "Lo que sueles preguntarme antes de empezar.",
+    intro: "Si tu duda no está aquí, escríbeme y te respondo personalmente.",
   },
   en: {
-    eyebrow: "Frequently asked questions",
-    title: "What people usually ask me before getting started",
+    title: "What people usually ask me before getting started.",
+    intro: "If your question isn't here, write to me and I'll answer personally.",
   },
 };
 
 export function Faq({ locale }: { locale: Locale }) {
   const t = STRINGS[locale];
-  const faqItems = getFaqItems(locale);
 
   return (
-    <section id="faq" className="studio-faq border-b border-line/70 py-24 md:py-32">
-      <div className="container-page">
-        <DepthReveal>
-          <p className="text-xs font-semibold tracking-[0.14em] text-cobalt uppercase">
-            {t.eyebrow}
-          </p>
-          <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
-            {t.title}
-          </h2>
-        </DepthReveal>
-
-        <div className="studio-faq-list max-w-3xl divide-y divide-line/70 border-y border-line/70">
-          {faqItems.map((item, index) => (
-            <DepthReveal key={item.question} delay={Math.min(index * 0.04, 0.16)}>
-              <details className="group py-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-navy marker:content-none">
-                  {item.question}
-                  <Plus
-                    size={18}
-                    className="shrink-0 text-cobalt transition-transform duration-200 group-open:rotate-45"
-                    aria-hidden="true"
-                  />
-                </summary>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate">
-                  {item.answer}
-                </p>
-              </details>
-            </DepthReveal>
+    <section id="faq" className="rr-section">
+      <div className="container-page rr-faq">
+        <div className="rr-faq-head">
+          <h2 className="rr-display rr-section-title">{t.title}</h2>
+          <p className="rr-section-intro mt-6">{t.intro}</p>
+        </div>
+        <div className="rr-faq-list">
+          {getFaqItems(locale).map((item) => (
+            <details key={item.question}>
+              <summary>
+                {item.question}
+                <Plus size={20} aria-hidden="true" />
+              </summary>
+              <p>{item.answer}</p>
+            </details>
           ))}
         </div>
       </div>

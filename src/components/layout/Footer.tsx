@@ -1,52 +1,45 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Mail } from "lucide-react";
-import { InstagramIcon } from "@/components/ui/SocialIcons";
+import { InstagramIcon, WhatsappIcon } from "@/components/ui/SocialIcons";
 import { localizePath, type Locale } from "@/lib/i18n/config";
-
-const SOCIAL_LINKS = [
-  {
-    label: "Instagram",
-    href: "https://www.instagram.com/rr.webandgrowth",
-    icon: InstagramIcon,
-  },
-];
 
 const STRINGS: Record<Locale, {
   tagline: string;
-  network: string;
-  legal: string;
+  contact: string;
   explore: string;
+  legal: string;
+  builder: string;
   rights: string;
-  builtBy: string;
+  place: string;
   legalLinks: { href: string; label: string }[];
 }> = {
   es: {
-    tagline:
-      "Webs y aplicaciones pensadas para hacer crecer negocios. Estrategia, diseño y desarrollo en una misma dirección.",
-    network: "Redes",
-    legal: "Legal",
+    tagline: "Webs y aplicaciones para negocios pequeños, hechas por una sola persona de principio a fin.",
+    contact: "Contacto",
     explore: "Explora",
+    legal: "Legal",
+    builder: "Configura tu proyecto",
     rights: "Todos los derechos reservados.",
-    builtBy: "Diseñado y desarrollado por Raúl Romero.",
+    place: "Cartagena, Murcia",
     legalLinks: [
       { href: "/aviso-legal", label: "Aviso legal" },
-      { href: "/privacidad", label: "Política de privacidad" },
-      { href: "/cookies", label: "Política de cookies" },
+      { href: "/privacidad", label: "Privacidad" },
+      { href: "/cookies", label: "Cookies" },
     ],
   },
   en: {
-    tagline:
-      "Websites and applications built to help businesses grow. Strategy, design and development in one direction.",
-    network: "Social",
-    legal: "Legal",
+    tagline: "Websites and applications for small businesses, made by one person from start to finish.",
+    contact: "Contact",
     explore: "Explore",
+    legal: "Legal",
+    builder: "Build your project",
     rights: "All rights reserved.",
-    builtBy: "Designed and built by Raúl Romero.",
+    place: "Cartagena, Spain",
     legalLinks: [
       { href: "/aviso-legal", label: "Legal notice" },
-      { href: "/privacidad", label: "Privacy policy" },
-      { href: "/cookies", label: "Cookies policy" },
+      { href: "/privacidad", label: "Privacy" },
+      { href: "/cookies", label: "Cookies" },
     ],
   },
 };
@@ -55,85 +48,46 @@ export function Footer({ locale }: { locale: Locale }) {
   const t = STRINGS[locale];
 
   return (
-    <footer className="border-t border-line/70 bg-navy text-cream">
-      <div className="container-page grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="rr-footer">
+      <div className="container-page rr-footer-top">
         <div>
           <div className="flex items-center gap-2.5">
-            <Image
-              src="/brand/logo-mark-inverse.png"
-              alt=""
-              width={800}
-              height={672}
-              className="h-8 w-auto shrink-0"
-            />
-            <span className="text-sm font-bold tracking-[0.14em] uppercase">
-              Raúl Romero
-            </span>
+            <Image src="/brand/logo-mark-inverse.png" alt="" width={800} height={672} className="h-7 w-auto shrink-0" />
+            <span className="font-semibold">Raúl Romero</span>
           </div>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-cream/70">
-            {t.tagline}
-          </p>
-          <a
-            href="mailto:info@raulromero.es"
-            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cream/90 hover:text-cobalt-soft"
-          >
-            <Mail size={16} aria-hidden="true" />
-            info@raulromero.es
-          </a>
+          <p>{t.tagline}</p>
         </div>
 
         <div>
-          <h2 className="text-xs font-semibold tracking-[0.14em] text-cream/50 uppercase">
-            {t.network}
-          </h2>
-          <ul className="mt-4 flex flex-col gap-3">
-            {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
-              <li key={label}>
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 text-sm text-cream/80 hover:text-cobalt-soft"
-                >
-                  <Icon size={16} aria-hidden="true" />
-                  {label}
-                </a>
-              </li>
-            ))}
+          <h2>{t.contact}</h2>
+          <ul>
+            <li><a href="mailto:info@raulromero.es"><Mail size={16} aria-hidden="true" />info@raulromero.es</a></li>
+            <li><a href="https://wa.me/34684772973" target="_blank" rel="noreferrer noopener"><WhatsappIcon size={16} />WhatsApp</a></li>
+            <li><a href="https://www.instagram.com/rr.webandgrowth" target="_blank" rel="noreferrer noopener"><InstagramIcon size={16} />Instagram</a></li>
           </ul>
-          <h2 className="mt-8 text-xs font-semibold tracking-[0.14em] text-cream/50 uppercase">
-            {t.explore}
-          </h2>
-          <Link href="/labs" className="mt-4 inline-flex text-sm text-cream/80 hover:text-cobalt-soft">
-            Labs ↗
-          </Link>
         </div>
 
         <div>
-          <h2 className="text-xs font-semibold tracking-[0.14em] text-cream/50 uppercase">
-            {t.legal}
-          </h2>
-          <ul className="mt-4 flex flex-col gap-3">
+          <h2>{t.explore}</h2>
+          <ul>
+            <li><Link href={localizePath("/configurador", locale)}>{t.builder}</Link></li>
+            <li><Link href="/labs">Labs</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>{t.legal}</h2>
+          <ul>
             {t.legalLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={localizePath(link.href, locale)}
-                  className="text-sm text-cream/80 hover:text-cobalt-soft"
-                >
-                  {link.label}
-                </Link>
-              </li>
+              <li key={link.href}><Link href={localizePath(link.href, locale)}>{link.label}</Link></li>
             ))}
           </ul>
         </div>
       </div>
 
-      <div className="container-page"><p className="studio-footer-mark" aria-hidden="true">{locale === "es" ? "HAGAMOS QUE AVANCE." : "LET’S MOVE FORWARD."}</p></div>
-      <div className="border-t border-cream/10">
-        <div className="container-page flex flex-col gap-2 py-6 text-xs text-cream/50 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Raúl Romero. {t.rights}</p>
-          <p>{t.builtBy}</p>
-        </div>
+      <div className="container-page rr-footer-bottom">
+        <p>© {new Date().getFullYear()} Raúl Romero. {t.rights}</p>
+        <p>{t.place}</p>
       </div>
     </footer>
   );

@@ -32,7 +32,7 @@ export function StepStyle({ locale }: { locale: Locale }) {
 
       <div className="mt-6 flex flex-col gap-8">
         <div>
-          <h3 className="text-sm font-bold text-navy">{labels.tone}</h3>
+          <h3 className="text-base font-semibold text-navy">{labels.tone}</h3>
           <div className="mt-3">
             <OptionGrid
               options={STYLE_TONE_OPTIONS}
@@ -46,7 +46,7 @@ export function StepStyle({ locale }: { locale: Locale }) {
         </div>
 
         <div>
-          <h3 className="text-sm font-bold text-navy">{labels.color}</h3>
+          <h3 className="text-base font-semibold text-navy">{labels.color}</h3>
           <div role="radiogroup" aria-label={labels.color} className="mt-3 flex flex-wrap gap-3">
             {STYLE_COLOR_PRESETS.map((preset) => {
               const active = style.color === preset.value;
@@ -78,7 +78,7 @@ export function StepStyle({ locale }: { locale: Locale }) {
 
         <div className="flex flex-wrap gap-8">
           <div>
-            <h3 className="text-sm font-bold text-navy">{labels.contrast}</h3>
+            <h3 className="text-base font-semibold text-navy">{labels.contrast}</h3>
             <div className="mt-3">
               <SegmentedControl
                 label={labels.contrast}
@@ -89,7 +89,7 @@ export function StepStyle({ locale }: { locale: Locale }) {
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-navy">{labels.density}</h3>
+            <h3 className="text-base font-semibold text-navy">{labels.density}</h3>
             <div className="mt-3">
               <SegmentedControl
                 label={labels.density}

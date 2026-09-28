@@ -73,28 +73,28 @@ export function StepResult({ locale }: { locale: Locale }) {
     <div>
       <StepHeader step="result" locale={locale} />
 
-      <motion.div layout className="mt-6 border border-line/70 bg-cream">
+      <motion.div layout className="rr-panel mt-6">
         <dl className="divide-y divide-line/70">
           {rows.map((row) => (
             <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <dt className="text-xs font-semibold uppercase tracking-wide text-slate">{row.label}</dt>
+              <dt className="text-sm text-slate">{row.label}</dt>
               <dd className="text-sm font-medium text-navy sm:text-right">{row.value}</dd>
             </div>
           ))}
 
           <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate">{t.complexity}</dt>
+            <dt className="text-sm text-slate">{t.complexity}</dt>
             <dd className="text-sm font-medium text-navy sm:text-right">{t.complexityLabel[result.complexity]}</dd>
           </div>
           <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate">{t.timeline}</dt>
+            <dt className="text-sm text-slate">{t.timeline}</dt>
             <dd className="text-sm font-medium text-navy sm:text-right">
               {t.weeks(result.timelineWeeks.min, result.timelineWeeks.max)}
             </dd>
           </div>
           {SHOW_PRICE_ESTIMATE && result.priceRangeEur && (
             <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <dt className="text-xs font-semibold uppercase tracking-wide text-slate">{t.priceEstimate}</dt>
+              <dt className="text-sm text-slate">{t.priceEstimate}</dt>
               <dd className="text-sm font-medium text-navy sm:text-right">
                 {result.priceRangeEur.min}–{result.priceRangeEur.max} €
               </dd>
@@ -105,9 +105,9 @@ export function StepResult({ locale }: { locale: Locale }) {
 
       <p className="mt-3 text-xs leading-relaxed text-slate">{t.priceDisclaimer}</p>
 
-      <div className="mt-5 flex flex-col gap-4 border border-cobalt/30 bg-cobalt/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="rr-panel-tint mt-5">
         <div>
-          <p className="text-sm font-bold text-navy">{t.nextStep}</p>
+          <p className="text-base font-semibold text-navy">{t.nextStep}</p>
           <p className="mt-1 text-sm text-slate">{t.nextStepBody}</p>
         </div>
       </div>
@@ -115,7 +115,7 @@ export function StepResult({ locale }: { locale: Locale }) {
       <button
         type="button"
         onClick={handleShare}
-        className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-navy hover:text-cobalt"
+        className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-navy hover:text-cobalt"
       >
         {copied ? <Check size={14} aria-hidden="true" /> : <Link2 size={14} aria-hidden="true" />}
         {copied ? t.shareCopied : t.share}

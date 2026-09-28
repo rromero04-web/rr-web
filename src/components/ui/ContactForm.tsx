@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, ChevronDown } from "lucide-react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
 import { SERVICE_OPTIONS, BUDGET_OPTIONS } from "@/lib/validation";
 import { localizePath, type Locale } from "@/lib/i18n/config";
@@ -23,6 +23,7 @@ const STRINGS: Record<Locale, {
   budgetPlaceholder: string;
   messageLabel: string;
   messagePlaceholder: string;
+  legalSummary: string;
   legalNotice: (privacyHref: string) => ReactNode;
   consentLabel: (privacyHref: string) => ReactNode;
   submit: string;
@@ -39,6 +40,7 @@ const STRINGS: Record<Locale, {
     budgetPlaceholder: "Prefiero no indicarlo",
     messageLabel: "Cuéntame tu proyecto",
     messagePlaceholder: "Cuéntame brevemente tu idea, problema o proceso a mejorar.",
+    legalSummary: "Información básica sobre protección de datos",
     legalNotice: (privacyHref) => (
       <p>
         <strong className="text-navy">Responsable:</strong> Raúl Romero
@@ -99,6 +101,7 @@ const STRINGS: Record<Locale, {
     budgetPlaceholder: "Prefer not to say",
     messageLabel: "Tell me about your project",
     messagePlaceholder: "Briefly describe your idea, problem or process to improve.",
+    legalSummary: "Basic information on data protection",
     legalNotice: (privacyHref) => (
       <p>
         <strong className="text-navy">Data controller:</strong> Raúl Romero
@@ -278,9 +281,15 @@ export function ContactForm({ locale }: { locale: Locale }) {
         )}
       </div>
 
-      <div className="border border-line/70 bg-navy/[0.03] p-4 text-xs leading-relaxed text-slate">
-        {t.legalNotice(privacyHref)}
-      </div>
+      {/* Primera capa de información (modelo por capas de la AEPD): plegada
+          para no frenar el envío, pero siempre disponible junto al formulario. */}
+      <details className="group text-xs leading-relaxed text-slate">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 font-medium text-navy marker:content-none">
+          {t.legalSummary}
+          <ChevronDown size={14} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="mt-1 border-l-2 border-line pl-4">{t.legalNotice(privacyHref)}</div>
+      </details>
 
       <div className="flex items-start gap-3">
         <input

@@ -1,75 +1,73 @@
-"use client";
-
-import { useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowDown, ArrowUpRight, SlidersHorizontal } from "lucide-react";
-import { SolutionShowcase } from "@/components/ui/SolutionShowcase";
-import { AmbientDepth } from "@/components/ui/AmbientDepth";
-import { Magnetic } from "@/components/ui/Magnetic";
 import { localizePath, type Locale } from "@/lib/i18n/config";
 
-const COPY = {
+const COPY: Record<Locale, {
+  lines: string[];
+  lead: string;
+  contact: string;
+  builder: string;
+  person: string;
+  role: string;
+  servicesLabel: string;
+  services: string[];
+}> = {
   es: {
-    eyebrow: "Marketing + Diseño + Desarrollo",
-    title: "Webs y aplicaciones que hacen avanzar",
-    accent: "tu negocio.",
-    description: "Combino estrategia, diseño y desarrollo para crear soluciones digitales que captan clientes, simplifican procesos y ayudan a crecer.",
-    contact: "Cuéntame tu proyecto", demos: "Probar las demos", builder: "Configura tu proyecto",
-    signature: "Raúl Romero · Web & Growth",
-    notes: ["Diseño con intención", "Tecnología que resuelve", "Trato directo, de principio a fin"],
-    scroll: "Descubre lo que podemos crear",
+    lines: ["Webs y aplicaciones", "que hacen avanzar", "tu negocio."],
+    lead: "Diseño y desarrollo webs y herramientas a medida para que te encuentren, te escriban y trabajes con menos papeleo.",
+    contact: "Cuéntame tu proyecto",
+    builder: "Configura tu proyecto",
+    person: "Hablas directamente conmigo",
+    role: "Raúl Romero, diseño y desarrollo en Cartagena",
+    servicesLabel: "Servicios",
+    services: ["Web profesional", "Web de captación", "Aplicaciones a medida"],
   },
   en: {
-    eyebrow: "Marketing + Design + Development",
-    title: "Websites and applications that move",
-    accent: "your business forward.",
-    description: "I combine strategy, design and development to create digital solutions that attract customers, simplify processes and support business growth.",
-    contact: "Tell me about your project", demos: "View live demos", builder: "Build your project",
-    signature: "Raúl Romero · Web & Growth",
-    notes: ["Purposeful design", "Technology that solves problems", "Direct collaboration, start to finish"],
-    scroll: "Discover what we can create",
+    lines: ["Websites and apps", "that move your", "business forward."],
+    lead: "I design and build websites and custom tools so people find you, get in touch, and you spend less time on paperwork.",
+    contact: "Tell me about your project",
+    builder: "Build your project",
+    person: "You talk directly to me",
+    role: "Raúl Romero, design and development in Cartagena, Spain",
+    servicesLabel: "Services",
+    services: ["Professional websites", "Lead-generation websites", "Custom applications"],
   },
 };
 
 export function Hero({ locale }: { locale: Locale }) {
   const t = COPY[locale];
-  const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
-  // Profundidad cinematográfica sutil: al hacer scroll, la vista del
-  // showcase se desplaza y escala ligeramente más despacio que el resto
-  // (parallax), como si tuviera su propio plano en el espacio.
-  const showcaseY = useTransform(scrollYProgress, [0, 1], [0, 70]);
-  const showcaseScale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   return (
-    <section id="inicio" ref={sectionRef} className="studio-hero studio-depth-perspective relative">
-      <AmbientDepth tone="light" />
-      <div className="container-page relative z-10">
-        <div className="studio-hero-grid">
-          <motion.div style={{ y: contentY }} className="min-w-0 motion-reduce:!transform-none">
-            <p className="studio-eyebrow"><span className="studio-status-dot" />{t.eyebrow}</p>
-            <h1 className="studio-hero-title">{t.title} <span>{t.accent}</span></h1>
-            <p className="studio-hero-description">{t.description}</p>
-            <div className="studio-hero-actions">
-              <Magnetic>
-                <a href="#contacto" className="studio-button studio-button-primary">{t.contact}<ArrowUpRight size={18} aria-hidden="true" /></a>
-              </Magnetic>
-              <a href="#servicios" className="studio-button studio-button-outline">{t.demos}<ArrowDown size={16} aria-hidden="true" /></a>
-            </div>
-            <Link href={localizePath("/configurador", locale)} className="studio-builder-link">
-              <SlidersHorizontal size={16} aria-hidden="true" />{t.builder}<ArrowUpRight size={15} aria-hidden="true" />
-            </Link>
-          </motion.div>
-          <motion.div style={{ y: showcaseY, scale: showcaseScale }} className="studio-hero-parallax motion-reduce:!transform-none">
-            <SolutionShowcase locale={locale} />
-          </motion.div>
+    <section id="inicio" className="rr-hero">
+      <div className="container-page">
+        {/* El único momento orquestado de la página: las líneas del titular
+            suben una tras otra al cargar. */}
+        <h1 className="rr-display rr-hero-title">
+          {t.lines.map((line, index) => (
+            <span key={line} className="rr-hero-line">
+              <span style={{ animationDelay: `${0.1 + index * 0.09}s` }}>
+                {line}
+              </span>
+            </span>
+          ))}
+        </h1>
+
+        <div className="rr-hero-body">
+          <p className="rr-hero-lead">{t.lead}</p>
+          <div className="rr-hero-actions">
+            <a href="#contacto" className="rr-button">{t.contact}</a>
+            <Link href={localizePath("/configurador", locale)} className="rr-link">{t.builder}</Link>
+          </div>
         </div>
-        <div className="studio-hero-foot">
-          <span className="studio-hero-signature">{t.signature}</span>
-          <div className="studio-hero-notes">{t.notes.map((note) => <span key={note}>{note}</span>)}</div>
-          <a href="#servicios" aria-label={t.scroll} className="studio-scroll-link"><ArrowDown size={18} aria-hidden="true" /></a>
+
+        <div className="rr-hero-foot">
+          <div className="rr-hero-person">
+            <Image src="/brand/raul-photo.jpg" alt="" width={112} height={112} sizes="56px" className="rr-hero-avatar" priority />
+            <p><strong>{t.person}</strong>{t.role}</p>
+          </div>
+          <nav aria-label={t.servicesLabel} className="rr-hero-services">
+            {t.services.map((service) => <a key={service} href="#servicios">{service}</a>)}
+          </nav>
         </div>
       </div>
     </section>

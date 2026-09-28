@@ -11,7 +11,7 @@ export function ActionLog({ log, locale }: { log: LogEntry[]; locale: Locale }) 
 
   return (
     <div className="border-t border-line/70 bg-navy-soft/[0.03] p-3">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate">{t.logTitle}</p>
+      <p className="text-xs font-semibold text-slate">{t.logTitle}</p>
 
       {/* Región accesible: anuncia solo la última acción a lectores de pantalla. */}
       <div aria-live="polite" className="sr-only">

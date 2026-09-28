@@ -5,7 +5,7 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { MonitorSmartphone } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { ConfiguratorProvider, useConfigurator } from "@/lib/configurator/state";
-import { PREVIEW_STRINGS } from "@/lib/configurator/strings";
+import { CTA_STRINGS, PREVIEW_STRINGS } from "@/lib/configurator/strings";
 import type { StepId } from "@/lib/configurator/types";
 import { Modal } from "@/components/demo/ui/Modal";
 import { StepProgress } from "./StepNav";
@@ -37,8 +37,12 @@ function ConfiguratorLayout({ locale }: { locale: Locale }) {
   const StepComponent = STEP_COMPONENTS[state.currentStep];
 
   return (
-    <div className="studio-configurator container-page py-24 md:py-32">
+    <div className="rr-configurator container-page">
       <div className="mx-auto max-w-6xl">
+        <header className="rr-configurator-head">
+          <h1 className="rr-display rr-configurator-title">{CTA_STRINGS[locale].label}</h1>
+          <p>{CTA_STRINGS[locale].supportingText}</p>
+        </header>
         <StepProgress locale={locale} />
 
         <div className="mt-8 grid gap-10 md:grid-cols-[1.05fr_0.95fr] md:items-start">
@@ -56,21 +60,19 @@ function ConfiguratorLayout({ locale }: { locale: Locale }) {
             </AnimatePresence>
           </div>
 
-          <div className="hidden md:sticky md:top-28 md:block md:h-[560px]">
+          <div className="hidden md:sticky md:top-24 md:block md:h-[560px]">
             <PreviewFrame locale={locale} />
           </div>
         </div>
       </div>
 
       {/* Botón flotante para ver el preview en móvil/tablet */}
-      <button
-        type="button"
-        onClick={() => setMobilePreviewOpen(true)}
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 bg-navy px-5 py-3 text-sm font-semibold text-cream shadow-lg transition-colors hover:bg-cobalt md:hidden"
-      >
-        <MonitorSmartphone size={16} aria-hidden="true" />
-        {t.title}
-      </button>
+      <div className="fixed bottom-5 right-5 z-40 md:hidden">
+        <button type="button" onClick={() => setMobilePreviewOpen(true)} className="rr-button shadow-lg">
+          <MonitorSmartphone size={16} aria-hidden="true" />
+          {t.title}
+        </button>
+      </div>
 
       <Modal
         open={mobilePreviewOpen}

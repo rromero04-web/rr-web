@@ -11,7 +11,7 @@ interface SegmentedControlProps<Id extends string> {
 
 export function SegmentedControl<Id extends string>({ label, options, value, onChange }: SegmentedControlProps<Id>) {
   return (
-    <div role="radiogroup" aria-label={label} className="studio-segmented inline-flex border border-line/70 bg-cream p-1">
+    <div role="radiogroup" aria-label={label} className="rr-segmented">
       {options.map((option) => {
         const active = option.id === value;
         return (
@@ -21,10 +21,7 @@ export function SegmentedControl<Id extends string>({ label, options, value, onC
             role="radio"
             aria-checked={active}
             onClick={() => onChange(option.id)}
-            className={cn(
-              "relative px-4 py-2 text-xs font-semibold transition-colors motion-reduce:transition-none",
-              active ? "bg-navy text-cream" : "text-navy hover:text-cobalt"
-            )}
+            className={cn(active && "is-active")}
           >
             {option.label}
           </button>

@@ -13,15 +13,12 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="container-page py-24 md:py-32">
+    <div className="container-page rr-legal">
       <div className="mx-auto max-w-2xl">
-        <p className="text-xs font-semibold tracking-[0.14em] text-cobalt uppercase">
-          Legal
-        </p>
-        <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
+        <h1 className="rr-display rr-legal-title">
           Privacy Policy
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-slate">
+        <p className="mt-8 text-base leading-relaxed text-slate">
           This document explains, in plain language, what personal data this
           website processes, for what purpose, for how long, and what
           rights you have. It does not replace professional legal advice
@@ -34,7 +31,7 @@ export default function PrivacyPage() {
           <Link href="/privacidad">Spanish version</Link> shall prevail.
         </p>
 
-        <div className="mt-10 space-y-8 text-sm leading-relaxed text-slate [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-navy [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5 [&_p]:mt-2 [&_a]:font-medium [&_a]:text-navy [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-cobalt">
+        <div className="mt-12 space-y-10 text-base leading-relaxed text-slate [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-navy [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5 [&_p]:mt-2 [&_a]:font-medium [&_a]:text-navy [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-cobalt">
           <section>
             <h2>1. Data controller</h2>
             <p>

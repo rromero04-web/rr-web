@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/config";
@@ -15,7 +14,7 @@ export function StepProgress({ locale }: { locale: Locale }) {
   return (
     <nav
       aria-label={NAV_STRINGS[locale].progressLabel}
-      className="studio-step-progress flex items-center gap-1.5"
+      className="rr-step-progress"
     >
       {STEP_ORDER.map((step, index) => {
         const active = step === state.currentStep;
@@ -28,13 +27,8 @@ export function StepProgress({ locale }: { locale: Locale }) {
             onClick={() => jumpable && goToStep(step)}
             aria-current={active ? "step" : undefined}
             aria-label={NAV_STRINGS[locale].stepOf(index + 1, STEP_ORDER.length)}
-            className={cn(
-              "flex-1 rounded-full transition-colors motion-reduce:transition-none",
-              active ? "is-current" : index < currentIndex ? "is-complete" : "",
-              jumpable && !active && "cursor-pointer",
-              !jumpable && "cursor-not-allowed"
-            )}
-          ><span aria-hidden="true">{index + 1}</span></button>
+            className={cn(active ? "is-current" : index < currentIndex ? "is-complete" : "")}
+          ><span aria-hidden="true" /></button>
         );
       })}
     </nav>
@@ -61,13 +55,13 @@ export function StepNav({
           {t.requiredHint}
         </p>
       )}
-      <div className="studio-step-actions flex items-center justify-between gap-3">
+      <div className="rr-step-actions">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={goBack}
             disabled={isFirst}
-            className="inline-flex items-center gap-2 border border-navy/20 px-4 py-2.5 text-sm font-semibold text-navy transition-colors hover:border-cobalt hover:text-cobalt disabled:cursor-not-allowed disabled:opacity-40"
+            className="rr-button rr-button-outline"
           >
             <ArrowLeft size={15} aria-hidden="true" />
             {t.back}
@@ -75,7 +69,7 @@ export function StepNav({
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate transition-colors hover:text-navy"
+            className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-medium text-slate transition-colors hover:text-navy"
           >
             <RotateCcw size={14} aria-hidden="true" />
             {t.restart}
@@ -83,16 +77,15 @@ export function StepNav({
         </div>
 
         {!hideNext && (
-          <motion.button
+          <button
             type="button"
             onClick={goNext}
             disabled={!canAdvance}
-            whileTap={canAdvance ? { scale: 0.97 } : undefined}
-            className="inline-flex items-center gap-2 bg-navy px-6 py-2.5 text-sm font-semibold text-cream transition-colors hover:bg-cobalt disabled:cursor-not-allowed disabled:opacity-40"
+            className="rr-button"
           >
             {t.next}
             <ArrowRight size={15} aria-hidden="true" />
-          </motion.button>
+          </button>
         )}
       </div>
     </div>

@@ -23,13 +23,13 @@ export function StepHeader({ step, locale }: { step: StepId; locale: Locale }) {
 
   return (
     <div>
-      <p className="text-xs font-semibold tracking-[0.14em] text-cobalt uppercase">
+      <p className="text-sm text-slate">
         {NAV_STRINGS[locale].stepOf(index + 1, STEP_ORDER.length)}
       </p>
-      <h2 ref={headingRef} tabIndex={-1} className="studio-step-title mt-2 text-2xl font-extrabold tracking-tight text-navy sm:text-3xl">
+      <h2 ref={headingRef} tabIndex={-1} className="rr-display rr-step-title mt-2">
         {meta.title}
       </h2>
-      <p className="mt-2 text-sm leading-relaxed text-slate">{meta.subtitle}</p>
+      <p className="mt-3 max-w-[34em] text-base leading-relaxed text-slate">{meta.subtitle}</p>
     </div>
   );
 }
