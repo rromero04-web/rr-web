@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Globe, LayoutDashboard, Target, type LucideIcon } from "lucide-react";
 import { getServices } from "@/content/services";
 import { getProjects } from "@/content/projects";
 import { localizePath, type Locale } from "@/lib/i18n/config";
@@ -30,6 +30,12 @@ const COPY = {
   },
 };
 
+const OFFER_ICONS: Record<string, LucideIcon> = {
+  "web-profesional": Globe,
+  "web-de-captacion": Target,
+  "aplicaciones-a-medida": LayoutDashboard,
+};
+
 export function Services({ locale }: { locale: Locale }) {
   const t = COPY[locale];
   const projects = getProjects(locale);
@@ -45,9 +51,11 @@ export function Services({ locale }: { locale: Locale }) {
         <div className="rr-offer-list">
           {getServices(locale).map((service, index) => {
             const project = projects[index];
+            const Icon = OFFER_ICONS[service.slug] ?? Globe;
             return (
-              <article key={service.slug} className="rr-offer">
+              <article key={service.slug} id={`servicio-${service.slug}`} className="rr-offer">
                 <div>
+                  <span className="rr-offer-icon" aria-hidden="true"><Icon size={24} /></span>
                   <h3 className="rr-display">{service.title}</h3>
                   <p className="rr-offer-audience">{service.audience}</p>
                   {service.demoHref && (

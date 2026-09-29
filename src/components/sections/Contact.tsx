@@ -35,7 +35,7 @@ export function Contact({ locale }: { locale: Locale }) {
   const whatsappMessage = encodeURIComponent(t.whatsappMessage);
 
   return (
-    <section id="contacto" className="rr-section">
+    <section id="contacto" className="rr-section rr-contact-section">
       <div className="container-page rr-contact">
         <div>
           <h2 className="rr-display rr-section-title">{t.title}</h2>

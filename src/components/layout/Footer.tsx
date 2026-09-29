@@ -11,7 +11,6 @@ const STRINGS: Record<Locale, {
   legal: string;
   builder: string;
   rights: string;
-  place: string;
   legalLinks: { href: string; label: string }[];
 }> = {
   es: {
@@ -21,7 +20,6 @@ const STRINGS: Record<Locale, {
     legal: "Legal",
     builder: "Configura tu proyecto",
     rights: "Todos los derechos reservados.",
-    place: "Cartagena, Murcia",
     legalLinks: [
       { href: "/aviso-legal", label: "Aviso legal" },
       { href: "/privacidad", label: "Privacidad" },
@@ -35,7 +33,6 @@ const STRINGS: Record<Locale, {
     legal: "Legal",
     builder: "Build your project",
     rights: "All rights reserved.",
-    place: "Cartagena, Spain",
     legalLinks: [
       { href: "/aviso-legal", label: "Legal notice" },
       { href: "/privacidad", label: "Privacy" },
@@ -87,7 +84,6 @@ export function Footer({ locale }: { locale: Locale }) {
 
       <div className="container-page rr-footer-bottom">
         <p>© {new Date().getFullYear()} Raúl Romero. {t.rights}</p>
-        <p>{t.place}</p>
       </div>
     </footer>
   );

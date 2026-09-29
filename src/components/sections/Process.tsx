@@ -1,5 +1,6 @@
 import { getProcessSteps } from "@/content/process";
 import type { Locale } from "@/lib/i18n/config";
+import { ProcessStory } from "@/components/sections/ProcessStory";
 
 const STRINGS = {
   es: { title: "Cómo trabajamos, paso a paso.", intro: "Cinco fases, siempre en el mismo orden. Ves avances reales desde las primeras semanas y nada se cierra sin que lo hayas revisado." },
@@ -25,6 +26,9 @@ export function Process({ locale }: { locale: Locale }) {
           ))}
         </ol>
       </div>
+      {/* Fuera del contenedor: el lienzo ocupa todo el ancho de la sección para
+          que las partículas entren y salgan por los bordes de la pantalla. */}
+      <ProcessStory />
     </section>
   );
 }

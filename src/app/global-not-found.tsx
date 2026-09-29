@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Instrument_Sans } from "next/font/google";
+import { Space_Grotesk, Manrope } from "next/font/google";
 import "./globals.css";
 
-const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
+// Titulares en Space Grotesk (geométrica, con carácter); texto en Manrope.
+const displayFont = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
-  axes: ["wdth"],
+});
+
+const bodyFont = Manrope({
+  variable: "--font-body",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -19,7 +24,7 @@ export const metadata: Metadata = {
 // bilingüe: español primero (idioma principal del sitio) e inglés debajo.
 export default function GlobalNotFound() {
   return (
-    <html lang="es" className={`${instrumentSans.variable} h-full antialiased`}>
+    <html lang="es" className={`${displayFont.variable} ${bodyFont.variable} h-full antialiased`}>
       <body className="min-h-full">
         <div className="rr-site flex min-h-screen flex-col">
           <header className="container-page flex h-[72px] items-center">

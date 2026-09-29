@@ -76,7 +76,7 @@ export function Nav({ locale }: { locale: Locale }) {
     <header className={cn("rr-header", scrolled && "is-scrolled", menuOpen && "is-open")}>
       <div className="container-page rr-header-inner">
         <a href={anchor("inicio")} className="rr-brand" aria-label={t.home}>
-          <Image src="/brand/logo-mark.png" alt="" width={700} height={588} sizes="34px" priority className="h-7 w-auto shrink-0" />
+          <Image src="/brand/logo-mark-inverse.png" alt="" width={800} height={672} sizes="34px" priority className="h-7 w-auto shrink-0" />
           <span>Raúl Romero</span>
         </a>
         <nav aria-label={t.nav} className="rr-nav">

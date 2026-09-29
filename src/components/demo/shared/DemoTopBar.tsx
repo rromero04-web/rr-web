@@ -33,7 +33,7 @@ export function DemoTopBar({
   return (
     <div
       className={`flex flex-col items-center justify-center gap-2 px-4 py-2.5 text-center sm:flex-row sm:justify-between sm:text-left ${toneClassName}`}
-      style={{ fontFamily: "var(--font-instrument), ui-sans-serif, system-ui, sans-serif" }}
+      style={{ fontFamily: "var(--font-body), ui-sans-serif, system-ui, sans-serif" }}
     >
       <p className="text-sm font-medium">
         {t.badge}

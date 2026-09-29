@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Instrument_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Manrope } from "next/font/google";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { IntroSplash } from "@/components/layout/IntroSplash";
+import { INTRO_BOOT_SCRIPT } from "@/lib/intro";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -13,12 +15,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Tipografía de marca: una sola familia con eje de anchura. La versión
-// condensada da voz a los titulares; la estándar, al texto corrido.
-const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
+// Titulares en Space Grotesk (geométrica, con carácter); texto en Manrope.
+const displayFont = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
-  axes: ["wdth"],
+});
+
+const bodyFont = Manrope({
+  variable: "--font-body",
+  subsets: ["latin"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://raulromero.es";
@@ -99,13 +104,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSans.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${displayFont.variable} ${bodyFont.variable} h-full antialiased`}
+      // El script de arranque del intro añade data-intro a <html> antes de
+      // hidratar; sin esto React avisaría de un atributo no coincidente.
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-cream text-navy">
+        <script dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <IntroSplash />
         <SiteChrome>{children}</SiteChrome>
       </body>
     </html>

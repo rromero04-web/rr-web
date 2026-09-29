@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Geist, Geist_Mono, Instrument_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Manrope } from "next/font/google";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { IntroSplash } from "@/components/layout/IntroSplash";
+import { INTRO_BOOT_SCRIPT } from "@/lib/intro";
 import { SITE_URL } from "@/lib/i18n/config";
 import "../globals.css";
 
@@ -15,12 +17,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Tipografía de marca: una sola familia con eje de anchura. La versión
-// condensada da voz a los titulares; la estándar, al texto corrido.
-const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
+// Titulares en Space Grotesk (geométrica, con carácter); texto en Manrope.
+const displayFont = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
-  axes: ["wdth"],
+});
+
+const bodyFont = Manrope({
+  variable: "--font-body",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -99,13 +104,18 @@ export default function EnglishRootLayout({ children }: { children: ReactNode })
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSans.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${displayFont.variable} ${bodyFont.variable} h-full antialiased`}
+      // See the ES layout: the intro boot script sets data-intro on <html>
+      // before hydration.
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-cream text-navy">
+        <script dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <IntroSplash />
         <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
