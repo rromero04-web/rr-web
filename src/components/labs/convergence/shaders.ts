@@ -1,3 +1,5 @@
+import * as THREE from "three";
+
 // One body of matter, six states. Every particle derives each state from its
 // index and four random values, so the morph is computed entirely on the GPU.
 //
@@ -74,6 +76,9 @@ uniform float uRouteGroup;
 uniform vec3 uRouted;
 uniform float uComplete;
 uniform float uMobile;
+uniform float uIntro;
+uniform float uFocus;
+uniform float uAperture;
 
 uniform vec3 uEmber;
 uniform vec3 uLilac;
@@ -85,6 +90,7 @@ attribute vec4 aRand;
 
 varying vec3 vColor;
 varying float vAlpha;
+varying float vBlur;
 
 #define PI 3.14159265359
 #define TAU 6.28318530718
@@ -312,6 +318,26 @@ void main() {
   float reveal = smoothstep(3.2, 4.0, stage) * (1.0 - smoothstep(4.6, 5.0, stage));
   col = mix(col, groupColor(g) * 1.1, reveal * 0.5);
 
+  // A few particles drift close to the lens in every chapter: out-of-focus orbs
+  // that give the scene depth. They gather into the core with everything else.
+  float foreground = 0.0;
+  if (fract(r.w * 17.31 + r.y * 3.7) < 0.011) {
+    vec3 fg = vec3((r.x - 0.5) * 15.0, (r.y - 0.5) * 9.0, 3.0 + r.z * 5.0);
+    fg += flow(fg * 0.15 + t * 0.04) * 0.8;
+    float gather = exp(-pow((stage - 4.0) * 1.3, 2.0));
+    p = mix(fg, p, gather);
+    col = mix(mix(groupColor(g), uBone, 0.55) * 0.42, col, gather);
+    alpha = mix(0.7, alpha, gather);
+    foreground = 1.0 - gather;
+  }
+
+  // Intro: all of the matter is born from a single point and overshoots into place.
+  float ie = clamp((uIntro - r.z * 0.22) / 0.78, 0.0, 1.0);
+  float born = 1.0 - pow(1.0 - ie, 4.0);
+  float burst = sin(ie * PI) * (1.0 - ie) * mix(2.6, 0.4, uCalm);
+  p = rotY((1.0 - born) * (r.y - 0.5) * 5.0) * p * (born + burst);
+  col *= 1.0 + (1.0 - born) * 3.0;
+
   // The pointer is attention: it gathers matter in the swarm and bends the rest.
   vec3 toMouse = uMouse - p;
   float dist = length(toMouse.xy);
@@ -332,33 +358,48 @@ void main() {
   // Size uses its own seed: r.y also drives angles, and must not bias them.
   float size = uSize * (0.45 + pow(fract(r.w * 91.7 + r.x * 37.3 + r.z * 11.1), 3.0) * 1.3);
   size *= 1.0 - 0.45 * exp(-pow((stage - 4.0) * 2.5, 2.0));
-  gl_PointSize = clamp(size * uPixelRatio / -mv.z, 0.0, 48.0);
+  // Depth of field: matter outside the focal plane opens into soft bokeh.
+  float blur = clamp(abs(-mv.z - uFocus) * uAperture, 0.0, 3.0);
+  size *= (1.0 + blur * 2.3) * (1.0 + foreground * 2.2);
+  gl_PointSize = clamp(size * uPixelRatio / -mv.z, 0.0, 110.0);
   vColor = col;
-  vAlpha = alpha * smoothstep(0.2, 2.0, -mv.z);
+  vBlur = clamp(blur * 0.6, 0.0, 1.0);
+  vAlpha = alpha * smoothstep(0.2, 2.0, -mv.z) / (1.0 + blur * blur * 2.6);
 }
 `;
 
 export const particleFragment = /* glsl */ `
 varying vec3 vColor;
 varying float vAlpha;
+varying float vBlur;
 uniform float uOpacity;
 void main() {
   vec2 c = gl_PointCoord - 0.5;
   float d = length(c);
   if (d > 0.5) discard;
-  float core = smoothstep(0.5, 0.0, d);
-  float a = pow(core, 1.7) * vAlpha * uOpacity;
+  float soft = pow(smoothstep(0.5, 0.0, d), 1.7);
+  // Out of focus: a flat disc with a brighter rim, like a lens bokeh.
+  float disc = smoothstep(0.5, 0.43, d) * (0.5 + 0.5 * smoothstep(0.2, 0.47, d));
+  float a = mix(soft, disc * 0.55, vBlur) * vAlpha * uOpacity;
   gl_FragColor = vec4(vColor * a, a);
 }
 `;
 
-// Final grade: subtle chromatic offset towards the edges, vignette and film grain.
+// Final grade: atmosphere tinted by chapter, a lens around the pointer, the
+// convergence shockwave, chromatic offset, vignette and film grain.
 export const gradeShader = {
   uniforms: {
     tDiffuse: { value: null },
     uTime: { value: 0 },
     uAberration: { value: 0.0007 },
     uFlash: { value: 0 },
+    uAspect: { value: 1 },
+    uTint: { value: new THREE.Vector3() },
+    uGlow: { value: new THREE.Vector2(0.5, 0.5) },
+    uCursor: { value: new THREE.Vector2(0.5, 0.5) },
+    uCursorForce: { value: 0 },
+    uShock: { value: 10 },
+    uShockPos: { value: new THREE.Vector2(0.5, 0.5) },
   },
   vertexShader: /* glsl */ `
     varying vec2 vUv;
@@ -369,16 +410,50 @@ export const gradeShader = {
     uniform float uTime;
     uniform float uAberration;
     uniform float uFlash;
+    uniform float uAspect;
+    uniform vec3 uTint;
+    uniform vec2 uGlow;
+    uniform vec2 uCursor;
+    uniform float uCursorForce;
+    uniform float uShock;
+    uniform vec2 uShockPos;
     varying vec2 vUv;
     float rand(vec2 co) { return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453); }
+    float vnoise(vec2 p) {
+      vec2 i = floor(p), f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(rand(i), rand(i + vec2(1.0, 0.0)), f.x), mix(rand(i + vec2(0.0, 1.0)), rand(i + vec2(1.0, 1.0)), f.x), f.y);
+    }
     void main() {
-      vec2 c = vUv - 0.5;
+      vec2 asp = vec2(uAspect, 1.0);
+      vec2 uv = vUv;
+
+      // A soft magnifier follows the pointer.
+      vec2 dc = (uv - uCursor) * asp;
+      float lens = smoothstep(0.2, 0.0, length(dc)) * uCursorForce;
+      uv = uCursor + (uv - uCursor) * (1.0 - lens * 0.12);
+
+      // Shockwave: a ring of refraction expanding from the object.
+      vec2 ds = (uv - uShockPos) * asp;
+      float ls = length(ds);
+      float life = smoothstep(1.6, 0.0, uShock) * step(0.0, uShock);
+      float ring = exp(-pow((ls - uShock * 0.95) * 11.0, 2.0)) * life;
+      uv -= ds / (ls + 1e-4) / asp * ring * 0.045;
+
+      vec2 c = uv - 0.5;
       float edge = dot(c, c);
-      vec2 off = c * edge * uAberration * 40.0;
+      vec2 off = c * edge * uAberration * 40.0 + ds / (ls + 1e-4) / asp * ring * 0.012;
       vec3 col;
-      col.r = texture2D(tDiffuse, vUv + off).r;
-      col.g = texture2D(tDiffuse, vUv).g;
-      col.b = texture2D(tDiffuse, vUv - off).b;
+      col.r = texture2D(tDiffuse, uv + off).r;
+      col.g = texture2D(tDiffuse, uv).g;
+      col.b = texture2D(tDiffuse, uv - off).b;
+
+      // Atmosphere: a coloured haze around the matter, drifting slowly.
+      float haze = smoothstep(1.15, 0.0, length((vUv - uGlow) * asp));
+      float cloud = vnoise(vUv * asp * 2.2 + uTime * 0.02) * 0.6 + vnoise(vUv * asp * 5.0 - uTime * 0.03) * 0.4;
+      col += uTint * haze * haze * (0.05 + cloud * 0.07);
+      col += uTint * ring * 0.18;
+
       col *= 1.0 - smoothstep(0.18, 0.75, edge) * 0.55;
       col += uFlash * vec3(1.0, 0.96, 0.9) * (1.0 - edge * 1.4);
       col += (rand(vUv * 731.0 + fract(uTime) * 91.0) - 0.5) * 0.035;

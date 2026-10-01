@@ -97,8 +97,15 @@ export function ConvergenceExperience() {
         audioRef.current ??= new ConvergenceAudio(new AudioContext());
         await audioRef.current.enable();
         setSound(true);
+        // The intro burst starts as the curtain lifts; its impact lands with it.
+        window.setTimeout(() => audioRef.current?.impact(), 450);
       } catch { setSound(false); }
     }
+    stateRef.current.introAt = seconds();
+    // The button under the cursor disappears with the curtain.
+    const dot = cursorRef.current?.firstElementChild as HTMLElement | null | undefined;
+    if (cursorRef.current) cursorRef.current.dataset.hover = "false";
+    if (dot) dot.dataset.label = "";
     setEntered(true);
   }, []);
 

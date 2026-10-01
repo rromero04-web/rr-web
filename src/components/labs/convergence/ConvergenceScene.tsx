@@ -8,6 +8,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { AfterimagePass } from "three/examples/jsm/postprocessing/AfterimagePass.js";
 import { approach, decay, type Spring } from "./motion";
 import { gradeShader, particleFragment, particleVertex } from "./shaders";
 import type { Quality, SceneState } from "./model";
@@ -20,6 +21,11 @@ type Props = {
 };
 
 const COUNTS: Record<Quality, number> = { high: 120000, medium: 72000, low: 30000 };
+// Haze colour per stage, added in linear light by the grade pass.
+const TINTS: [number, number, number][] = [
+  [0.55, 0.3, 0.2], [0.75, 0.26, 0.12], [0.36, 0.3, 0.8], [0.12, 0.5, 0.75], [0.5, 0.42, 0.75], [0.42, 0.34, 0.62],
+];
+
 const COLORS = {
   ember: new THREE.Color("#ff6a3d"),
   lilac: new THREE.Color("#8f7dff"),
@@ -85,13 +91,14 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
   const flash = useRef(0);
   const lastStage = useRef(0);
   const points = useRef<THREE.Points>(null);
-  const post = useRef<{ composer: EffectComposer; bloom: UnrealBloomPass; grade: ShaderPass } | null>(null);
+  const post = useRef<{ composer: EffectComposer; trails: AfterimagePass; bloom: UnrealBloomPass; grade: ShaderPass } | null>(null);
+  const shock = useRef({ age: 10, introFired: false });
   const clock = useRef(0);
   const governor = useRef({ time: 0, frames: 0, strikes: 0 });
   const ready = useRef(false);
   const mobile = size.width < 820;
   const tmp = useMemo(() => ({
-    cam: new THREE.Vector3(), aim: new THREE.Vector3(), hit: new THREE.Vector3(), normal: new THREE.Vector3(),
+    cam: new THREE.Vector3(), shake: new THREE.Vector3(), aim: new THREE.Vector3(), hit: new THREE.Vector3(), normal: new THREE.Vector3(),
     ndc: new THREE.Vector2(), ray: new THREE.Raycaster(), plane: new THREE.Plane(),
   }), []);
 
@@ -134,6 +141,9 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
     uRouted: { value: new THREE.Vector3() },
     uComplete: { value: 0 },
     uMobile: { value: 0 },
+    uIntro: { value: 0 },
+    uFocus: { value: 11 },
+    uAperture: { value: 0.12 },
     uEmber: { value: COLORS.ember },
     uLilac: { value: COLORS.lilac },
     uAqua: { value: COLORS.aqua },
@@ -152,12 +162,14 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
   useEffect(() => {
     const composer = new EffectComposer(gl);
     composer.addPass(new RenderPass(scene, camera));
+    const trails = new AfterimagePass(0);
+    composer.addPass(trails);
     const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.85, 0.75, 0.08);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
     const grade = new ShaderPass(gradeShader);
     composer.addPass(grade);
-    post.current = { composer, bloom, grade };
+    post.current = { composer, trails, bloom, grade };
     return () => {
       composer.dispose();
       post.current = null;
@@ -173,6 +185,7 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
     current.composer.setSize(size.width, size.height);
     current.bloom.resolution.set(size.width * ratio * 0.5, size.height * ratio * 0.5);
     current.bloom.enabled = quality !== "low";
+    current.trails.enabled = quality !== "low";
   }, [size, gl, quality, scene, camera]);
 
   useFrame((_, rawDelta) => {
@@ -208,6 +221,11 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
     const aim = tmp.aim.set(sampleShot(shots, s, "aim", 0), sampleShot(shots, s, "aim", 1), sampleShot(shots, s, "aim", 2));
     look.current.lerp(aim, state.snap ? 1 : 1 - Math.exp(-dt * 4));
     perspective.lookAt(look.current);
+    // The shockwave shakes the camera a little, never the layout.
+    const quake = shock.current.age < 1.2 && !calm ? Math.exp(-shock.current.age * 4) * 0.12 : 0;
+    if (quake > 0.001) {
+      perspective.position.add(tmp.shake.set(Math.sin(clock.current * 61) * quake, Math.cos(clock.current * 47) * quake, 0));
+    }
 
     frame.current.x = decay(frame.current.x, sampleShot(shots, s, "frame", 0), state.snap ? 1e3 : 5, dt);
     frame.current.y = decay(frame.current.y, sampleShot(shots, s, "frame", 1), state.snap ? 1e3 : 5, dt);
@@ -218,8 +236,18 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
     tmp.plane.set(tmp.normal.subVectors(perspective.position, look.current).normalize(), 0);
     if (tmp.ray.ray.intersectPlane(tmp.plane, tmp.hit)) u.uMouse.value.copy(tmp.hit);
 
-    // The release of the convergence is the only flash in the piece.
-    if (lastStage.current < 4.55 && s >= 4.55 && !calm) flash.current = 1;
+    // Intro: the matter is born from one point once the curtain has lifted.
+    const introStart = state.introAt + 0.45;
+    const intro = state.snap ? 1 : state.introAt < 0 ? 0 : THREE.MathUtils.clamp((now - introStart) / 2.8, 0, 1);
+    if (!shock.current.introFired && state.introAt >= 0 && now >= introStart && !state.snap) {
+      shock.current.introFired = true;
+      shock.current.age = 0;
+      flash.current = calm ? 0.2 : 0.6;
+    }
+
+    // The release of the convergence is the only other flash in the piece.
+    if (lastStage.current < 4.55 && s >= 4.55 && !calm) { flash.current = 1; shock.current.age = 0; }
+    shock.current.age += dt;
     lastStage.current = s;
     flash.current = decay(flash.current, 0, 3.2, dt);
 
@@ -240,6 +268,29 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
     );
     u.uComplete.value = decay(u.uComplete.value, state.complete, 1.5, dt);
     u.uMobile.value = mobile ? 1 : 0;
+    u.uIntro.value = intro;
+    u.uFocus.value = perspective.position.distanceTo(look.current);
+    u.uAperture.value = (mobile ? 0.08 : 0.12) + Math.exp(-Math.pow((s - 4) * 2, 2)) * 0.1;
+
+    // Light trails while the matter travels: scroll speed, morphs and the intro.
+    const travel = Math.min(1, Math.abs(stage.current.velocity) * 1.4) * Math.sin(Math.PI * (s % 1));
+    const rush = Math.min(1, Math.abs(state.scrollVelocity) * 0.8);
+    const birth = intro > 0 && intro < 1 ? 1 - intro : 0;
+    pass.trails.uniforms.damp.value = calm || state.snap ? 0 : Math.min(0.9, travel * 0.55 + rush * 0.35 + birth * 0.9);
+
+    // Atmosphere follows the object on screen and takes the chapter's colour.
+    const tint = pass.grade.uniforms.uTint.value as THREE.Vector3;
+    const k = Math.min(Math.floor(s), 4), f = THREE.MathUtils.smootherstep(s - k, 0, 1);
+    const ta = TINTS[k], tb = TINTS[k + 1];
+    tint.set(ta[0] + (tb[0] - ta[0]) * f, ta[1] + (tb[1] - ta[1]) * f, ta[2] + (tb[2] - ta[2]) * f)
+      .multiplyScalar(0.8 + u.uComplete.value * 0.6);
+    const glow = pass.grade.uniforms.uGlow.value as THREE.Vector2;
+    glow.set(0.5 + frame.current.x, 0.5 - frame.current.y);
+    (pass.grade.uniforms.uShockPos.value as THREE.Vector2).copy(glow);
+    pass.grade.uniforms.uShock.value = shock.current.age;
+    (pass.grade.uniforms.uCursor.value as THREE.Vector2).set(mouse.current.x * 0.5 + 0.5, mouse.current.y * 0.5 + 0.5);
+    pass.grade.uniforms.uCursorForce.value = calm ? 0 : mouse.current.force * 0.9;
+    pass.grade.uniforms.uAspect.value = size.width / Math.max(1, size.height);
 
     const core = Math.exp(-Math.pow((s - 4) * 2.4, 2));
     pass.bloom.strength = 0.75 + core * 0.25 + flash.current * 1.1 + u.uComplete.value * 0.25;

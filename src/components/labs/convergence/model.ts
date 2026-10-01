@@ -40,12 +40,14 @@ export type SceneState = {
   paused: boolean;
   // Capture mode skips smoothing so stills can be rendered on slow machines.
   snap: boolean;
+  // When the visitor entered; the intro is timed from here.
+  introAt: number;
 };
 
 export function createSceneState(): SceneState {
   return {
     stage: 0, scrollVelocity: 0, pointerX: 0, pointerY: 0, pointerActive: 0,
     pulseAt: -100, routeAt: -100, routeGroup: 0, routed: [0, 0, 0], complete: 0,
-    calm: false, paused: false, snap: false,
+    calm: false, paused: false, snap: false, introAt: -1,
   };
 }
