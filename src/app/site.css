@@ -134,9 +134,12 @@
 :is(.rr-header, .rr-mobile-menu) nav[aria-label] a:hover { color: var(--text); background: rgb(150 172 214 / 10%); }
 :is(.rr-header, .rr-mobile-menu) nav[aria-label] a[aria-current="true"] { background: var(--text); color: var(--ink); }
 
+/* El backdrop-filter de .rr-header crea el bloque contenedor de este panel
+   fijo, así que se posiciona bajo la cabecera y se le da la altura del viewport. */
 .rr-mobile-menu {
-  position: fixed;
-  inset: var(--rr-header) 0 0;
+  position: absolute;
+  inset: 100% 0 auto;
+  height: calc(100dvh - var(--rr-header));
   overflow-y: auto;
   background: var(--ink);
   padding: 16px 0 40px;
