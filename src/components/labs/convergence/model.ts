@@ -1,34 +1,51 @@
-export type Phase = "prelude" | "attention" | "form" | "behavior" | "convergence" | "product";
 export type Quality = "high" | "medium" | "low";
+export type Discipline = 0 | 1 | 2;
 
-export const PHASES: { id: Phase; start: number; label: string; line: string }[] = [
-  { id: "prelude", start: 0, label: "PRELUDE", line: "Three disciplines. One system." },
-  { id: "attention", start: .08, label: "ATTENTION", line: "Attention without direction is noise." },
-  { id: "form", start: .28, label: "FORM", line: "Structure turns attention into meaning." },
-  { id: "behavior", start: .46, label: "BEHAVIOR", line: "Ideas become real when they can respond." },
-  { id: "convergence", start: .64, label: "CONVERGENCE", line: "The system becomes more than its parts." },
-  { id: "product", start: .82, label: "PRODUCT", line: "A living digital product." },
+export const DISCIPLINES = ["Marketing", "Design", "Development"] as const;
+
+export const CHAPTERS = [
+  { id: "prelude", index: "00", label: "Prelude" },
+  { id: "attention", index: "01", label: "Attention" },
+  { id: "form", index: "02", label: "Form" },
+  { id: "behavior", index: "03", label: "Behavior" },
+  { id: "convergence", index: "04", label: "Convergence" },
+  { id: "product", index: "05", label: "Product" },
+] as const;
+
+export type ChapterId = (typeof CHAPTERS)[number]["id"];
+
+export const SIGNALS: { id: number; label: string; discipline: Discipline }[] = [
+  { id: 1, label: "Clarify the offer", discipline: 0 },
+  { id: 2, label: "Make the structure visible", discipline: 1 },
+  { id: 3, label: "Respond to intent", discipline: 2 },
+  { id: 4, label: "Earn the first glance", discipline: 0 },
+  { id: 5, label: "Reveal the next step", discipline: 1 },
+  { id: 6, label: "Remove the friction", discipline: 2 },
 ];
 
-export const SIGNALS = [
-  { id: 1, label: "Clarify the offer", priority: 3 },
-  { id: 2, label: "Reveal the next step", priority: 1 },
-  { id: 3, label: "Reduce friction", priority: 5 },
-  { id: 4, label: "Make the structure visible", priority: 2 },
-  { id: 5, label: "Respond to intent", priority: 4 },
-  { id: 6, label: "Connect the system", priority: 6 },
-];
+// Mutable state shared between the DOM and the render loop. Writing to it
+// never re-renders React; the scene reads it once per frame.
+export type SceneState = {
+  stage: number;
+  scrollVelocity: number;
+  pointerX: number;
+  pointerY: number;
+  pointerActive: number;
+  pulseAt: number;
+  routeAt: number;
+  routeGroup: number;
+  routed: [number, number, number];
+  complete: number;
+  calm: boolean;
+  paused: boolean;
+  // Capture mode skips smoothing so stills can be rendered on slow machines.
+  snap: boolean;
+};
 
-export function phaseAt(progress: number): Phase {
-  for (let i = PHASES.length - 1; i >= 0; i--) if (progress >= PHASES[i].start) return PHASES[i].id;
-  return "prelude";
-}
-
-export function smoothstep(value: number) {
-  const x = Math.max(0, Math.min(1, value));
-  return x * x * (3 - 2 * x);
-}
-
-export function range(value: number, start: number, end: number) {
-  return smoothstep((value - start) / (end - start));
+export function createSceneState(): SceneState {
+  return {
+    stage: 0, scrollVelocity: 0, pointerX: 0, pointerY: 0, pointerActive: 0,
+    pulseAt: -100, routeAt: -100, routeGroup: 0, routed: [0, 0, 0], complete: 0,
+    calm: false, paused: false, snap: false,
+  };
 }

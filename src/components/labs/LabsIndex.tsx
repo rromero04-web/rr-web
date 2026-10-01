@@ -23,7 +23,7 @@ export function LabsIndex() {
           >
             <Image
               src="/labs/convergence/poster.png"
-              alt="Convergence: a warm particle field, precise violet geometry and a responsive blue network merging into one system"
+              alt="Convergence: a sphere of particles with three luminous orbits in ember, violet and aqua"
               fill
               priority
               sizes="(max-width: 900px) 100vw, 58vw"

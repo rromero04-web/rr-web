@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: "The interesting part happens between disciplines.",
     url: "/labs/convergence",
     type: "website",
-    images: [{ url: "/labs/convergence/opengraph.png", width: 1200, height: 630, alt: "Convergence — The interesting part happens between disciplines" }],
+    images: [{ url: "/labs/convergence/opengraph.png", width: 1200, height: 630, alt: "Convergence — Lab 001. Marketing brings attention, design gives it form, development makes it behave." }],
   },
   twitter: { card: "summary_large_image", images: ["/labs/convergence/opengraph.png"] },
 };

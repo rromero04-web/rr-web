@@ -1,346 +1,268 @@
 "use client";
 
-// One quiet procedural instrument serves the entire experience. No audio asset
-// or particle owns a voice: visual activity is reduced to a handful of controls.
-export type AudioSnapshot = {
-  progress: number;
-  direction: number;
-  scrollEnergy: number;
-  pointerX: number;
-  pointerWake: number;
-  alignment: number;
-  fieldEnergy: number;
-  cameraSpeed: number;
-  signalX: number;
-  signalVelocity: number;
-  connection: number;
-  field: number;
-  compression: number;
-  stillness: number;
-  darkness: number;
-  formation: number;
-  paused: boolean;
-  mobile: boolean;
-};
+// Procedural score. No audio files: a pad whose harmony follows the chapters,
+// air that responds to scroll speed, and a few authored events.
 
-export type AudioCue = "formStep" | "alignment" | "anticipation" | "escape" | "connection" | "impact" | "formation";
-export type SignalStage = "input" | "route" | "split" | "terminal";
-export type SignalEvent = { stage: SignalStage; route: number; pan: number; energy: number; delay?: number; composer?: boolean };
+const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+const hz = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 
-const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, value));
-const smooth = (value: number, a: number, b: number) => {
-  const t = clamp((value - a) / (b - a));
-  return t * t * (3 - 2 * t);
-};
-const bell = (value: number, a: number, b: number, c: number, d: number) => smooth(value, a, b) * (1 - smooth(value, c, d));
+// One voicing per stage. The piece starts suspended in D minor and resolves to D major.
+const CHORDS = [
+  [38, 45, 50, 53, 57], // Dm
+  [38, 45, 52, 53, 60], // Dm(add9) – restless
+  [34, 41, 50, 57, 60], // Bbmaj7 – structure
+  [36, 43, 52, 55, 59], // Cmaj7 – motion
+  [33, 40, 45, 49, 52], // A – tension
+  [38, 45, 54, 57, 64], // D(add9) – resolution
+];
 
-type Bus = "ambience" | "interaction" | "signals" | "impact" | "ui";
+// Two signals per discipline, each discipline in its own register.
+const ROUTE_SCALE = [[62, 66, 69], [64, 67, 71], [69, 73, 76]];
+
+export type AudioFrame = { stage: number; velocity: number; pointer: number; calm: boolean; mobile: boolean };
 
 export class ConvergenceAudio {
   private readonly ctx: AudioContext;
   private readonly master: GainNode;
-  private readonly buses: Record<Bus, GainNode>;
-  private readonly noise: AudioBuffer;
-  private readonly airSource: AudioBufferSourceNode;
-  private readonly airFilter: BiquadFilterNode;
-  private readonly airPan: StereoPannerNode;
+  private readonly dry: GainNode;
+  private readonly wet: GainNode;
+  private readonly padFilter: BiquadFilterNode;
+  private readonly padGain: GainNode;
+  private readonly voices: { a: OscillatorNode; b: OscillatorNode }[] = [];
   private readonly airGain: GainNode;
-  private readonly toneA: OscillatorNode;
-  private readonly toneB: OscillatorNode;
-  private readonly toneGain: GainNode;
-  private readonly pressure: OscillatorNode;
-  private readonly pressureGain: GainNode;
+  private readonly airFilter: BiquadFilterNode;
+  private readonly subGain: GainNode;
+  private readonly sub: OscillatorNode;
+  private readonly noise: AudioBuffer;
+  private readonly send: GainNode;
   private enabled = false;
   private disposed = false;
-  private mobile = false;
-  private voiceIntervals: { start: number; end: number }[] = [];
-  private randomState = 0x45a217;
-  private lastUpdate = -1;
-  private grainAt = 0;
-  private patternAt = 0;
-  private suspension: number | null = null;
+  private chord = -1;
+  private lastStage = 0;
+  private tickAt = 0;
+  private lastUpdate = 0;
+  private suspendTimer: number | null = null;
 
   constructor(ctx: AudioContext) {
     this.ctx = ctx;
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -18;
+    compressor.ratio.value = 3;
+    compressor.connect(ctx.destination);
     this.master = ctx.createGain();
     this.master.gain.value = 0;
-    this.master.connect(ctx.destination);
-    const makeBus = (level: number) => {
-      const gain = ctx.createGain();
-      gain.gain.value = level;
-      gain.connect(this.master);
-      return gain;
-    };
-    this.buses = {
-      ambience: makeBus(1), interaction: makeBus(.72), signals: makeBus(.86),
-      impact: makeBus(1), ui: makeBus(.45),
-    };
-    this.noise = ctx.createBuffer(1, Math.round(ctx.sampleRate * 2), ctx.sampleRate);
-    const samples = this.noise.getChannelData(0);
-    let filtered = 0;
-    for (let i = 0; i < samples.length; i++) {
-      filtered = filtered * .68 + (this.random() * 2 - 1) * .32;
-      samples[i] = filtered;
+    this.master.connect(compressor);
+
+    this.noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const data = this.noise.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+    // A generated hall: decaying stereo noise as impulse response.
+    const reverb = ctx.createConvolver();
+    const length = Math.round(ctx.sampleRate * 4.2);
+    const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const channel = impulse.getChannelData(c);
+      for (let i = 0; i < length; i++) channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3.2);
     }
-    this.airSource = ctx.createBufferSource();
-    this.airSource.buffer = this.noise;
-    this.airSource.loop = true;
+    reverb.buffer = impulse;
+    this.dry = ctx.createGain(); this.dry.gain.value = 0.7;
+    this.wet = ctx.createGain(); this.wet.gain.value = 0.55;
+    this.dry.connect(this.master);
+    reverb.connect(this.wet).connect(this.master);
+    const send = ctx.createGain();
+    send.connect(reverb);
+    this.send = send;
+
+    this.padFilter = ctx.createBiquadFilter();
+    this.padFilter.type = "lowpass";
+    this.padFilter.frequency.value = 600;
+    this.padFilter.Q.value = 0.6;
+    this.padGain = ctx.createGain();
+    this.padGain.gain.value = 0.0;
+    this.padFilter.connect(this.padGain);
+    this.padGain.connect(this.dry);
+    this.padGain.connect(send);
+    CHORDS[0].forEach((note, i) => {
+      const a = ctx.createOscillator();
+      const b = ctx.createOscillator();
+      a.type = "sawtooth"; b.type = "triangle";
+      a.frequency.value = hz(note); b.frequency.value = hz(note);
+      a.detune.value = -6 - i; b.detune.value = 7 + i;
+      const g = ctx.createGain();
+      g.gain.value = 0.05 / (1 + i * 0.35);
+      const pan = ctx.createStereoPanner();
+      pan.pan.value = (i / (CHORDS[0].length - 1) - 0.5) * 0.8;
+      a.connect(g); b.connect(g); g.connect(pan).connect(this.padFilter);
+      a.start(); b.start();
+      this.voices.push({ a, b });
+    });
+
+    const air = ctx.createBufferSource();
+    air.buffer = this.noise; air.loop = true;
     this.airFilter = ctx.createBiquadFilter();
-    this.airFilter.type = "bandpass";
-    this.airFilter.frequency.value = 750;
-    this.airFilter.Q.value = .38;
-    this.airPan = ctx.createStereoPanner();
-    this.airGain = ctx.createGain();
-    this.airGain.gain.value = 0;
-    this.airSource.connect(this.airFilter).connect(this.airPan).connect(this.airGain).connect(this.buses.ambience);
-    this.airSource.start();
+    this.airFilter.type = "bandpass"; this.airFilter.frequency.value = 900; this.airFilter.Q.value = 0.7;
+    this.airGain = ctx.createGain(); this.airGain.gain.value = 0;
+    air.connect(this.airFilter).connect(this.airGain);
+    this.airGain.connect(this.dry); this.airGain.connect(send);
+    air.start();
 
-    this.toneA = ctx.createOscillator();
-    this.toneA.type = "sine";
-    this.toneA.frequency.value = 164;
-    this.toneB = ctx.createOscillator();
-    this.toneB.type = "sine";
-    this.toneB.frequency.value = 246;
-    this.toneGain = ctx.createGain();
-    this.toneGain.gain.value = 0;
-    this.toneA.connect(this.toneGain);
-    this.toneB.connect(this.toneGain);
-    this.toneGain.connect(this.buses.ambience);
-    this.toneA.start(); this.toneB.start();
-
-    this.pressure = ctx.createOscillator();
-    this.pressure.type = "triangle";
-    this.pressure.frequency.value = 74;
-    this.pressureGain = ctx.createGain();
-    this.pressureGain.gain.value = 0;
-    this.pressure.connect(this.pressureGain).connect(this.buses.ambience);
-    this.pressure.start();
+    this.sub = ctx.createOscillator();
+    this.sub.type = "sine"; this.sub.frequency.value = hz(26);
+    this.subGain = ctx.createGain(); this.subGain.gain.value = 0;
+    this.sub.connect(this.subGain).connect(this.dry);
+    this.sub.start();
   }
 
-  private random() {
-    this.randomState = (Math.imul(this.randomState, 1664525) + 1013904223) >>> 0;
-    return this.randomState / 4294967296;
-  }
-
-  private routeBase(route: number) {
-    const intervals = [0, 2, 3, 5, 7, 10, 12];
-    return 153 * Math.pow(2, intervals[Math.round(clamp(route, 0, 6))] / 12);
-  }
-
-  private target(param: AudioParam, value: number, seconds = .08) {
-    param.setTargetAtTime(value, this.ctx.currentTime, seconds);
-  }
-
-  private reserveVoice(start: number, end: number, bus: Bus) {
-    this.voiceIntervals = this.voiceIntervals.filter(voice => voice.end > this.ctx.currentTime);
-    const overlaps = this.voiceIntervals.reduce((count, voice) =>
-      count + Number(voice.start < end && voice.end > start), 0);
-    if (bus !== "impact" && overlaps >= (this.mobile ? 16 : 24)) return false;
-    this.voiceIntervals.push({ start, end });
-    return true;
+  private glide(param: AudioParam, value: number, time = 0.1) {
+    param.setTargetAtTime(value, this.ctx.currentTime, time);
   }
 
   async enable() {
     if (this.disposed) return;
-    if (this.suspension !== null) window.clearTimeout(this.suspension);
-    this.suspension = null;
+    if (this.suspendTimer !== null) window.clearTimeout(this.suspendTimer);
     await this.ctx.resume();
     this.enabled = true;
-    this.target(this.master.gain, .58, .045);
-    this.tone(330, 294, .12, .012, "ui", 0, this.ctx.currentTime, "sine");
+    this.glide(this.master.gain, 0.9, 0.4);
   }
 
   disable() {
     this.enabled = false;
-    this.target(this.master.gain, 0, .025);
-    if (this.suspension !== null) window.clearTimeout(this.suspension);
-    this.suspension = window.setTimeout(() => {
+    this.glide(this.master.gain, 0, 0.08);
+    this.suspendTimer = window.setTimeout(() => {
       if (!this.enabled && !this.disposed) void this.ctx.suspend();
-    }, 240);
+    }, 600);
   }
 
-  update(state: AudioSnapshot) {
-    if (!this.enabled || this.disposed || this.ctx.state !== "running") return;
+  update(frame: AudioFrame) {
+    if (!this.enabled || this.disposed) return;
     const now = this.ctx.currentTime;
-    if (now - this.lastUpdate < .032) return;
+    if (now - this.lastUpdate < 0.03) return;
     this.lastUpdate = now;
-    this.mobile = state.mobile;
-    const p = state.progress;
-    const attention = bell(p, .065, .12, .245, .34);
-    const form = bell(p, .23, .31, .42, .52);
-    const behavior = bell(p, .425, .48, .59, .69);
-    const convergence = bell(p, .605, .67, .785, .88);
-    const product = smooth(p, .825, .91);
-    const silence = clamp(Math.max(state.stillness, state.darkness, state.paused ? 1 : 0));
-    const audible = (1 - silence) * (1 - silence * .55);
-    const activity = clamp(state.fieldEnergy * .65 + state.pointerWake * .28);
-    const speed = clamp(state.signalVelocity * .028 + state.cameraSpeed * .006 + state.scrollEnergy * .35);
-
-    this.target(this.airGain.gain, (.00045 + attention * (.004 + activity * .003)
-      + behavior * .0015 + convergence * (.003 + speed * .004) + product * .0018) * audible, .09);
-    this.target(this.airFilter.frequency, 680 + attention * (1500 + activity * 1500)
-      + behavior * 850 + convergence * (1200 + speed * 2600) + product * 460, .09);
-    this.target(this.airPan.pan, clamp(state.pointerX * attention * .25 + state.signalX / 10 * behavior * .32, -.38, .38), .16);
-    this.target(this.toneGain.gain, (form * .0038 + convergence * (.0015 + state.connection * .003)
-      + product * .0036) * audible, .13);
-    this.target(this.toneA.frequency, 164 + form * state.alignment * 1.8 + convergence * state.field * 6 - product * 0, .19);
-    this.target(this.toneB.frequency, 246 + convergence * state.compression * 9 + product * .4, .19);
-    this.target(this.pressureGain.gain, (convergence * (.002 + state.compression * .013)
-      + product * .0016) * audible, .12);
-    this.target(this.pressure.frequency, 74 + convergence * state.compression * 12 - product * 1, .12);
-    this.target(this.buses.signals.gain, .86 * audible, silence > .7 ? .022 : .07);
-    this.target(this.buses.interaction.gain, .72 * audible, silence > .7 ? .022 : .07);
-
-    const grainRate = (attention * (1.7 + activity * 5.4) + convergence * (1.3 + state.field * 3.5))
-      * (state.mobile ? .58 : 1) * audible;
-    if (grainRate > .15 && now >= this.grainAt) {
-      const coherent = clamp(state.alignment * .7 + state.connection * .55);
-      const pan = (this.random() * 2 - 1) * (.58 - coherent * .36) + state.pointerX * .12;
-      this.noiseTick(1850 + coherent * 920 + this.random() * 1750, .017 + this.random() * .02,
-        .005 + activity * .003, pan, "ambience", now);
-      this.grainAt = now + (1 / grainRate) * (1.35 - coherent * .68 + this.random() * (1 - coherent) * .5);
+    const s = clamp(frame.stage, 0, 5);
+    const nearest = Math.round(s);
+    if (nearest !== this.chord) {
+      this.chord = nearest;
+      CHORDS[nearest].forEach((note, i) => {
+        const v = this.voices[i];
+        this.glide(v.a.frequency, hz(note), 0.6);
+        this.glide(v.b.frequency, hz(note), 0.75);
+      });
     }
-    const tension = convergence * state.field * (1 - state.compression * .3) * audible;
-    if (tension > .1 && now >= this.patternAt) {
-      const rate = 1.3 + tension * 7.8;
-      this.tone(144 + state.compression * 31, 150 + state.compression * 27,
-        .065, .006 + tension * .007, "signals", (this.random() - .5) * (1 - state.compression) * .6, now, "triangle");
-      this.patternAt = now + 1 / rate;
+    const speed = clamp(Math.abs(frame.velocity));
+    const core = Math.exp(-Math.pow((s - 4) * 2.2, 2));
+    const product = clamp(s - 4.5, 0, 0.5) * 2;
+    this.glide(this.padGain.gain, 0.32 + product * 0.12 - core * 0.12, 0.3);
+    this.glide(this.padFilter.frequency, 380 + s * 160 + speed * 1400 + product * 700 + frame.pointer * 300, 0.15);
+    this.glide(this.airGain.gain, (0.012 + speed * 0.09 + core * 0.05) * (frame.calm ? 0.5 : 1), 0.08);
+    this.glide(this.airFilter.frequency, 500 + speed * 2600 + core * 1800, 0.1);
+    this.glide(this.subGain.gain, core * 0.22, 0.2);
+    this.glide(this.sub.frequency, hz(26) * (1 + core * 0.06), 0.2);
+
+    // Attention: pointer movement crackles. Form: a quiet metronome of alignment.
+    const attention = clamp(1 - Math.abs(s - 1) * 1.4);
+    const form = clamp(1 - Math.abs(s - 2) * 1.6);
+    if (now >= this.tickAt) {
+      if (attention > 0.2 && frame.pointer > 0.05) {
+        this.noiseHit(2400 + Math.random() * 3000, 0.02, 0.05 * attention * frame.pointer, (Math.random() - 0.5) * 1.2);
+        this.tickAt = now + 0.04 + Math.random() * 0.12 / (0.2 + frame.pointer);
+      } else if (form > 0.4) {
+        this.tone(hz(81), hz(81), 0.08, 0.018 * form, 0, "sine", 0.3);
+        this.tickAt = now + 0.5;
+      } else {
+        this.tickAt = now + 0.1;
+      }
     }
+
+    // A riser into the core and an impact when it releases.
+    if (this.lastStage < 3.55 && s >= 3.55) this.riser();
+    if (this.lastStage < 4.55 && s >= 4.55) this.impact();
+    this.lastStage = s;
   }
 
-  private tone(from: number, to: number, duration: number, level: number, bus: Bus,
-    pan: number, start: number, shape: OscillatorType = "sine") {
-    if (this.disposed) return;
-    const begin = Math.max(start, this.ctx.currentTime + .003);
-    if (!this.reserveVoice(begin, begin + duration + .012, bus)) return;
-    const oscillator = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const stereo = this.ctx.createStereoPanner();
-    oscillator.type = shape;
-    oscillator.frequency.setValueAtTime(Math.max(20, from), begin);
-    oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, to), begin + duration);
-    gain.gain.setValueAtTime(.0001, begin);
-    gain.gain.exponentialRampToValueAtTime(Math.max(.0002, level), begin + Math.min(.025, duration * .16));
-    gain.gain.exponentialRampToValueAtTime(.0001, begin + duration);
-    stereo.pan.value = clamp(pan, -.72, .72);
-    oscillator.connect(gain).connect(stereo).connect(this.buses[bus]);
-    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); stereo.disconnect(); };
-    oscillator.start(begin);
-    oscillator.stop(begin + duration + .012);
+  private tone(from: number, to: number, duration: number, level: number, pan = 0,
+    shape: OscillatorType = "sine", wet = 0.5, start = this.ctx.currentTime) {
+    if (!this.enabled || this.disposed) return;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    const p = this.ctx.createStereoPanner();
+    const w = this.ctx.createGain();
+    o.type = shape;
+    o.frequency.setValueAtTime(from, start);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, to), start + duration);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, level), start + Math.min(0.02, duration * 0.2));
+    g.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    p.pan.value = clamp(pan, -1, 1);
+    w.gain.value = wet;
+    o.connect(g).connect(p);
+    p.connect(this.dry); p.connect(w).connect(this.send);
+    o.onended = () => { o.disconnect(); g.disconnect(); p.disconnect(); w.disconnect(); };
+    o.start(start); o.stop(start + duration + 0.02);
   }
 
-  private noiseTick(cutoff: number, duration: number, level: number, pan: number, bus: Bus, start: number) {
-    if (this.disposed) return;
-    const begin = Math.max(start, this.ctx.currentTime + .003);
-    if (!this.reserveVoice(begin, begin + duration + .004, bus)) return;
-    const source = this.ctx.createBufferSource();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-    const stereo = this.ctx.createStereoPanner();
-    source.buffer = this.noise;
-    filter.type = "bandpass"; filter.frequency.value = cutoff; filter.Q.value = 1.5;
-    gain.gain.setValueAtTime(.0001, begin);
-    gain.gain.exponentialRampToValueAtTime(Math.max(.0002, level), begin + .004);
-    gain.gain.exponentialRampToValueAtTime(.0001, begin + duration);
-    stereo.pan.value = clamp(pan, -.72, .72);
-    source.connect(filter).connect(gain).connect(stereo).connect(this.buses[bus]);
-    source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); stereo.disconnect(); };
-    source.start(begin, this.random() * 1.6, duration + .004);
+  private noiseHit(freq: number, duration: number, level: number, pan = 0, start = this.ctx.currentTime, sweepTo?: number) {
+    if (!this.enabled || this.disposed) return;
+    const src = this.ctx.createBufferSource();
+    const f = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+    const p = this.ctx.createStereoPanner();
+    src.buffer = this.noise;
+    f.type = "bandpass"; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(freq, start);
+    if (sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo, start + duration);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, level), start + (sweepTo ? duration * 0.9 : 0.004));
+    g.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    p.pan.value = clamp(pan, -1, 1);
+    src.connect(f).connect(g).connect(p);
+    p.connect(this.dry); p.connect(this.send);
+    src.onended = () => { src.disconnect(); f.disconnect(); g.disconnect(); p.disconnect(); };
+    src.start(start, Math.random(), duration + 0.02);
   }
 
-  cue(cue: AudioCue) {
-    if (!this.enabled || this.ctx.state !== "running") return;
-    const now = this.ctx.currentTime;
-    switch (cue) {
-      case "formStep":
-        this.noiseTick(2450, .014, .009, -.12, "interaction", now);
-        this.tone(205, 199, .14, .008, "interaction", -.08, now + .008);
-        break;
-      case "alignment":
-        this.noiseTick(2850, .024, .027, .08, "interaction", now);
-        this.tone(174, 165, .31, .027, "interaction", .02, now + .007);
-        break;
-      case "escape":
-        this.tone(143, 181, .26, .021, "signals", .42, now, "triangle");
-        break;
-      case "connection":
-        this.tone(246, 219, .38, .021, "signals", -.16, now);
-        this.noiseTick(1850, .027, .009, -.35, "signals", now + .055);
-        break;
-      case "anticipation":
-        this.tone(112, 109, .16, .012, "signals", 0, now);
-        break;
-      case "impact":
-        // Suction precedes a compact low-mid pressure pulse, then leaves space.
-        this.noiseTick(3300, .031, .065, 0, "impact", now);
-        this.tone(182, 96, .105, .095, "impact", 0, now + .023, "triangle");
-        this.tone(76, 43, .26, .17, "impact", 0, now + .046);
-        this.tone(126, 84, .15, .055, "impact", 0, now + .047);
-        break;
-      case "formation":
-        // The system resolves into the same interval family used by its signals.
-        this.tone(164.8, 164.8, .48, .025, "interaction", -.12, now);
-        this.tone(207.65, 207.65, .47, .027, "interaction", 0, now + .12);
-        this.tone(246.94, 246.94, .75, .034, "interaction", .12, now + .25);
-        this.tone(493.88, 493.88, .3, .006, "interaction", .12, now + .26);
-        break;
-    }
+  private riser() {
+    this.noiseHit(300, 1.6, 0.12, 0, this.ctx.currentTime, 4200);
+    this.tone(hz(45), hz(57), 1.6, 0.05, 0, "sawtooth", 0.8);
   }
 
-  signal(event: SignalEvent, start = this.ctx.currentTime) {
-    if (!this.enabled || this.ctx.state !== "running") return;
-    const route = clamp(event.route, 0, 6);
-    const energy = clamp(event.energy, .2, 1.4);
-    // A shared interval family gives each route a distinct destination without
-    // turning six signals into unrelated instruments.
-    const base = this.routeBase(route);
-    const ratio = event.stage === "route" ? 1.12 : event.stage === "split" ? 1.32
-      : event.stage === "terminal" ? .84 : 1;
-    const pan = clamp(event.pan, -.66, .66);
-    if (event.composer && event.stage === "terminal") {
-      // A short rising resolution reads as completed work, even on small speakers.
-      this.tone(base * 1.25, base * 1.25, .26, .034 * energy, "signals", pan, start);
-      this.tone(base * 1.5, base * 1.5, .42, .036 * energy, "signals", pan, start + .095);
-      this.tone(base * 2, base * 2, .28, .009 * energy, "signals", pan, start + .19);
-      return;
-    }
-    const duration = event.stage === "terminal" ? .27 : .15;
-    if (!event.composer) this.noiseTick(event.stage === "terminal" ? 1250 : 2400, .018, .008 * energy, pan, "signals", start);
-    this.tone(base * ratio, base * ratio * (event.stage === "terminal" ? .93 : 1.025),
-      duration, .026 * energy, "signals", pan, start + .006, event.stage === "split" ? "triangle" : "sine");
-    if (event.stage === "split" && !this.mobile) {
-      this.tone(base * 1.51, base * 1.49, .115, .01 * energy, "signals", pan + .25, start + .082);
-    }
+  impact() {
+    const t = this.ctx.currentTime;
+    this.tone(hz(38), hz(26), 1.4, 0.6, 0, "sine", 0.2, t);
+    this.tone(hz(50), hz(38), 0.5, 0.16, 0, "triangle", 0.6, t);
+    this.noiseHit(1800, 0.9, 0.18, 0, t, 300);
+    [62, 66, 69, 74].forEach((n, i) => this.tone(hz(n), hz(n), 2.6, 0.035, (i - 1.5) * 0.4, "sine", 1, t + 0.18 + i * 0.07));
   }
 
-  signalEvent(event: SignalEvent) {
-    this.signal(event, this.ctx.currentTime + (event.delay ?? 0));
+  pulse() {
+    const t = this.ctx.currentTime;
+    [55, 59, 62, 67, 71].forEach((n, i) => this.tone(hz(n), hz(n), 0.4, 0.07, -0.8 + i * 0.4, "triangle", 0.6, t + i * 0.11));
   }
 
-  select(id: number) {
-    if (!this.enabled || this.ctx.state !== "running") return;
-    this.tone(this.routeBase(id - 1) * 1.5, this.routeBase(id - 1) * 1.5,
-      .11, .014, "ui", -.1 + id * .035, this.ctx.currentTime);
+  route(discipline: number, routedCount: number) {
+    const t = this.ctx.currentTime;
+    const scale = ROUTE_SCALE[discipline] ?? ROUTE_SCALE[0];
+    const lift = routedCount > 3 ? 12 : 0;
+    scale.forEach((n, i) => this.tone(hz(n + lift), hz(n + lift), 0.9, 0.08, (discipline - 1) * 0.6, "sine", 0.7, t + i * 0.09));
+    this.noiseHit(5200, 0.06, 0.04, (discipline - 1) * 0.6, t);
   }
 
-  route(id: number, priorRoutes: number) {
-    if (!this.enabled || this.ctx.state !== "running") return;
-    const now = this.ctx.currentTime + .01;
-    const route = clamp(id - 1, 0, 5);
-    const energy = .82 + Math.min(.26, priorRoutes * .045);
-    const baseAngle = route / 9 * Math.PI * 2 - .18;
-    const panAt = (fraction: number) => clamp((2.35 + Math.cos(baseAngle + fraction * 1.14) * (.3 + fraction * 2.55)) / 5.2, -.55, .55);
-    this.signal({ stage: "input", route, pan: -.04, energy, composer: true }, now);
-    this.signal({ stage: "route", route, pan: .44, energy: energy * .79, composer: true }, now + .42);
-    this.signal({ stage: "split", route, pan: panAt(.5), energy: energy * .71, composer: true }, now + .76);
-    this.signal({ stage: "terminal", route, pan: panAt(1), energy: energy * .88, composer: true }, now + 1.14);
+  complete() {
+    const t = this.ctx.currentTime + 0.5;
+    [50, 57, 62, 66, 69, 74, 78].forEach((n, i) => this.tone(hz(n), hz(n), 4, 0.05, (i - 3) * 0.25, "sine", 1, t + i * 0.12));
+  }
+
+  hover() {
+    this.tone(hz(93), hz(93), 0.05, 0.012, 0, "sine", 0.2);
+  }
+
+  click() {
+    this.tone(hz(86), hz(81), 0.09, 0.04, 0, "triangle", 0.3);
   }
 
   async dispose() {
     this.disposed = true;
-    if (this.suspension !== null) window.clearTimeout(this.suspension);
-    this.airSource.stop(); this.toneA.stop(); this.toneB.stop(); this.pressure.stop();
-    await this.ctx.close();
+    if (this.suspendTimer !== null) window.clearTimeout(this.suspendTimer);
+    try { await this.ctx.close(); } catch { /* already closed */ }
   }
 }
