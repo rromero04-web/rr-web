@@ -19,14 +19,35 @@ On entering, all of the matter is born from a single point. It bursts outward wi
 
 The morph between states happens as the next section arrives. Each section holds its own state for roughly the first 45% of its scroll, and particles leave with a staggered delay so they move as a crowd rather than a block.
 
+## Interaction
+
+- **Pointer:** gathers the swarm in Attention and bends the other states. A soft lens follows it.
+- **Press and hold (mouse):** a gravity well. Every state is pulled towards the pointer, and the image bends around a dark centre.
+- **Release:** a burst and a shockwave travel outwards from the well, with a strength that depends on how long you held. In Behavior, releasing also sends a signal through the streams.
+- **Drag:** rotates the matter. The rotation keeps its momentum and settles on a full turn.
+- **Tap (touch):** a burst at the tap; touch scrolling is never blocked.
+- **Scroll speed:** the matter trails behind fast scrolling, with light trails.
+- **Signal composer:** each signal lights the orbit of its discipline, and routing all six completes the system.
+
+## Language
+
+All copy lives in `copy.ts` in Spanish and English. The language comes from `?lang=es|en`, then the visitor's last choice (`localStorage`), then the browser language. The server renders Spanish. The ES/EN switch is in the preloader and the HUD, and it updates `<html lang>`.
+
 ## Files
 
 - `src/app/(experiments)/layout.tsx`: a separate root layout. It contains no site chrome or global site CSS, and loads Geist, Geist Mono and Instrument Serif (italic accents).
 - `src/components/labs/convergence/ConvergenceExperience.tsx`: the DOM layer. It holds the preloader with its "enter with sound / in silence" choice, the HUD, the custom cursor, Lenis smooth scroll, the scroll → stage mapping, text reveals, the marquee and the signal composer. Every per-frame DOM write happens in a single `requestAnimationFrame` loop, so scrolling never re-renders React.
-- `src/components/labs/convergence/ConvergenceScene.tsx`: the React Three Fiber canvas. It contains the camera shots per stage (positioned with `setViewOffset` so text and matter never overlap), the pointer projection, postprocessing: light trails (AfterimagePass, driven by scroll speed, morphs and the intro), UnrealBloom, then a grade pass with a haze tinted by chapter, a soft lens around the pointer, the refractive shockwave, chromatic offset, vignette and grain and an adaptive quality governor.
-- `src/components/labs/convergence/shaders.ts`: all six states, plus depth of field (out-of-focus particles open into bokeh discs) and a sparse layer of foreground orbs. All of it is computed in the vertex shader from each particle's index and four random values. The CPU does no per-particle work each frame.
-- `src/components/labs/convergence/ConvergenceAudio.ts`: a procedural score built with Web Audio, with no audio files. A pad's harmony follows the chapters (it starts in D minor and resolves to D major), air noise responds to scroll speed, and there are a pointer crackle, a riser into the core, an impact, signal arpeggios and a completion chord.
+- `src/components/labs/convergence/ConvergenceScene.tsx`: the React Three Fiber canvas. It contains the camera shots per stage (positioned with `setViewOffset` so text and matter never overlap), the pointer projection, postprocessing: light trails (AfterimagePass, driven by scroll speed, morphs and the intro), UnrealBloom, then a grade pass with a haze tinted by chapter, a soft lens around the pointer that becomes a gravity lens while holding, the refractive shockwave, chromatic offset, vignette and grain and an adaptive quality governor.
+- `src/components/labs/convergence/shaders.ts`: all six states (with data packets in the streams, polar jets in the core and a rim light on the sphere), the gravity well, the release burst and scroll inertia, plus depth of field (out-of-focus particles open into bokeh discs) and a sparse layer of foreground orbs. All of it is computed in the vertex shader from each particle's index and four random values. The CPU does no per-particle work each frame.
+- `src/components/labs/convergence/ConvergenceAudio.ts`: a procedural score built with Web Audio, with no audio files and no continuous noise. Everything is pitched to the chord of the current chapter (it starts in D minor and resolves to D major):
+  - a breathing pad;
+  - glassy grains, through a ping-pong delay and a dark generated hall, whose density follows scroll speed;
+  - water-drop tones under the pointer in Attention;
+  - an arpeggio in Form and a 16th-note data pattern in Behavior;
+  - a rising drone while holding, and a burst on release;
+  - a tonal riser and an impact at the convergence, and bells in the product.
 - `src/components/labs/convergence/model.ts`: the chapters, the signals, and the shared mutable scene state.
+- `src/components/labs/convergence/copy.ts`: Spanish and English copy.
 
 ## Quality, accessibility, fallbacks
 
@@ -41,4 +62,4 @@ The morph between states happens as the next section arrives. Each section holds
 
 ## Verified / not verified
 
-Checked in headless Chromium (SwiftShader) at 1440×900 and 390×844: every stage, the composer through to completion, and lint, typecheck and build. Not checked yet: real GPUs and frame rates, physical iOS/Android devices, screen readers, and the sound design on real speakers.
+Checked in headless Chromium (SwiftShader) at 1440×900 and 390×844: every stage, the composer through to completion, and lint, typecheck and build. Not checked yet: real GPUs and frame rates, physical iOS/Android devices, screen readers, and the sound design on real speakers. Audio levels were only checked with an analyser: no errors, peaks around 0.46 at most, and every chapter's layer audible above the pad.

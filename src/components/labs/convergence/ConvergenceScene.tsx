@@ -93,6 +93,7 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
   const points = useRef<THREE.Points>(null);
   const post = useRef<{ composer: EffectComposer; trails: AfterimagePass; bloom: UnrealBloomPass; grade: ShaderPass } | null>(null);
   const shock = useRef({ age: 10, introFired: false });
+  const touch = useRef({ hold: 0, lastBurst: -100, spin: 0, spinVelocity: 0, scroll: 0 });
   const clock = useRef(0);
   const governor = useRef({ time: 0, frames: 0, strikes: 0 });
   const ready = useRef(false);
@@ -144,6 +145,11 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
     uIntro: { value: 0 },
     uFocus: { value: 11 },
     uAperture: { value: 0.12 },
+    uHold: { value: 0 },
+    uBurstAge: { value: 100 },
+    uBurstPos: { value: new THREE.Vector3() },
+    uBurstPower: { value: 0 },
+    uScrollVel: { value: 0 },
     uEmber: { value: COLORS.ember },
     uLilac: { value: COLORS.lilac },
     uAqua: { value: COLORS.aqua },
@@ -232,9 +238,37 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
     const w = size.width, h = size.height;
     perspective.setViewOffset(w, h, -frame.current.x * w, -frame.current.y * h, w, h);
 
-    tmp.ray.setFromCamera(tmp.ndc.set(mouse.current.x, mouse.current.y), perspective);
+    // Drag turns the matter; the spin keeps its momentum and slowly settles.
+    const object = points.current;
+    const tc = touch.current;
+    tc.spinVelocity += state.drag * (calm ? 0.0015 : 0.004);
+    state.drag = 0;
+    tc.spinVelocity = decay(tc.spinVelocity, 0, 2.2, dt);
+    tc.spin += tc.spinVelocity;
+    if (Math.abs(tc.spinVelocity) < 0.0005) tc.spin = decay(tc.spin, Math.round(tc.spin / (Math.PI * 2)) * Math.PI * 2, 0.25, dt);
+    if (object) object.rotation.set(0, tc.spin, 0);
+    object?.updateMatrixWorld();
+
+    // Pointer positions in the matter's own space, so the well follows it when it turns.
     tmp.plane.set(tmp.normal.subVectors(perspective.position, look.current).normalize(), 0);
-    if (tmp.ray.ray.intersectPlane(tmp.plane, tmp.hit)) u.uMouse.value.copy(tmp.hit);
+    tmp.ray.setFromCamera(tmp.ndc.set(mouse.current.x, mouse.current.y), perspective);
+    if (tmp.ray.ray.intersectPlane(tmp.plane, tmp.hit) && object) u.uMouse.value.copy(object.worldToLocal(tmp.hit));
+
+    tc.hold = decay(tc.hold, state.pointerDown ? 1 : 0, state.pointerDown ? 1.6 : 6, dt);
+    if (state.burstAt !== tc.lastBurst) {
+      tc.lastBurst = state.burstAt;
+      tmp.ray.setFromCamera(tmp.ndc.set(state.burstX, state.burstY), perspective);
+      if (tmp.ray.ray.intersectPlane(tmp.plane, tmp.hit) && object) u.uBurstPos.value.copy(object.worldToLocal(tmp.hit));
+      u.uBurstPower.value = state.burstPower;
+      if (!calm) {
+        shock.current.age = 0;
+        (pass.grade.uniforms.uShockPos.value as THREE.Vector2).set(state.burstX * 0.5 + 0.5, state.burstY * 0.5 + 0.5);
+      }
+    }
+    u.uBurstAge.value = Math.max(0, now - state.burstAt);
+    u.uHold.value = tc.hold;
+    tc.scroll = decay(tc.scroll, THREE.MathUtils.clamp(state.scrollVelocity, -2, 2), 6, dt);
+    u.uScrollVel.value = tc.scroll;
 
     // Intro: the matter is born from one point once the curtain has lifted.
     const introStart = state.introAt + 0.45;
@@ -286,10 +320,11 @@ function Matter({ stateRef, quality, onSlow, onReady }: Props) {
       .multiplyScalar(0.8 + u.uComplete.value * 0.6);
     const glow = pass.grade.uniforms.uGlow.value as THREE.Vector2;
     glow.set(0.5 + frame.current.x, 0.5 - frame.current.y);
-    (pass.grade.uniforms.uShockPos.value as THREE.Vector2).copy(glow);
+    if (now - state.burstAt > 2) (pass.grade.uniforms.uShockPos.value as THREE.Vector2).copy(glow);
     pass.grade.uniforms.uShock.value = shock.current.age;
     (pass.grade.uniforms.uCursor.value as THREE.Vector2).set(mouse.current.x * 0.5 + 0.5, mouse.current.y * 0.5 + 0.5);
-    pass.grade.uniforms.uCursorForce.value = calm ? 0 : mouse.current.force * 0.9;
+    pass.grade.uniforms.uCursorForce.value = calm ? 0 : Math.max(mouse.current.force * 0.9, touch.current.hold);
+    pass.grade.uniforms.uHold.value = calm ? touch.current.hold * 0.4 : touch.current.hold;
     pass.grade.uniforms.uAspect.value = size.width / Math.max(1, size.height);
 
     const core = Math.exp(-Math.pow((s - 4) * 2.4, 2));

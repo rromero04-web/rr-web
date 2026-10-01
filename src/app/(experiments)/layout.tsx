@@ -11,13 +11,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://raulromero.es";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "Convergence — Lab 001", template: "%s | Raúl Romero" },
-  description: "An interactive study of attention, form and behavior becoming one living digital product.",
+  description: "Un estudio interactivo sobre atención, forma y comportamiento convertidos en un producto digital vivo.",
   robots: { index: true, follow: true },
 };
 
 export default function ExperimentsLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${serif.variable}`}>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${serif.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -79,6 +79,11 @@ uniform float uMobile;
 uniform float uIntro;
 uniform float uFocus;
 uniform float uAperture;
+uniform float uHold;
+uniform float uBurstAge;
+uniform vec3 uBurstPos;
+uniform float uBurstPower;
+uniform float uScrollVel;
 
 uniform vec3 uEmber;
 uniform vec3 uLilac;
@@ -94,6 +99,12 @@ varying float vBlur;
 
 #define PI 3.14159265359
 #define TAU 6.28318530718
+
+// Written by the shape functions: a size multiplier and, for the product
+// sphere, the surface normal used for its rim light.
+float gSize = 1.0;
+float gSurface = 0.0;
+vec3 gNormal = vec3(0.0, 0.0, 1.0);
 
 ${noise}
 
@@ -193,6 +204,9 @@ vec3 streamShape(vec4 r, float t, out vec3 col, out float alpha) {
   float lane = floor(r.x * lanes);
   float lh = hash(lane + 1.7);
   float speed = mix(0.035, 0.075, lh) * mix(1.0, 0.45, uCalm);
+  // A few particles are packets: faster, brighter, larger.
+  float packet = step(fract(r.w * 23.17 + r.z * 5.3), 0.05);
+  speed *= 1.0 + packet * 2.8;
   float s = fract(r.y + t * speed);
   float span = mix(26.0, 15.0, uMobile);
   float x = (s - 0.5) * span;
@@ -207,8 +221,9 @@ vec3 streamShape(vec4 r, float t, out vec3 col, out float alpha) {
   p.y += wave * sin(lane * 2.1) * 0.35;
   float node = smoothstep(2.2, 0.0, abs(x));
   float fade = smoothstep(0.0, 0.08, s) * smoothstep(1.0, 0.92, s);
-  col = mix(uAqua * 0.75, uBone, node * 0.55 + wave * 0.8) * (0.7 + node * 0.8 + wave * 2.4);
+  col = mix(uAqua * 0.75, uBone, node * 0.55 + wave * 0.8 + packet * 0.5) * (0.7 + node * 0.8 + wave * 2.4 + packet * 1.6);
   alpha = 0.75 * fade;
+  gSize = 1.0 + packet * 0.9;
   return p;
 }
 
@@ -222,6 +237,21 @@ vec3 coreShape(vec4 r, float t, float g, out vec3 col, out float alpha) {
     p = rotZ(-0.16) * rotX(0.36) * p;
     col = mix(uBone, groupColor(g), 0.6) * (0.9 - r.y * 0.5);
     alpha = 0.85;
+    return p;
+  }
+  if (r.w > 0.6) {
+    // Polar jets: matter escaping along the axis of the disk.
+    vec3 axis = rotZ(-0.16) * rotX(0.36) * vec3(0.0, 1.0, 0.0);
+    vec3 side = normalize(cross(axis, vec3(1.0, 0.0, 0.0)));
+    vec3 other = cross(axis, side);
+    float along = fract(r.y + t * mix(0.9, 0.35, uCalm));
+    float sgn = r.x < 0.5 ? 1.0 : -1.0;
+    float spread = (0.04 + along * 0.32) ;
+    float a = r.z * TAU + along * 6.0;
+    vec3 p = axis * sgn * (0.25 + along * 3.6) + (side * cos(a) + other * sin(a)) * spread * (0.5 + r.x);
+    col = mix(uBone, uAqua, along) * (1.4 - along) * 1.1;
+    alpha = 0.9 * (1.0 - along);
+    gSize = 0.8;
     return p;
   }
   vec3 dir = sphereDir(r);
@@ -264,6 +294,8 @@ vec3 orbShape(float index, vec4 r, float t, float g, out vec3 col, out float alp
   float wave = exp(-pow((dot(dir, normalize(vec3(sin(uRouteGroup * 2.1), 0.4, cos(uRouteGroup * 2.1)))) - (1.0 - uRouteAge * 0.9)) * 6.0, 2.0)) * exp(-uRouteAge * 0.8);
   vec3 p = dir * (R + d + wave * 0.35 + (r.z - 0.5) * 0.04);
   p = rotY(t * 0.08) * p;
+  gSurface = 1.0;
+  gNormal = rotY(t * 0.08) * dir;
   // Three disciplines flow over the same surface as regions, not as separate parts.
   float field = snoise(dir * 0.9 + vec3(0.0, t * 0.05, 0.0));
   float gg = field < -0.18 ? 0.0 : field < 0.2 ? 1.0 : 2.0;
@@ -298,7 +330,10 @@ void main() {
   vec3 colA; float alphaA;
   vec3 colB; float alphaB;
   vec3 a = shapeAt(k, aIndex, r, t, g, colA, alphaA);
+  float sizeA = gSize; float surfaceA = gSurface;
+  gSize = 1.0; gSurface = 0.0;
   vec3 b = shapeAt(k + 1.0, aIndex, r, t, g, colB, alphaB);
+  float sizeB = gSize; float surfaceB = gSurface;
 
   // Compression pulls on a spiral; the release overshoots and settles.
   float ease = e;
@@ -313,6 +348,8 @@ void main() {
 
   vec3 col = mix(colA, colB, e);
   float alpha = mix(alphaA, alphaB, e);
+  float sizeMul = mix(sizeA, sizeB, e);
+  float surface = mix(surfaceA, surfaceB, e);
 
   // Convergence: colors of the three disciplines appear inside the same matter.
   float reveal = smoothstep(3.2, 4.0, stage) * (1.0 - smoothstep(4.6, 5.0, stage));
@@ -353,14 +390,42 @@ void main() {
   p.z += influence * (0.6 - attention * 1.2);
   col += uBone * influence * attention * 0.6;
 
+  // Press and hold: a gravity well at the pointer pulls every state in.
+  vec3 toWell = uMouse - p;
+  float well = uHold * smoothstep(6.5, 0.0, length(toWell)) * (1.0 - uCalm * 0.5);
+  p += toWell * well * 0.8 + vec3(-toWell.y, toWell.x, 0.0) * well * 0.4;
+  col += uBone * well * 0.45;
+
+  // Release: a burst travels outwards from the well.
+  if (uBurstAge < 3.0) {
+    vec3 fromB = p - uBurstPos;
+    float dB = length(fromB) + 0.001;
+    float wave = exp(-pow((dB - uBurstAge * 7.0) * 0.9, 2.0)) * exp(-uBurstAge * 1.4);
+    float push = (1.0 - smoothstep(0.0, 6.0, dB)) * uBurstAge * exp(-uBurstAge * 3.5) * 9.0;
+    p += fromB / dB * (wave * 0.9 + push) * uBurstPower * (1.0 - uCalm * 0.6);
+    col += mix(uBone, groupColor(g), 0.4) * wave * uBurstPower * 1.3;
+  }
+
+  // Scroll inertia: the matter trails behind fast scrolling, each particle by its own weight.
+  p.y += uScrollVel * (0.35 + r.x * 0.65) * 0.6 * (1.0 - uCalm);
+
+  // A slow sparkle so that still matter never looks frozen.
+  col *= 0.88 + 0.24 * sin(t * (1.5 + r.z * 3.5) + r.x * 60.0);
+
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  if (surface > 0.0) {
+    vec3 n = normalize(normalMatrix * gNormal);
+    float rim = pow(1.0 - abs(dot(n, normalize(-mv.xyz))), 2.2);
+    col *= 1.0 + rim * 1.4 * surface;
+    alpha *= mix(1.0, 0.8 + rim * 0.7, surface);
+  }
   gl_Position = projectionMatrix * mv;
   // Size uses its own seed: r.y also drives angles, and must not bias them.
   float size = uSize * (0.45 + pow(fract(r.w * 91.7 + r.x * 37.3 + r.z * 11.1), 3.0) * 1.3);
   size *= 1.0 - 0.45 * exp(-pow((stage - 4.0) * 2.5, 2.0));
   // Depth of field: matter outside the focal plane opens into soft bokeh.
   float blur = clamp(abs(-mv.z - uFocus) * uAperture, 0.0, 3.0);
-  size *= (1.0 + blur * 2.3) * (1.0 + foreground * 2.2);
+  size *= (1.0 + blur * 2.3) * (1.0 + foreground * 2.2) * sizeMul;
   gl_PointSize = clamp(size * uPixelRatio / -mv.z, 0.0, 110.0);
   vColor = col;
   vBlur = clamp(blur * 0.6, 0.0, 1.0);
@@ -399,6 +464,7 @@ export const gradeShader = {
     uCursor: { value: new THREE.Vector2(0.5, 0.5) },
     uCursorForce: { value: 0 },
     uShock: { value: 10 },
+    uHold: { value: 0 },
     uShockPos: { value: new THREE.Vector2(0.5, 0.5) },
   },
   vertexShader: /* glsl */ `
@@ -417,6 +483,7 @@ export const gradeShader = {
     uniform float uCursorForce;
     uniform float uShock;
     uniform vec2 uShockPos;
+    uniform float uHold;
     varying vec2 vUv;
     float rand(vec2 co) { return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453); }
     float vnoise(vec2 p) {
@@ -428,10 +495,13 @@ export const gradeShader = {
       vec2 asp = vec2(uAspect, 1.0);
       vec2 uv = vUv;
 
-      // A soft magnifier follows the pointer.
+      // A soft magnifier follows the pointer; holding turns it into a gravity lens
+      // that bends the image around a dark centre.
       vec2 dc = (uv - uCursor) * asp;
-      float lens = smoothstep(0.2, 0.0, length(dc)) * uCursorForce;
-      uv = uCursor + (uv - uCursor) * (1.0 - lens * 0.12);
+      float dl = length(dc);
+      float lens = smoothstep(0.2 + uHold * 0.12, 0.0, dl) * uCursorForce;
+      uv = uCursor + (uv - uCursor) * (1.0 - lens * (0.12 + uHold * 0.3));
+      uv += normalize(dc + 1e-5) / asp * uHold * 0.012 * smoothstep(0.3, 0.05, dl) * sin(dl * 60.0 - uTime * 6.0) * 0.4;
 
       // Shockwave: a ring of refraction expanding from the object.
       vec2 ds = (uv - uShockPos) * asp;
@@ -454,6 +524,8 @@ export const gradeShader = {
       col += uTint * haze * haze * (0.05 + cloud * 0.07);
       col += uTint * ring * 0.18;
 
+      col *= 1.0 - uHold * smoothstep(0.045, 0.0, dl) * 0.85;
+      col += uTint * uHold * smoothstep(0.09, 0.045, dl) * smoothstep(0.03, 0.05, dl) * 0.9;
       col *= 1.0 - smoothstep(0.18, 0.75, edge) * 0.55;
       col += uFlash * vec3(1.0, 0.96, 0.9) * (1.0 - edge * 1.4);
       col += (rand(vUv * 731.0 + fract(uTime) * 91.0) - 0.5) * 0.035;

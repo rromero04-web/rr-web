@@ -41,7 +41,7 @@ export function LabsIndex() {
             <Link href="/labs/convergence" className={styles.cta}>
               Explorar experimento <span aria-hidden="true">↗</span>
             </Link>
-            <p className={styles.note}>Experiencia en inglés · Sonido opcional</p>
+            <p className={styles.note}>En español e inglés · Sonido opcional</p>
           </div>
         </article>
       </section>

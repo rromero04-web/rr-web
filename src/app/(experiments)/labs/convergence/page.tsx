@@ -3,11 +3,13 @@ import { ConvergenceExperience } from "@/components/labs/convergence/Convergence
 
 export const metadata: Metadata = {
   title: "Convergence — Lab 001",
-  description: "Attention becomes form. Form becomes behavior. Three disciplines converge into a living digital product.",
+  description: "La atención se convierte en forma y la forma en comportamiento: una experiencia interactiva en WebGL sobre marketing, diseño y desarrollo. En español e inglés.",
   alternates: { canonical: "/labs/convergence" },
   openGraph: {
     title: "Convergence — Lab 001",
-    description: "The interesting part happens between disciplines.",
+    description: "Lo interesante ocurre entre disciplinas. / The interesting part happens between disciplines.",
+    locale: "es_ES",
+    alternateLocale: ["en_US"],
     url: "/labs/convergence",
     type: "website",
     images: [{ url: "/labs/convergence/opengraph.png", width: 1200, height: 630, alt: "Convergence — Lab 001. Marketing brings attention, design gives it form, development makes it behave." }],

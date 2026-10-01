@@ -5,7 +5,8 @@ import Link from "next/link";
 import Lenis from "lenis";
 import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ConvergenceAudio } from "./ConvergenceAudio";
-import { CHAPTERS, DISCIPLINES, SIGNALS, createSceneState, type Quality, type SceneState } from "./model";
+import { CHAPTERS, SIGNALS, createSceneState, type Quality, type SceneState } from "./model";
+import { COPY, type Lang } from "./copy";
 import styles from "./convergence.module.css";
 
 const ConvergenceScene = dynamic(() => import("./ConvergenceScene").then((m) => m.ConvergenceScene), { ssr: false });
@@ -35,6 +36,9 @@ export function ConvergenceExperience() {
   const [chapter, setChapter] = useState(0);
   const [routed, setRouted] = useState<number[]>([]);
   const [finePointer, setFinePointer] = useState(false);
+  const [lang, setLang] = useState<Lang>("es");
+  const [interactions, setInteractions] = useState(0);
+  const t = COPY[lang];
 
   // Capabilities and preferences.
   useEffect(() => {
@@ -57,17 +61,32 @@ export function ConvergenceExperience() {
       setQuality(forcedQuality === "low" || forcedQuality === "medium" || forcedQuality === "high" ? forcedQuality
         : small ? "low" : window.devicePixelRatio > 1.5 && window.innerWidth > 1600 ? "high" : "medium");
     });
+    // Language: an explicit ?lang, then the visitor's last choice, then the browser.
+    const params = new URLSearchParams(window.location.search);
+    let preferred: string | null = params.get("lang");
+    try { preferred ??= localStorage.getItem("convergence-lang"); } catch { /* storage may be unavailable */ }
+    preferred ??= navigator.language.toLowerCase().startsWith("es") ? "es" : "en";
+    const initialLang: Lang = preferred === "en" ? "en" : "es";
+    const langFrame = requestAnimationFrame(() => setLang(initialLang));
     const state = stateRef.current;
-    state.snap = new URLSearchParams(window.location.search).has("capture");
+    state.snap = params.has("capture");
     if (state.snap) (window as unknown as { __convergence: unknown }).__convergence = state;
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
     motion.addEventListener("change", update);
     fine.addEventListener("change", update);
-    return () => { cancelAnimationFrame(raf); motion.removeEventListener("change", update); fine.removeEventListener("change", update); };
+    return () => { cancelAnimationFrame(raf); cancelAnimationFrame(langFrame); motion.removeEventListener("change", update); fine.removeEventListener("change", update); };
   }, []);
 
   useEffect(() => { stateRef.current.calm = reduced || calm; }, [reduced, calm]);
+
+  useEffect(() => { document.documentElement.lang = lang; }, [lang]);
+
+  const chooseLang = useCallback((next: Lang) => {
+    setLang(next);
+    try { localStorage.setItem("convergence-lang", next); } catch { /* optional preference */ }
+    audioRef.current?.click();
+  }, []);
 
   // Preloader counter: honest about the scene, never stuck if WebGL is absent.
   const loaded = webgl === false || sceneReady;
@@ -140,8 +159,56 @@ export function ConvergenceExperience() {
     let currentChapter = -1;
     const cursor = { x: window.innerWidth / 2, y: window.innerHeight / 2, tx: window.innerWidth / 2, ty: window.innerHeight / 2 };
 
+    // Press, hold, drag and release on the matter itself (never on controls).
+    const press = { active: false, at: 0, x: 0, y: 0, moved: 0, type: "mouse" };
+    let lastMoveAt = performance.now();
+    let pointerSpeed = 0;
+    const isControl = (target: EventTarget | null) =>
+      target instanceof Element && Boolean(target.closest("a, button, input, label, [data-no-hold]"));
+    const toNdc = (x: number, y: number) => [(x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1];
+    const onDown = (event: PointerEvent) => {
+      if (state.snap || document.documentElement.dataset.locked === "true") return;
+      if (event.button !== 0 || isControl(event.target)) return;
+      press.active = true; press.at = performance.now(); press.x = event.clientX; press.y = event.clientY;
+      press.moved = 0; press.type = event.pointerType;
+      if (event.pointerType === "mouse") {
+        state.pointerDown = true;
+        root.dataset.holding = "true";
+        audioRef.current?.holdStart();
+      }
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!press.active) return;
+      press.active = false;
+      const held = (performance.now() - press.at) / 1000;
+      const tap = press.type !== "mouse" && press.moved < 12 && held < 0.4;
+      if (press.type === "mouse" || tap) {
+        const [nx, ny] = toNdc(event.clientX, event.clientY);
+        const dragged = press.moved > 40;
+        const power = press.type === "mouse" ? Math.min(1.6, 0.35 + held * 0.6) * (dragged ? 0.35 : 1) : 0.9;
+        state.burstAt = seconds(); state.burstX = nx; state.burstY = ny; state.burstPower = power;
+        if (Math.abs(state.stage - 3) < 0.5) state.pulseAt = seconds();
+        audioRef.current?.burst(power, nx);
+        setInteractions((n) => n + 1);
+      }
+      state.pointerDown = false;
+      delete root.dataset.holding;
+      audioRef.current?.holdEnd();
+    };
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+
     const onMove = (event: PointerEvent) => {
       if (state.snap) return;
+      const now = performance.now();
+      const step = Math.hypot(event.clientX - cursor.tx, event.clientY - cursor.ty);
+      pointerSpeed = Math.min(1, step / Math.max(1, now - lastMoveAt) / 2.5);
+      lastMoveAt = now;
+      if (press.active) {
+        press.moved += Math.abs(event.movementX) + Math.abs(event.movementY);
+        if (press.type === "mouse") state.drag += event.movementX;
+      }
       cursor.tx = event.clientX; cursor.ty = event.clientY;
       state.pointerX = (event.clientX / window.innerWidth) * 2 - 1;
       state.pointerY = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -205,6 +272,8 @@ export function ConvergenceExperience() {
       }
 
       pointerIdle += dt;
+      pointerSpeed *= Math.exp(-dt * 6);
+      state.pointerSpeed = pointerSpeed;
       if (pointerIdle > 2.5) state.pointerActive = Math.max(0, state.pointerActive - dt * 0.6);
 
       const c = cursorRef.current;
@@ -215,7 +284,7 @@ export function ConvergenceExperience() {
       }
 
       audioRef.current?.update({
-        stage, velocity, pointer: state.pointerActive * Math.min(1, pointerIdle < 0.12 ? 1 : 0),
+        stage, velocity, pointerX: state.pointerX, pointerSpeed, hold: state.pointerDown,
         calm: state.calm, mobile: window.innerWidth < 820,
       });
       raf = requestAnimationFrame(loop);
@@ -227,6 +296,9 @@ export function ConvergenceExperience() {
       lenis?.destroy();
       lenisRef.current = null;
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       document.removeEventListener("pointerleave", onLeave);
       document.removeEventListener("pointerover", onOver);
     };
@@ -282,7 +354,7 @@ export function ConvergenceExperience() {
 
   return (
     <div ref={rootRef} className={styles.root} data-entered={entered} data-calm={reduced || calm} data-chapter={CHAPTERS[chapter].id}>
-      <a className={styles.skip} href="#composer">Skip to the signal composer</a>
+      <a className={styles.skip} href="#composer">{t.skip}</a>
 
       <div className={styles.stage} aria-hidden="true">
         {webgl && <ConvergenceScene stateRef={stateRef} quality={quality} onReady={() => setSceneReady(true)} onSlow={() => setQuality((q) => (q === "high" ? "medium" : "low"))} />}
@@ -292,25 +364,25 @@ export function ConvergenceExperience() {
       {/* Preloader */}
       <div className={styles.loader} data-ready={ready} data-gone={entered} aria-hidden={entered}>
         <div className={styles.loaderTop}>
-          <span>Raúl Romero</span>
-          <span>Lab 001 — Convergence</span>
-          <span>Strategy × Design × Technology</span>
+          <span>{t.loader.top[0]}</span>
+          <span>{t.loader.top[1]}</span>
+          <LangSwitch lang={lang} onChange={chooseLang} label={t.hud.language} tabbable={!entered} />
         </div>
         <div className={styles.loaderCenter}>
           <svg className={styles.loaderRing} viewBox="0 0 100 100" aria-hidden="true">
             <circle cx="50" cy="50" r="48" pathLength={1} />
             <circle cx="50" cy="50" r="48" pathLength={1} style={{ strokeDashoffset: 1 - count / 100 }} />
           </svg>
-          <p className={styles.loaderNote}>{ready ? "The system is ready." : "Calibrating the field"}</p>
+          <p className={styles.loaderNote}>{ready ? t.loader.ready : t.loader.calibrating}</p>
           <div className={styles.loaderChoice} data-show={ready}>
-            <button ref={enterRef} onClick={() => enter(true)} data-cursor="Enter" tabIndex={ready ? 0 : -1}>
-              <SoundBars on /> Enter with sound
+            <button ref={enterRef} onClick={() => enter(true)} data-cursor={t.cursor.enter} tabIndex={ready ? 0 : -1}>
+              <SoundBars on /> {t.loader.withSound}
             </button>
-            <button onClick={() => enter(false)} data-cursor="Enter" tabIndex={ready ? 0 : -1}>Enter in silence</button>
+            <button onClick={() => enter(false)} data-cursor={t.cursor.enter} tabIndex={ready ? 0 : -1}>{t.loader.silent}</button>
           </div>
         </div>
         <div className={styles.loaderBottom}>
-          <span className={styles.loaderHint}>Best with headphones · Scroll to converge</span>
+          <span className={styles.loaderHint}>{t.loader.hint}</span>
           <span className={styles.loaderCount}>{String(Math.floor(count)).padStart(3, "0")}</span>
         </div>
         <span className={styles.loaderBar} style={{ transform: `scaleX(${count / 100})` }} />
@@ -318,34 +390,40 @@ export function ConvergenceExperience() {
 
       {/* Persistent interface */}
       <header className={styles.hud}>
-        <Link href="/labs" className={styles.back} data-cursor="Labs"><span aria-hidden="true">←</span> Labs</Link>
+        <Link href="/labs" className={styles.back} data-cursor={t.cursor.labs}><span aria-hidden="true">←</span> Labs</Link>
         <span className={styles.mark}>Convergence <em>Lab 001</em></span>
         <div className={styles.controls}>
-          <button onClick={() => setCalm((v) => !v)} aria-pressed={reduced || calm} disabled={reduced} data-cursor="Motion">
-            Motion: {reduced || calm ? "calm" : "full"}
+          <LangSwitch lang={lang} onChange={chooseLang} label={t.hud.language} tabbable={entered} />
+          <button className={styles.motionToggle} onClick={() => setCalm((v) => !v)} aria-pressed={reduced || calm} disabled={reduced} data-cursor={t.cursor.motion}>
+            {t.hud.motion(reduced || calm)}
           </button>
-          <button onClick={toggleSound} aria-pressed={sound} data-cursor="Sound" aria-label={sound ? "Mute sound" : "Turn sound on"}>
-            <SoundBars on={sound} /> <span>Sound {sound ? "on" : "off"}</span>
+          <button onClick={toggleSound} aria-pressed={sound} data-cursor={t.cursor.sound} aria-label={sound ? t.hud.soundOff : t.hud.soundOn}>
+            <SoundBars on={sound} /> <span>{t.hud.sound(sound)}</span>
           </button>
         </div>
       </header>
       <div className={styles.hudBottom} aria-hidden="true">
         <span className={styles.chapterIndex}>
-          <b key={chapter}>{CHAPTERS[chapter].index}</b> / 05 — <i key={`l${chapter}`}>{CHAPTERS[chapter].label}</i>
+          <b key={chapter}>{CHAPTERS[chapter].index}</b> / 05 — <i key={`l${chapter}-${lang}`}>{t.chapters[chapter]}</i>
         </span>
         <span className={styles.rail}><span ref={railRef} /></span>
         <span className={styles.percent}><span ref={percentRef}>000</span>%</span>
       </div>
+      {webgl && (
+        <p className={styles.hint} data-show={entered && interactions < 3 && chapter > 0 && chapter < 5} aria-hidden="true">
+          <i />{finePointer ? t.hints.pointer : t.hints.touch}
+        </p>
+      )}
 
       {finePointer && <div ref={cursorRef} className={styles.cursor} aria-hidden="true"><span /></div>}
 
-      <main className={styles.content}>
+      <main className={styles.content} lang={lang}>
         {/* 00 — Prelude */}
         <section data-stage={0} className={`${styles.section} ${styles.hero}`} aria-labelledby="title">
           <div className={styles.heroMeta}>
-            <span>(Lab 001)</span>
-            <span>An interactive study of what happens<br />when three disciplines become one system.</span>
-            <span>2026</span>
+            <span>{t.hero.meta[0]}</span>
+            <span>{t.hero.meta[1].split("\n").map((line, i) => <Fragment key={i}>{i > 0 && <br />}{line}</Fragment>)}</span>
+            <span>{t.hero.meta[2]}</span>
           </div>
           <h1 id="title" className={styles.heroTitle} aria-label="Convergence">
             {"Convergence".split("").map((ch, i) => (
@@ -353,38 +431,18 @@ export function ConvergenceExperience() {
             ))}
           </h1>
           <div className={styles.heroFoot}>
-            <p className={styles.heroLede}>
-              Marketing brings <Serif>attention</Serif>. Design gives it <Serif>form</Serif>. Development makes it <Serif>behave</Serif>.
-            </p>
-            <button className={styles.scrollCue} onClick={() => scrollTo(1)} data-cursor="Begin">
-              <span>Scroll to converge</span><i aria-hidden="true" />
+            <p className={styles.heroLede}><Rich text={t.hero.lede} /></p>
+            <button className={styles.scrollCue} onClick={() => scrollTo(1)} data-cursor={t.cursor.begin}>
+              <span>{t.hero.cue}</span><i aria-hidden="true" />
             </button>
           </div>
         </section>
 
-        {/* 01 — Attention */}
+        <Chapter stage={1} align="left" index="01" copy={t.attention} color="ember" />
+        <Chapter stage={2} align="right" index="02" copy={t.form} color="lilac" />
         <Chapter
-          stage={1} align="left" index="01" discipline="Marketing" title="Attention"
-          statement="Attention without direction is *noise.*"
-          body="Every product begins as scattered interest: glances, clicks, half-intentions. On its own it goes nowhere. Move your cursor through the field and watch it gather around you. That pull is the raw material."
-          aside={<><Dot color="ember" /> Input · Unstructured signal<br /><span>Move the cursor to gather the field</span></>}
-        />
-
-        {/* 02 — Form */}
-        <Chapter
-          stage={2} align="right" index="02" discipline="Design" title="Form"
-          statement="Structure turns attention into *meaning.*"
-          body="Design is not decoration. It is deciding where each thing goes, and why. The same matter, now aligned into layers, grids and hierarchy: something a person can read at a glance."
-          aside={<><Dot color="lilac" /> Layers 05 · Grid 12 col<br /><span>Hierarchy · Rhythm · Contrast</span></>}
-        />
-
-        {/* 03 — Behavior */}
-        <Chapter
-          stage={3} align="left" index="03" discipline="Development" title="Behavior"
-          statement="Ideas become real when they can *respond.*"
-          body="Code gives form a pulse. Information starts to move, branch and react to the people using it. Send a signal through the system."
-          aside={<><Dot color="aqua" /> Input → State → Response<br /><span>72 channels · 1 node</span></>}
-          action={<button className={styles.pill} onClick={sendPulse} data-cursor="Send"><span>Send a signal</span><i aria-hidden="true">→</i></button>}
+          stage={3} align="left" index="03" copy={t.behavior} color="aqua"
+          action={<button className={styles.pill} onClick={sendPulse} data-cursor={t.cursor.send}><span>{t.behavior.action}</span><i aria-hidden="true">→</i></button>}
         />
 
         {/* 04 — Convergence */}
@@ -394,19 +452,17 @@ export function ConvergenceExperience() {
               <div ref={marqueeRef} className={styles.marqueeTrack}>
                 {Array.from({ length: 4 }, (_, i) => (
                   <Fragment key={i}>
-                    <span>Attention</span><em>×</em><span>Form</span><em>×</em><span>Behavior</span><em>×</em>
+                    <span>{t.marquee[0]}</span><em>×</em><span>{t.marquee[1]}</span><em>×</em><span>{t.marquee[2]}</span><em>×</em>
                   </Fragment>
                 ))}
               </div>
             </div>
             <div className={styles.convergenceCopy}>
-              <p className={styles.eyebrow} data-reveal><span>04</span> Convergence</p>
+              <p className={styles.eyebrow} data-reveal><span>04</span> {t.convergence.eyebrow}</p>
               <h2 id="convergence-title" className={styles.statement} data-reveal>
-                <Words text="The system becomes more than its *parts.*" />
+                <Words text={t.convergence.statement} />
               </h2>
-              <p className={styles.body} data-reveal>
-                When the three stop working in sequence and start working as one, the result is not a sum. It is a product that is alive.
-              </p>
+              <p className={styles.body} data-reveal>{t.convergence.body}</p>
             </div>
           </div>
         </section>
@@ -414,27 +470,27 @@ export function ConvergenceExperience() {
         {/* 05 — Product */}
         <section data-stage={5} id="composer" className={`${styles.section} ${styles.product}`} aria-labelledby="product-title">
           <div className={styles.productCopy}>
-            <p className={styles.eyebrow} data-reveal><span>05</span> Product</p>
+            <p className={styles.eyebrow} data-reveal><span>05</span> {t.product.eyebrow}</p>
             <h2 id="product-title" className={styles.statement} data-reveal>
-              <Words text="Three inputs. One *living* system." />
+              <Words text={t.product.statement} />
             </h2>
-            <p className={styles.body} data-reveal>Route each signal into the system. Every discipline lights its own orbit, and the whole responds.</p>
+            <p className={styles.body} data-reveal>{t.product.body}</p>
 
-            <div className={styles.composer} data-reveal data-complete={complete}>
+            <div className={styles.composer} data-reveal data-complete={complete} data-no-hold>
               <div className={styles.composerHead}>
-                <span>Signal composer</span>
-                <span aria-hidden="true"><b>{String(routed.length).padStart(2, "0")}</b> / 06 routed</span>
+                <span>{t.product.composer}</span>
+                <span aria-hidden="true"><b>{String(routed.length).padStart(2, "0")}</b> / 06 {t.product.routedCount}</span>
               </div>
               <ul>
-                {SIGNALS.map((signal) => {
+                {SIGNALS.map((signal, i) => {
                   const done = routed.includes(signal.id);
                   return (
                     <li key={signal.id}>
-                      <button onClick={() => route(signal.id)} aria-pressed={done} data-discipline={signal.discipline} data-cursor={done ? "Routed" : "Route"}>
+                      <button onClick={() => route(signal.id)} aria-pressed={done} data-discipline={signal.discipline} data-cursor={done ? t.product.cursorRouted : t.product.cursorRoute}>
                         <span className={styles.sigIndex}>{String(signal.id).padStart(2, "0")}</span>
-                        <span className={styles.sigLabel}>{signal.label}</span>
-                        <span className={styles.sigTag}>{DISCIPLINES[signal.discipline]}</span>
-                        <span className={styles.sigState} aria-hidden="true">{done ? "Routed" : "Route →"}</span>
+                        <span className={styles.sigLabel}>{t.product.signals[i]}</span>
+                        <span className={styles.sigTag}>{t.product.disciplines[signal.discipline]}</span>
+                        <span className={styles.sigState} aria-hidden="true">{done ? t.product.routed : t.product.route}</span>
                       </button>
                     </li>
                   );
@@ -442,10 +498,9 @@ export function ConvergenceExperience() {
               </ul>
               <div className={styles.composerFoot}>
                 <p aria-live="polite">
-                  {complete ? "All six signals routed. This is what a working system feels like."
-                    : routed.length ? `${routed.length} of 6 signals routed.` : "Select a signal to route it."}
+                  {complete ? t.product.complete : routed.length ? t.product.progress(routed.length) : t.product.idle}
                 </p>
-                <button onClick={reset} disabled={!routed.length} data-cursor="Reset">Reset</button>
+                <button onClick={reset} disabled={!routed.length} data-cursor={t.cursor.reset}>{t.product.reset}</button>
               </div>
             </div>
           </div>
@@ -454,19 +509,19 @@ export function ConvergenceExperience() {
         {/* Outro */}
         <section className={`${styles.section} ${styles.outro}`} aria-labelledby="outro-title">
           <h2 id="outro-title" className={styles.outroTitle} data-reveal>
-            <Words text="The interesting part happens *between* disciplines." />
+            <Words text={t.outro.statement} />
           </h2>
           <div className={styles.outroActions} data-reveal>
-            <Link href="/#contacto" className={styles.pill} data-cursor="Talk">
-              <span>Start a project</span><i aria-hidden="true">→</i>
+            <Link href={`${t.outro.home}#contacto`} className={styles.pill} data-cursor={t.cursor.talk}>
+              <span>{t.outro.start}</span><i aria-hidden="true">→</i>
             </Link>
-            <Link href="/#proceso" className={styles.link} data-cursor="Read">See how I work</Link>
-            <button className={styles.link} onClick={() => scrollTo(0)} data-cursor="Again">Replay ↑</button>
+            <Link href={`${t.outro.home}#proceso`} className={styles.link} data-cursor={t.cursor.read}>{t.outro.how}</Link>
+            <button className={styles.link} onClick={() => scrollTo(0)} data-cursor={t.cursor.again}>{t.outro.replay}</button>
           </div>
           <footer className={styles.credits}>
-            <span>Concept, design &amp; code — Raúl Romero</span>
-            <span>WebGL · GLSL · Web Audio · 2026</span>
-            <Link href="/labs">Back to Labs</Link>
+            <span>{t.outro.credits[0]}</span>
+            <span>{t.outro.credits[1]}</span>
+            <Link href="/labs">{t.outro.credits[2]}</Link>
           </footer>
         </section>
       </main>
@@ -474,22 +529,27 @@ export function ConvergenceExperience() {
   );
 }
 
+type ChapterCopy = { title: string; discipline: string; statement: string; body: string; aside: readonly string[] };
+
 function Chapter(props: {
-  stage: number; align: "left" | "right"; index: string; discipline: string;
-  title: string; statement: string; body: string; aside: ReactNode; action?: ReactNode;
+  stage: number; align: "left" | "right"; index: string; copy: ChapterCopy;
+  color: "ember" | "lilac" | "aqua"; action?: ReactNode;
 }) {
   const id = `chapter-${props.index}`;
+  const c = props.copy;
   return (
     <section data-stage={props.stage} className={`${styles.section} ${styles.chapter}`} data-align={props.align} aria-labelledby={id}>
       <div className={styles.sticky}>
-      <div className={styles.chapterGhost} aria-hidden="true">{props.title}</div>
-      <div className={styles.chapterInner}>
-        <p className={styles.eyebrow} data-reveal><span>{props.index}</span> {props.title} — {props.discipline}</p>
-        <h2 id={id} className={styles.statement} data-reveal><Words text={props.statement} /></h2>
-        <p className={styles.body} data-reveal>{props.body}</p>
-        {props.action && <div className={styles.action} data-reveal>{props.action}</div>}
-        <p className={styles.aside} data-reveal>{props.aside}</p>
-      </div>
+        <div className={styles.chapterGhost} aria-hidden="true">{c.title}</div>
+        <div className={styles.chapterInner}>
+          <p className={styles.eyebrow} data-reveal><span>{props.index}</span> {c.title} — {c.discipline}</p>
+          <h2 id={id} className={styles.statement} data-reveal><Words text={c.statement} /></h2>
+          <p className={styles.body} data-reveal>{c.body}</p>
+          {props.action && <div className={styles.action} data-reveal>{props.action}</div>}
+          <p className={styles.aside} data-reveal>
+            <i className={styles.dot} data-color={props.color} aria-hidden="true" /> {c.aside[0]}<br /><span>{c.aside[1]}</span>
+          </p>
+        </div>
       </div>
     </section>
   );
@@ -517,12 +577,22 @@ function Words({ text }: { text: string }) {
   );
 }
 
-function Serif({ children }: { children: ReactNode }) {
-  return <em className={styles.serif}>{children}</em>;
+// Inline text where *word* is set in the italic serif, without animation.
+function Rich({ text }: { text: string }) {
+  return <>{text.split(/(\*[^*]+\*)/g).map((part, i) =>
+    part.startsWith("*") ? <em key={i} className={styles.serif}>{part.slice(1, -1)}</em> : <Fragment key={i}>{part}</Fragment>)}</>;
 }
 
-function Dot({ color }: { color: "ember" | "lilac" | "aqua" }) {
-  return <i className={styles.dot} data-color={color} aria-hidden="true" />;
+function LangSwitch({ lang, onChange, label, tabbable }: { lang: Lang; onChange: (lang: Lang) => void; label: string; tabbable: boolean }) {
+  return (
+    <span className={styles.lang} role="group" aria-label={label}>
+      {(["es", "en"] as const).map((code) => (
+        <button key={code} onClick={() => onChange(code)} aria-pressed={lang === code} tabIndex={tabbable ? 0 : -1} data-cursor={code.toUpperCase()} lang={code}>
+          {code.toUpperCase()}
+        </button>
+      ))}
+    </span>
+  );
 }
 
 function SoundBars({ on }: { on: boolean }) {
