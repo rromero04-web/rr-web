@@ -18,7 +18,7 @@ export function LanguageSwitcher({
     <nav
       aria-label={locale === "es" ? "Selector de idioma" : "Language selector"}
       className={cn(
-        "inline-flex items-center border border-navy/15 text-xs font-semibold",
+        "rr-lang inline-flex items-center border border-navy/15 text-xs font-semibold",
         variant === "mobile" && "w-full"
       )}
     >

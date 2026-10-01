@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Mail, Menu, X } from "lucide-react";
+import { WhatsappIcon } from "@/components/ui/SocialIcons";
 import { cn } from "@/lib/utils";
 import { localizePath, type Locale } from "@/lib/i18n/config";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -12,6 +13,10 @@ import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 const LINKS = {
   es: ["Qué hago", "Sobre mí", "Proceso", "Preguntas"],
   en: ["What I do", "About", "Process", "FAQ"],
+};
+const HINTS = {
+  es: ["Webs, captación y herramientas a medida", "Quién hay detrás de cada proyecto", "Cómo trabajamos, de la idea al lanzamiento", "Precio, plazos y mantenimiento"],
+  en: ["Websites, lead generation and custom tools", "Who's behind every project", "How we work, from idea to launch", "Pricing, timelines and maintenance"],
 };
 const IDS = ["servicios", "sobre-mi", "proceso", "faq"];
 const COPY = {
@@ -91,11 +96,24 @@ export function Nav({ locale }: { locale: Locale }) {
         </div>
       </div>
       {menuOpen && <div id="mobile-menu" ref={menuRef} className="rr-mobile-menu">
-        <nav aria-label={t.nav} className="container-page">
-          {IDS.map((id, index) => <a key={id} href={anchor(id)} onClick={close}>{LINKS[locale][index]}</a>)}
-          <a href={anchor("contacto")} onClick={close} className="rr-button">{t.contact}</a>
-          <Link href={localizePath("/configurador", locale)} onClick={close} className="rr-link">{t.builder}</Link>
-        </nav>
+        <div className="container-page rr-mobile-menu-inner">
+          <nav aria-label={t.nav} className="rr-menu-links">
+            {IDS.map((id, index) => (
+              <a key={id} href={anchor(id)} onClick={close} aria-current={isHome && active === id ? "location" : undefined} style={{ "--i": index } as CSSProperties}>
+                <span>{LINKS[locale][index]}</span>
+                <small>{HINTS[locale][index]}</small>
+              </a>
+            ))}
+          </nav>
+          <div className="rr-menu-foot" style={{ "--i": IDS.length } as CSSProperties}>
+            <a href={anchor("contacto")} onClick={close} className="rr-button">{t.contact}</a>
+            <Link href={localizePath("/configurador", locale)} onClick={close} className="rr-link">{t.builder}</Link>
+            <div className="rr-menu-contact">
+              <a href="mailto:info@raulromero.es"><Mail size={16} aria-hidden="true" />info@raulromero.es</a>
+              <a href="https://wa.me/34684772973" target="_blank" rel="noreferrer noopener"><WhatsappIcon size={16} />WhatsApp</a>
+            </div>
+          </div>
+        </div>
       </div>}
     </header>
   );

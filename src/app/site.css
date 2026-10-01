@@ -129,10 +129,10 @@
 .rr-menu-toggle:hover { background: rgb(150 172 214 / 10%); }
 
 /* Selector de idioma (usa utilidades de Tailwind pensadas para fondo claro). */
-:is(.rr-header, .rr-mobile-menu) nav[aria-label] { border-color: var(--edge-strong); border-radius: 8px; overflow: hidden; }
-:is(.rr-header, .rr-mobile-menu) nav[aria-label] a { color: var(--muted); border-color: var(--edge-strong); }
-:is(.rr-header, .rr-mobile-menu) nav[aria-label] a:hover { color: var(--text); background: rgb(150 172 214 / 10%); }
-:is(.rr-header, .rr-mobile-menu) nav[aria-label] a[aria-current="true"] { background: var(--text); color: var(--ink); }
+:is(.rr-header, .rr-mobile-menu) .rr-lang { border-color: var(--edge-strong); border-radius: 8px; overflow: hidden; }
+:is(.rr-header, .rr-mobile-menu) .rr-lang a { color: var(--muted); border-color: var(--edge-strong); }
+:is(.rr-header, .rr-mobile-menu) .rr-lang a:hover { color: var(--text); background: rgb(150 172 214 / 10%); }
+:is(.rr-header, .rr-mobile-menu) .rr-lang a[aria-current="true"] { background: var(--text); color: var(--ink); }
 
 /* El backdrop-filter de .rr-header crea el bloque contenedor de este panel
    fijo, así que se posiciona bajo la cabecera y se le da la altura del viewport. */
@@ -141,20 +141,77 @@
   inset: 100% 0 auto;
   height: calc(100dvh - var(--rr-header));
   overflow-y: auto;
-  background: var(--ink);
-  padding: 16px 0 40px;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(120% 60% at 50% 115%, rgb(40 85 255 / 30%), transparent 70%),
+    var(--ink);
+  border-top: 1px solid var(--edge);
+  animation: rr-fade 0.25s ease-out;
 }
-.rr-mobile-menu nav { display: flex; flex-direction: column; }
-.rr-mobile-menu nav > a:not(.rr-button):not(.rr-link) {
-  padding: 14px 0;
+.rr-mobile-menu-inner { display: flex; flex-direction: column; min-height: 100%; padding-top: 12px; padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+
+.rr-menu-links { display: flex; flex-direction: column; }
+.rr-menu-links a {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 18px 0 18px 20px;
   border-bottom: 1px solid var(--edge);
-  font-family: var(--font-display), sans-serif;
-  font-size: 30px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
+  animation: rr-menu-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 45ms + 40ms);
 }
-.rr-mobile-menu .rr-button { margin-top: 28px; }
-.rr-mobile-menu .rr-link { margin-top: 8px; align-self: flex-start; }
+.rr-menu-links a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24px;
+  width: 3px;
+  height: 22px;
+  border-radius: 3px;
+  background: var(--edge-strong);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.rr-menu-links span { font-family: var(--font-display), sans-serif; font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.2; }
+.rr-menu-links small { font-size: 14px; color: var(--muted); }
+.rr-menu-links a:hover::before,
+.rr-menu-links a:focus-visible::before { background: var(--accent-soft); }
+.rr-menu-links a[aria-current]::before { background: var(--accent); box-shadow: 0 0 14px 2px var(--glow); }
+.rr-menu-links a[aria-current] small { color: var(--accent-soft); }
+
+.rr-menu-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 40px;
+  animation: rr-menu-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 45ms + 40ms);
+}
+.rr-menu-foot .rr-link { align-self: center; }
+.rr-menu-contact { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 8px; margin-top: 12px; }
+.rr-menu-contact a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--edge-strong);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.rr-menu-contact a:hover { color: var(--text); border-color: var(--accent-soft); }
+
+@keyframes rr-menu-in { from { opacity: 0; translate: 0 14px; } }
+@media (prefers-reduced-motion: reduce) {
+  .rr-mobile-menu, .rr-menu-links a, .rr-menu-foot { animation: none; }
+}
 
 @media (max-width: 960px) {
   .rr-nav, .rr-header-actions > .rr-button { display: none; }
